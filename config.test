@@ -1,0 +1,21 @@
+algorithm_sequence = [3, 2, 2, 1];
+roi = [32,32,32];
+
+// amplitude threshold
+// for HIO: if data > threshold: replace guess by data * guess/abs(guess),
+// for ER: 1.if data > threshold: replace guess by data * guess/abs(guess), 2. replace as 1., and set the rest to 0
+
+amp_threshold = 1000.0;
+amp_threshold_fill_zeros = false;
+
+phase_min = 0.7;
+phase_max = 10.0;
+beta = .9;
+
+// support
+support_update_step = 5;
+support_threshold = 1.0;
+support_type = 1;
+
+
+
