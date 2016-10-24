@@ -1,13 +1,13 @@
 //
-//  Reconstruction.hpp
+//  worker.hpp
 //  ArrayFire-OpenCL
 //
 //  Created by Barbara Frosik on 8/12/16.
 //  Copyright © 2016 ArrayFire. All rights reserved.
 //
 
-#ifndef Reconstruction_hpp
-#define Reconstruction_hpp
+#ifndef worker_hpp
+#define worker_hpp
 
 #include "stdio.h"
 #include "arrayfire.h"
@@ -83,4 +83,4 @@ public:
 };
 
 
-#endif /* Reconstruction_hpp */
+#endif /* worker_hpp */

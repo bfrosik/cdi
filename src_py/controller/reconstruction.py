@@ -1,22 +1,22 @@
 import numpy as np
-import pycdi.utilities.utils as ut
+import src_py.utilities.utils as ut
 
 def do_reconstruction(proc, data, conf):
     if proc == 'cpu':
-        from pycdi.cyth.wrap_cpu import *
+        from src_py.cyth.bridge_cpu import *
     elif proc == 'opencl':
-        from pycdi.cyth.wrap_opencl import *
+        from src_py.cyth.bridge_opencl import *
     elif proc == 'cuda':
-        from pycdi.cyth.wrap_cuda import *
+        from src_py.cyth.bridge_cuda import *
     else:
         print 'unrecognized processor, only "cpu", "opencl", and "cuda" are valid'
         return None, None
     
     dims = data.shape
-    fast_module = PyRecWrap()
+    fast_module = PyBridge()
     data_l = data.flatten().tolist()
 
-    fast_module.start_calc_gen_guess(data_l, dims, conf)
+    fast_module.start_calc(data_l, dims, conf)
     er = fast_module.get_errors()
     image_r = np.asarray(fast_module.get_image_r())
     image_i = np.asarray(fast_module.get_image_i())
@@ -42,7 +42,9 @@ def get_dim(dim):
     
 def reconstruction(proc, filename, conf):
     img = ut.get_array_from_tif(filename)
+
     data = img[::-1,:,:]
+
     dim0 = get_dim(data.shape[0])
     dim1 = get_dim(data.shape[1])
     dim2 = get_dim(data.shape[2])

@@ -1,5 +1,5 @@
 //
-//  Reconstruction.cpp
+//  worker.cpp
 //  ArrayFire-OpenCL
 //
 //  Created by Barbara Frosik on 8/12/16.
@@ -7,13 +7,13 @@
 //
 
 #include "fstream"
-#include "Reconstruction.hpp"
+#include "worker.hpp"
 #include "cstdio"
 #include "cstdlib"
 #include "math.h"
 #include "vector"
-#include "Parameters.hpp"
-#include "State.hpp"
+#include "parameters.hpp"
+#include "state.hpp"
 #include "common.h"
 
 

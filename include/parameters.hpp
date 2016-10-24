@@ -1,13 +1,13 @@
 //
-//  Parameters.hpp
+//  parameters.hpp
 //  ArrayFire-OpenCL
 //
 //  Created by Barbara Frosik on 8/15/16.
 //  Copyright © 2016 ArrayFire. All rights reserved.
 //
 
-#ifndef Parameters_hpp
-#define Parameters_hpp
+#ifndef parameters_hpp
+#define parameters_hpp
 
 #include "stdio.h"
 #include "arrayfire.h"
@@ -56,4 +56,4 @@ public:
 };
 
 
-#endif /* Parameters_hpp */
+#endif /* parameters_hpp */

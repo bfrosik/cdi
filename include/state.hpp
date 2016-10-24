@@ -1,13 +1,13 @@
 //
-//  State.hpp
+//  state.hpp
 //  ArrayFire-OpenCL
 //
 //  Created by Barbara Frosik on 8/15/16.
 //  Copyright © 2016 ArrayFire. All rights reserved.
 //
 
-#ifndef State_hpp
-#define State_hpp
+#ifndef state_hpp
+#define state_hpp
 
 #include "stdio.h"
 #include "arrayfire.h"
@@ -63,4 +63,4 @@ public:
 };
 
 
-#endif /* State_hpp */
+#endif /* state_hpp */

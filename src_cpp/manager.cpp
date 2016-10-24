@@ -9,13 +9,13 @@
 
 #include "sstream"
 #include "arrayfire.h"
-#include "RecWrap.hpp"
-#include "Reconstruction.hpp"
+#include "worker.hpp"
+#include "manager.hpp"
 
 
 using namespace af;
 
-void RecWrap::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> guess_buffer_r, std::vector<d_type> guess_buffer_i, std::vector<int> dim, const std::string & config)
+void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> guess_buffer_r, std::vector<d_type> guess_buffer_i, std::vector<int> dim, const std::string & config)
 {
     af::array real_d(dim[0], dim[1], dim[2], &data_buffer_r[0]);
     af::array data = complex(real_d, 0.0);
@@ -26,14 +26,14 @@ void RecWrap::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> g
        
     Reconstruction reconstruction(data, guess, config.c_str());
     rec = &reconstruction;
-
     timer::start();
-    reconstruction.Iterate();
+
+    reconstruction.Iterate();	
+
     printf("iterate function took %g seconds\n", timer::stop());
-	
 }
 
-void RecWrap::StartCalcGenGuess(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config)
+void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config)
 {
     af::array real_d(dim[0], dim[1], dim[2], &data_buffer_r[0]);
     af::array data = complex(real_d, 0.0);
@@ -50,7 +50,24 @@ void RecWrap::StartCalcGenGuess(std::vector<d_type> data_buffer_r, std::vector<i
 	
 }
 
-std::vector<d_type> RecWrap::GetImageR()
+void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config, int nu_threads)
+{
+    af::array real_d(dim[0], dim[1], dim[2], &data_buffer_r[0]);
+    af::array data = complex(real_d, 0.0);
+
+    af::randomEngine r(AF_RANDOM_ENGINE_MERSENNE, (uint)time(0));
+    af::array guess = randu(data.dims(), c32, r);
+     
+    Reconstruction reconstruction(data, guess, config.c_str());
+    rec = &reconstruction;
+
+    timer::start();
+    reconstruction.Iterate();
+    printf("iterate function took %g seconds\n", timer::stop());
+	
+}
+
+std::vector<d_type> Manager::GetImageR()
 {
     af::array image = rec->GetImage();
 
@@ -61,7 +78,7 @@ std::vector<d_type> RecWrap::GetImageR()
     return v;
 }
 
-std::vector<d_type> RecWrap::GetImageI()
+std::vector<d_type> Manager::GetImageI()
 {
     af::array image = rec->GetImage();
 
@@ -72,7 +89,7 @@ std::vector<d_type> RecWrap::GetImageI()
     return v;
 }
 
-std::vector<d_type> RecWrap::GetErrors()
+std::vector<d_type> Manager::GetErrors()
 {
     return rec->GetErrors();;
 }

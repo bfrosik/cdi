@@ -1,4 +1,4 @@
-import pycdi.controller.reconstruction as rec
+import src_py.controller.reconstruction as rec
 import sys
 import os
 import argparse

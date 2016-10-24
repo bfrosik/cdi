@@ -1,13 +1,13 @@
 //
-//  State.cpp
+//  state.cpp
 //  ArrayFire-OpenCL
 //
 //  Created by Barbara Frosik on 8/15/16.
 //  Copyright © 2016 ArrayFire. All rights reserved.
 //
 
-#include "State.hpp"
-#include "Parameters.hpp"
+#include "state.hpp"
+#include "parameters.hpp"
 #include "vector"
 
 // a reference to params object
