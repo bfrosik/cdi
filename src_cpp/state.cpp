@@ -65,7 +65,7 @@ bool State::IsConvolve()
     return run_convolution;
 }
 
-bool State::Next(af::array data)
+bool State::Next()
 {
     // finish if all iterations done
     

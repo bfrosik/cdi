@@ -46,7 +46,7 @@ public:
     // It finds which algorithm will be run in this state (ER or HIO)
     // It updates support at the correct iterations.
     // It finds whether the algorithm should include convolve.
-    bool Next(af::array data);
+    bool Next();
     
     // Returns which algorithm (ER or HIO) should be run in a current state (i.e. iteration).
     int GetCurrentAlg();

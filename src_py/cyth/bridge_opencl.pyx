@@ -1,6 +1,7 @@
 # distutils: language = c++
 # distutils: include_dirs = ['include', 'include/af/include',]
-# distutils: libraries = ['cdi', 'afopencl',  'config++',]
+# distutils: sources = ['src_cpp/bridge.cpp', 'src_cpp/manager.cpp', 'src_cpp/parameters.cpp', 'src_cpp/state.cpp', 'src_cpp/worker.cpp']
+# distutils: libraries = ['afopencl',  'config++',]
 # distutils: library_dirs = lib
 
 from libcpp.vector cimport vector

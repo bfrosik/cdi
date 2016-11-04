@@ -1,9 +1,9 @@
-algorithm_sequence = [3, 2, 2, 1];
-roi = [32,32,32];
+aliens = ((115,177,0,136,187,10));
+binning = [1,1];
+center_shift = [1,2,3];
 
-// amplitude threshold
-// for HIO: if data > threshold: replace guess by data * guess/abs(guess),
-// for ER: 1.if data > threshold: replace guess by data * guess/abs(guess), 2. replace as 1., and set the rest to 0
+algorithm_sequence = [3, 2, 2, 1];
+roi = [70,100,64];
 
 amp_threshold = 1000.0;
 amp_threshold_fill_zeros = false;

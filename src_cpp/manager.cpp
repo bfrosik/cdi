@@ -7,7 +7,6 @@
 //
 
 
-#include "sstream"
 #include "arrayfire.h"
 #include "worker.hpp"
 #include "manager.hpp"
@@ -35,19 +34,7 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> g
 
 void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config)
 {
-    af::array real_d(dim[0], dim[1], dim[2], &data_buffer_r[0]);
-    af::array data = complex(real_d, 0.0);
-
-    af::randomEngine r(AF_RANDOM_ENGINE_MERSENNE, (uint)time(0));
-    af::array guess = randu(data.dims(), c32, r);
-     
-    Reconstruction reconstruction(data, guess, config.c_str());
-    rec = &reconstruction;
-
-    timer::start();
-    reconstruction.Iterate();
-    printf("iterate function took %g seconds\n", timer::stop());
-	
+    StartCalc(data_buffer_r, dim, config, 1);
 }
 
 void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config, int nu_threads)

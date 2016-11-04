@@ -44,25 +44,12 @@ void Reconstruction::Init()
     // multiply the image by first element of data array and the norm
 
     af::array first_array = data(0);
-    if (data.type() == c32)
+    d_type *host_first_data = real(first_array).host<d_type>();
+    d_type first = host_first_data[0];
+    delete [] host_first_data;
+    if (first != 0)
     {
-        float *host_first_data = real(first_array).host<float>();
-        float first = host_first_data[0];
-        delete [] host_first_data;
-        if (first != 0)
-        {
-            r_image *= first * GetNorm(r_image);
-        }
-    }
-    else // type is c64
-    {
-        d_type *host_first_data = real(first_array).host<d_type>();
-        d_type first = host_first_data[0];
-        delete [] host_first_data;
-        if (first != 0)
-        {
-            r_image *= first * GetNorm(r_image);
-        }
+        r_image *= first * GetNorm(r_image);
     }
 
     // initialize other components
@@ -79,7 +66,7 @@ void Reconstruction::Iterate()
 
 bool Reconstruction::Next()
 {
-    bool ret = state->Next(data);
+    bool ret = state->Next();
 
     if (ret)
     {
