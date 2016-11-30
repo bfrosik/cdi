@@ -18,12 +18,10 @@ std::vector<d_type>  errors;
 af::array support;
 
 bool run_convolution = false;
+int averaging_iter = 0;
 
-int alg_index = 0;
-int iter_of_current_alg_left = 0;
-int current_iter = 0;
+int current_iter = -1;
 int iter_num = 0;
-int current_alg = ALGORITHM_HIO;
 
 State::State(Params* parameters)
 {
@@ -44,11 +42,11 @@ void State::Init(const dim4 data_dim)
 State::~State()
 {
 }
-
+/*
 int State::GetCurrentAlg()
 {
     return current_alg;
-}
+}*/
 
 void State::RecordError(d_type error)
 {
@@ -65,38 +63,21 @@ bool State::IsConvolve()
     return run_convolution;
 }
 
-bool State::Next()
+int State::GetAveragingIteration()
 {
-    // finish if all iterations done
-    
-    if (current_iter++ == iter_num)
+    return (current_iter - params->GetIterateAvgStart() );
+}
+
+int State::Next()
+{
+    if (current_iter++ == iter_num - 1)
     {
         return false;
     }
-    
-    // handle the algorithm identification variables
-    if (--iter_of_current_alg_left > 0)
-    {
-        run_convolution = false;
-    }
-    // switch algorithm
-    else
-    {
-        iter_of_current_alg_left = params->GetAlgorithmSequence()[alg_index++];
-        // run convolution on first iteration when switched algorithm
-        // run_convolution = true;
-        if (current_alg == ALGORITHM_ER)
-        {
-            current_alg = ALGORITHM_HIO;
-        }
-        else
-        {
-            current_alg = ALGORITHM_ER;
-        }
-    }
+    // figure out if run conolution - run on algorithm switch
     
     // figure out support update
-    if (current_iter % params->GetSuportUpdateStep() == 0 && alg_index != 0)
+    if (current_iter % params->GetSuportUpdateStep() == 0 && current_iter != 0)
     {
         //UpdateSupport();
     }

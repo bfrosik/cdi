@@ -6,17 +6,18 @@
 //  Copyright © 2016 ArrayFire. All rights reserved.
 //
 
+#include "map"
 #include "parameters.hpp"
+#include "common.h"
 #include "iostream"
 #include "libconfig.h++"
 
-// an array holding numbers of algoritms iterations, starting with ER algorithm.
+// maps algorithm name to algorithm number
+std::map<std::string, int> algorithm_map;
+// an array holding algoritms iterations.
 std::vector<int> algorithm_sequence;
-std::vector<int> roi;
 
 // amplitude threshold
-// for HIO: if data > threshold: replace guess by data * guess/abs(guess),
-// for ER: 1.if data > threshold: replace guess by data * guess/abs(guess), 2. replace as 1., and set the rest to 0
 d_type amp_threshold;
 bool amp_threshold_fill_zeros;
 
@@ -25,15 +26,21 @@ d_type phase_max = 10;
 float beta = .9;
 
 // support
+std::vector<int> roi;
 int support_update_step = 5;
 float support_threshold;
 int support_type;
 bool d_type_precision;
 
+// when to start averaging iterates
+int iterate_avg_start;
+// number of iterates to average
+
 using namespace libconfig;
 
 Params::Params(const char* config_file)
 {
+    BuildAlgorithmMap();
     Config cfg;
     
     // Read the file. If there is an error, report.
@@ -52,17 +59,28 @@ Params::Params(const char* config_file)
     
     try {
         const Setting& root = cfg.getRoot();
-        const Setting &tmp = root["algorithm_sequence"];
+        const Setting &tmp = root["alg"];
         int count = tmp.getLength();
         
         for (int i = 0; i < count; ++i)
-        {
-            algorithm_sequence.push_back(tmp[i]);
+        {            
+            int repeat = tmp[i][0];
+            for (int j = 0; j < repeat; ++j)
+            {
+                for (int k = 1; k < tmp[i].getLength(); ++k)
+                {
+                    int iterations = tmp[i][k][1];
+                    for (int l = 0; l < iterations; ++l)
+                    {
+                        algorithm_sequence.push_back(algorithm_map[tmp[i][k][0]]);
+                    }
+                }
+            }
         }
     }
     catch ( const SettingNotFoundException &nfex)
     {
-        printf("No 'algorithm_sequence' setting in configuration file.");
+        printf("No 'algorithm_sequence' parameter in configuration file.");
     }
     
     try {
@@ -77,7 +95,7 @@ Params::Params(const char* config_file)
     }
     catch ( const SettingNotFoundException &nfex)
     {
-        printf("No 'roi' setting in configuration file.");
+        printf("No 'roi' parameter in configuration file.");
     }
     
     try
@@ -86,7 +104,7 @@ Params::Params(const char* config_file)
     }
     catch(const SettingNotFoundException &nfex)
     {
-        printf("No 'amp_threshold' setting in configuration file.");
+        printf("No 'amp_threshold' parameter in configuration file.");
     }
 
     try {
@@ -94,7 +112,7 @@ Params::Params(const char* config_file)
     }
     catch (const SettingNotFoundException &nfex)
     {
-        printf("No 'amp_threshold_fill_zeros' setting in configuration file.");
+        printf("No 'amp_threshold_fill_zeros' parameter in configuration file.");
     }
     
     try {
@@ -102,7 +120,7 @@ Params::Params(const char* config_file)
     }
     catch (const SettingNotFoundException &nfex)
     {
-        printf("No 'phase_min' setting in configuration file.");
+        printf("No 'phase_min' parameter in configuration file.");
     }
 
     try {
@@ -110,7 +128,7 @@ Params::Params(const char* config_file)
     }
     catch (const SettingNotFoundException &nfex)
     {
-        printf("No 'phase_max' setting in configuration file.");
+        printf("No 'phase_max' parameter in configuration file.");
     }
 
     try
@@ -119,7 +137,7 @@ Params::Params(const char* config_file)
     }
     catch (const SettingNotFoundException &nfex)
     {
-        printf("No 'beta' setting in configuration file.");
+        printf("No 'beta' parameter in configuration file.");
     }
 
     try
@@ -128,7 +146,7 @@ Params::Params(const char* config_file)
     }
     catch (const SettingNotFoundException &nfex)
     {
-        printf("No 'support_update_step' setting in configuration file.");
+        printf("No 'support_update_step' parameter in configuration file.");
     }
 
     try
@@ -136,26 +154,35 @@ Params::Params(const char* config_file)
         support_threshold = cfg.lookup("support_threshold");
     } catch (const SettingNotFoundException &nfex)
     {
-        printf("No 'support_threshold' setting in configuration file.");
+        printf("No 'support_threshold' parameter in configuration file.");
     }
 
     try
     {
         support_type = cfg.lookup("support_type");
     } catch (const SettingNotFoundException &nfex) {
-        printf("No 'support_type' setting in configuration file.");
+        printf("No 'support_type' parameter in configuration file.");
     }
-    
+
+    try
+    {
+        iterate_avg_start = cfg.lookup("iterate_avg_start");
+    } catch (const SettingNotFoundException &nfex) {
+        printf("No 'iterate_avg_start' parameter in configuration file.");
+    }
+        
+}
+
+void Params::BuildAlgorithmMap()
+{
+    // hardcoded
+    algorithm_map.insert(std::pair<char*,int>("ER", ALGORITHM_ER));
+    algorithm_map.insert(std::pair<char*,int>("HIO", ALGORITHM_HIO));
 }
 
 int Params::GetIterationsNumber()
 {
-    int sum = 0;
-    for (int i = 0; i < algorithm_sequence.size(); i++)
-    {
-        sum += algorithm_sequence[i];
-    }
-    return sum;
+    return algorithm_sequence.size();
 }
 
 std::vector<int> Params::GetAlgorithmSequence()
@@ -197,5 +224,11 @@ std::vector<int> Params::GetRoi()
 {
     return roi;
 }
+
+int Params::GetIterateAvgStart()
+{
+    return iterate_avg_start;
+}
+
 
 

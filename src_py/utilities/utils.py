@@ -1,5 +1,6 @@
 import tifffile as tf
 import numpy as np
+from tvtk.api import tvtk
 
 def get_array_from_tif(filename):
     return tf.imread(filename)
@@ -63,5 +64,23 @@ def get_centered(array, center_shift):
     centered[shift[0]:shift[0]+shape[0], shift[1]:shift[1]+shape[1], shift[2]:shift[2]+shape[2]] = array
 
     return centered    
+
+
+def crop(image, dims):
+    self.SetCrop(self.CropX, self.CropY, self.CropZ)
+    dims = list(self.image[self.cropobj].shape)
+    if len(dims)==2:
+        dims.append(1)
+    self.imd.dimensions = tuple(dims)
+    self.imd.extent =  0, dims[2]-1, 0, dims[1]-1, 0, dims[0]-1
+    self.imd.point_data.scalars=self.image[self.cropobj].ravel()
+    return self.imd
+
+def write_image_data(filename, image):
+    writer = tvtk.StructuredPointsWriter()
+    writer.file_name = filename
+    writer.file_type = 'binary'
+    writer.set_input(image.ravel())
+    writer.write()
 
 

@@ -82,6 +82,8 @@ def reconstruction(proc, filename, conf):
 
     data = prepare_data(config_map, data)
 
-    return do_reconstruction(proc, data, conf)
+    image, errors = do_reconstruction(proc, data, conf)
+    #ut.write_image_data('ph.vtk', image)
+    return image, errors
     
 

@@ -25,7 +25,6 @@ class State
 private:
     // This method is called
     void UpdateSupport();
-    int GetCurrentIteration();
     
 public:
     // Constructor. Takes pointer to the param object. Uses the param object to set the initial values.
@@ -46,13 +45,19 @@ public:
     // It finds which algorithm will be run in this state (ER or HIO)
     // It updates support at the correct iterations.
     // It finds whether the algorithm should include convolve.
-    bool Next();
+    int Next();
     
+    // Returns current iteration number
+    int GetCurrentIteration();
+
     // Returns which algorithm (ER or HIO) should be run in a current state (i.e. iteration).
     int GetCurrentAlg();
     
     // Returns true if the current state should include convolution.
     bool IsConvolve();
+
+    // Returns the difference of current iteration and iteration of averaging start
+    int GetAveragingIteration();
     
     // Stores the error parameter
     void RecordError(d_type error);

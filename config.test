@@ -1,9 +1,9 @@
 aliens = ((115,177,0,136,187,10));
-binning = [1,1];
-center_shift = [1,2,3];
+binning = [3,3,2];
+center_shift = [0,0,0];
 
-algorithm_sequence = [3, 2, 2, 1];
-roi = [70,100,64];
+algorithm_sequence = [3, 3, 3, 3, 3, 3, 3, 3, 3, 3];
+alg = ((3, ("ER",2), ("HIO", 2), ("ER", 2)), (2, ("ER",3), ("HIO",3)))
 
 amp_threshold = 1000.0;
 amp_threshold_fill_zeros = false;
@@ -16,6 +16,7 @@ beta = .9;
 support_update_step = 5;
 support_threshold = 1.0;
 support_type = 1;
+roi = [32,32,32];
 
-
+iterate_avg_start = 120;
 

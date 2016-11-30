@@ -14,17 +14,20 @@
 #include "common.h"
 #include "vector"
 
-
+class Reconstruction;
 using namespace af;
 
 // This class holds parameters defining the reconstruction process. The parameters are set based on configuration file.
 // Methods of this class are generally getters.
 class Params
 {
+private:
+    void BuildAlgorithmMap();
+
 public:
     // Constructor. Takes in configuration file, parses the configuration and sets the parameters accordingly.
     Params(const char* config_file);
-    
+
     // Returns an array containing numbers indicating how many iterations will be performed for each alternating algorithm.
     std::vector<int> GetAlgorithmSequence();
     
@@ -53,6 +56,10 @@ public:
     
     // Returns beta parameter for the HIO processing.
     float GetBeta();
+    
+    // Returns number of last iteration where the amplitudes are averaged.
+    int GetIterateAvgStart();
+
 };
 
 

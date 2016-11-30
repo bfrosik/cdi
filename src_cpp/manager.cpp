@@ -24,6 +24,7 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> g
     af::array guess = complex(real_g, imag_g);
        
     Reconstruction reconstruction(data, guess, config.c_str());
+    reconstruction.Init();
     rec = &reconstruction;
     timer::start();
 
@@ -46,6 +47,7 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim,
     af::array guess = randu(data.dims(), c32, r);
      
     Reconstruction reconstruction(data, guess, config.c_str());
+    reconstruction.Init();
     rec = &reconstruction;
 
     timer::start();
