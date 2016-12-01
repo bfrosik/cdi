@@ -10,6 +10,17 @@
 #define common_h
 
 typedef float d_type;
+struct Alg_switch 
+{
+    int algorithm;
+    int iterations;
+    Alg_switch(int alg, int iter)
+    {
+        algorithm = alg;
+        iterations = iter;
+    }
+};
+typedef struct Alg_switch alg_switch;
 
 const int ALGORITHM_ER = 0;
 const int ALGORITHM_HIO = 1;

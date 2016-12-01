@@ -20,9 +20,6 @@ using namespace af;
 
 class Params;
 class State;
-class Reconstruction;
-
-typedef void (Reconstruction::*func)(void);
 
 // This class represents a single image phase reconstruction processing.
 // It constructs the following objects:
@@ -39,8 +36,6 @@ private:
     Params *params;
     // State object constructed by the Reconstruction class
     State *state;
-
-    std::map<int, func> func_map;
 
     // initializes algorithm functions map
     void InitFunctionMap();
@@ -68,12 +63,6 @@ private:
     // Averages amplitudes
     void Average();
     
-    // Each iteration of the image, whether it is ER or HIO, is considered as a new state. This method executes one iteration.
-    // First it calls Next() on State, which determines which algorithm should be run in this state. It also determines whether the
-    // algorithms should be modified by applying convolution or updating support. This method returns false if all iterations have
-    // been completed (i.e. the code reached last state), and true otherwise. Typically this method will be run in a while loop.
-    bool Next();    
-
 public:
     
     // The class constructor takes data array, an image guess array in reciprocal space, and configuration file. The image guess
@@ -89,7 +78,10 @@ public:
     // 5. it initializes other components (i.e. state)
     void Init();
     
-    //
+    // Each iteration of the image, is considered as a new state. This method executes one iteration.
+    // First it calls Next() on State, which determines which algorithm should be run in this state. It also determines whether the
+    // algorithms should be modified by applying convolution or updating support. This method returns false if all iterations have
+    // been completed (i.e. the code reached last state), and true otherwise. Typically this method will be run in a while loop.
     void Iterate();
 
     af::array GetImage();

@@ -20,19 +20,19 @@
 
 af::array data;
 d_type norm_data;
-long size;
+long data_size;
 
 af::array ds_image;
 af::array rs_amplitudes;
 af::array amplitude_condition;
 af::array averages;
+std::vector<d_type> aver_v;
 af::array kernel;
 
-//typedef void (Reconstruction::*func)(void);
-//std::map<int, func> func_map;
+typedef void (Reconstruction::*func)(void);
+std::map<int, func> func_map;
 
-std::vector<int> algorithm_sequance;
-std::vector<func> func_sequance;
+int aver_method = 1;
 
 Reconstruction::Reconstruction(af::array image_data, af::array guess, const char* config_file)
 {
@@ -46,7 +46,7 @@ void Reconstruction::Init()
 {
     norm_data = GetNorm(data);
     amplitude_condition = operator>(params->GetAmpThreshold(), data);
-    size = data.elements();
+    data_size = data.elements();
     
     // multiply the rs_amplitudes by first element of data array and the norm
 
@@ -62,12 +62,6 @@ void Reconstruction::Init()
     averages = constant(0.0, data.dims());
     InitKernel();
     InitFunctionMap();    
-
-    algorithm_sequance = params->GetAlgorithmSequence();
-    for (int i = 0; i < algorithm_sequance.size(); i++)
-    {
-        func_sequance.push_back(func_map[algorithm_sequance[i]]);
-    }
 
     // initialize other components
     state->Init(data.dims());
@@ -92,26 +86,10 @@ void Reconstruction::Iterate()
     while (state->Next())
     {
         int current_iteration = state->GetCurrentIteration();
-        printf("current iter %i", current_iteration);
-        (*this.*func_sequance[current_iteration])();
-        printf("did iter %i", current_iteration);
+        (*this.*func_map[state->GetCurrentAlg()])();
     }
 }
-/*
-bool Reconstruction::Next()
-{   
-    if (state->Next())
-    {
-        int current_iteration = state->GetCurrentIteration();
-        printf("current iter %i", current_iteration);
-        (*this.*func_sequance[current_iteration])();
-        printf("did iter %i", current_iteration);
-        return true;
-    }
 
-    return false;
-}
-*/
 void Reconstruction::Er()
 {
     printf("er\n");
@@ -122,8 +100,7 @@ void Reconstruction::Er()
     d_type norm_ds_image_with_support = GetNorm(ds_image);
     
     d_type ratio = sqrt(norm_ds_image/norm_ds_image_with_support);
-    ds_image *= ratio;
-    
+    ds_image *= ratio;    
 }
 
 void Reconstruction::Hio()
@@ -144,12 +121,11 @@ void Reconstruction::Hio()
     
     d_type ratio = sqrt(norm_ds_image/norm_ds_image_with_support);
     ds_image *= ratio;
-    printf("did hio\n");
 }
 
 void Reconstruction::ModulusProjection()
 {
-    rs_amplitudes = ifft3(ds_image)*size;
+    rs_amplitudes = ifft3(ds_image)*data_size;
     
     if (state->IsConvolve())
     {
@@ -167,35 +143,44 @@ void Reconstruction::ModulusProjection()
     {
         replace(rs_amplitudes, ! amplitude_condition, 0);
     }
-    ds_image = fft3(rs_amplitudes)/size;
+    ds_image = fft3(rs_amplitudes)/data_size;
 
     Average();
 }
 
 af::array Reconstruction::Convolve()
 {
+    printf("convolve\n");
     return af::convolve(ds_image, kernel);
 }
 
 void Reconstruction::Average()
 {
+  if (aver_method == 0)
+  {
     int averaging_iter = state->GetAveragingIteration();
     if (averaging_iter > 0)
     {
         averages = averages * (averaging_iter - 1)/averaging_iter + abs(ds_image)/averaging_iter;
         ds_image = ds_image * averages;
+    printf("average\n");
     }
     else if (averaging_iter == 0)
     { 
         averages = abs(ds_image);
+    printf("average\n");
     }
+  }
 
-
-/*    if (averaging_iter < 0)
+  else
+  {
+    int averaging_iter = state->GetAveragingIteration();
+    if (averaging_iter < 0)
     {
         return;
     }
 
+    printf("average\n");
     d_type *amplitudes = abs(ds_image).host<d_type>();
     std::vector<d_type> v(amplitudes, amplitudes + ds_image.elements());
     if (averaging_iter > 0)
@@ -206,7 +191,6 @@ void Reconstruction::Average()
         }
         af::array aver_a(ds_image.dims(0), ds_image.dims(1), ds_image.dims(2), &aver_v[0]);
         ds_image = ds_image *aver_a;
-
     }
     else if (averaging_iter == 0)
     {
@@ -214,8 +198,8 @@ void Reconstruction::Average()
     }
 
     delete [] amplitudes;
-*/
-    
+
+  }
 }
 
 d_type Reconstruction::GetNorm(af::array arr)

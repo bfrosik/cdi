@@ -17,6 +17,7 @@
 class Reconstruction;
 using namespace af;
 
+
 // This class holds parameters defining the reconstruction process. The parameters are set based on configuration file.
 // Methods of this class are generally getters.
 class Params
@@ -28,9 +29,6 @@ public:
     // Constructor. Takes in configuration file, parses the configuration and sets the parameters accordingly.
     Params(const char* config_file);
 
-    // Returns an array containing numbers indicating how many iterations will be performed for each alternating algorithm.
-    std::vector<int> GetAlgorithmSequence();
-    
     // Returns number of all ierations, as defined in the "algorithm sequence" array
     int GetIterationsNumber();
     
@@ -59,6 +57,12 @@ public:
     
     // Returns number of last iteration where the amplitudes are averaged.
     int GetIterateAvgStart();
+
+    // Returns a vector containing algorithm switch sequence.
+    // Algorithm switch is defined as a pair of two elements, the first defining an algorithm, and the second defining
+    // iteration at which the algorithm starts iterating.
+    std::vector<alg_switch> GetAlgSwitches();
+
 
 };
 

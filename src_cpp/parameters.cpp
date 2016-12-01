@@ -14,8 +14,8 @@
 
 // maps algorithm name to algorithm number
 std::map<std::string, int> algorithm_map;
-// an array holding algoritms iterations.
-std::vector<int> algorithm_sequence;
+// vector holding algorithm run sequence, where algorithm run is a pair of algorithm and number of iterations
+std::vector<alg_switch> alg_switches;
 
 // amplitude threshold
 d_type amp_threshold;
@@ -59,21 +59,21 @@ Params::Params(const char* config_file)
     
     try {
         const Setting& root = cfg.getRoot();
-        const Setting &tmp = root["alg"];
+        const Setting &tmp = root["algorithm_sequence"];
         int count = tmp.getLength();
         
+        int switch_iter = 0;
+        int iter = 0;
         for (int i = 0; i < count; ++i)
-        {            
+        {   
             int repeat = tmp[i][0];
-            for (int j = 0; j < repeat; ++j)
-            {
-                for (int k = 1; k < tmp[i].getLength(); ++k)
+            for (int k = 0; k < repeat; k++)
+            { 
+                for (int j = 1; j < tmp[i].getLength(); ++j)
                 {
-                    int iterations = tmp[i][k][1];
-                    for (int l = 0; l < iterations; ++l)
-                    {
-                        algorithm_sequence.push_back(algorithm_map[tmp[i][k][0]]);
-                    }
+                    iter = tmp[i][j][1];
+                    switch_iter = switch_iter + iter;
+                    alg_switches.push_back(Alg_switch(algorithm_map[tmp[i][j][0]], switch_iter));
                 }
             }
         }
@@ -182,12 +182,7 @@ void Params::BuildAlgorithmMap()
 
 int Params::GetIterationsNumber()
 {
-    return algorithm_sequence.size();
-}
-
-std::vector<int> Params::GetAlgorithmSequence()
-{
-    return algorithm_sequence;
+    return alg_switches[alg_switches.size()-1].iterations;
 }
 
 int Params::GetSuportUpdateStep()
@@ -229,6 +224,12 @@ int Params::GetIterateAvgStart()
 {
     return iterate_avg_start;
 }
+
+std::vector<alg_switch> Params::GetAlgSwitches()
+{
+    return alg_switches;
+}
+
 
 
 
