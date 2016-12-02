@@ -67,7 +67,7 @@ bool State::IsConvolve()
 
 int State::GetAveragingIteration()
 {
-    return (current_iter - params->GetIterateAvgStart() );
+    return averaging_iter;
 }
 
 int State::Next()
@@ -90,6 +90,9 @@ int State::Next()
     {
         run_convolution = false;
     }
+
+    // calculate the averaging iteration. It 
+    averaging_iter = current_iter - params->GetIterateAvgStart();
     
     // figure out support update
     if (current_iter % params->GetSuportUpdateStep() == 0 && current_iter != 0)
