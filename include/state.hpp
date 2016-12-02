@@ -43,8 +43,8 @@ public:
     // It returns false if the program reached the end of iterations, and true otherwise.
     // It finds which algorithm will be run in this state .
     // It sets the algorithm to run convolution based on state. (convolution is run at the algorithm switch)
+    // It calculates the averaging iteration (current iteration - start of averaging)
     // It updates support at the correct iterations.
-    // It finds whether the algorithm should include convolve.
     int Next();
     
     // Returns current iteration number
