@@ -9,7 +9,6 @@
 #ifndef state_hpp
 #define state_hpp
 
-#include "stdio.h"
 #include "arrayfire.h"
 #include "vector"
 #include "common.h"
@@ -22,10 +21,6 @@ class Params;
 // This class maintain the state of the reconstruction process.
 class State
 {
-private:
-    // This method updates support array dimentions.
-    void UpdateSupport();
-    
 public:
     // Constructor. Takes pointer to the Param object. Uses the Param object to set the initial values.
     State(Params *params);
@@ -35,9 +30,8 @@ public:
     
     // This initializes the object. It does the following:
     // - sets current algorithm
-    // - calculates and sets the number of iterations
-    // - create initial support array based on the configured roi values
-    void Init(const dim4 data_dim);
+    // - sets the total number of iterations
+    void Init();
     
     // This method determines the attributes of the current state (i.e. iteration).
     // It returns false if the program reached the end of iterations, and true otherwise.
@@ -53,17 +47,17 @@ public:
     // Returns an algorithm that should be run in a current state (i.e. iteration).
     int GetCurrentAlg();
     
-    // Returns true if the current state should include convolution.
-    bool IsConvolve();
+    // Returns true if the current state should include support update.
+    bool IsUpdateSupport();
+
+    // Returns true if the current state should include partial coherence update.
+    bool IsUpdatePartialCoherence();
 
     // Returns the difference of current iteration and iteration of averaging start
     int GetAveragingIteration();
     
-    // Stores the error parameter
+    // Stores the error
     void RecordError(d_type error);
-    
-    // Returns current support array
-    af::array GetSupport();
     
     // Returns vector containing errors
     std::vector<d_type> GetErrors();

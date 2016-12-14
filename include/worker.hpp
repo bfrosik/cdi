@@ -20,6 +20,7 @@ using namespace af;
 
 class Params;
 class State;
+class Support;
 
 // This class represents a single image phase reconstruction processing.
 // It constructs the following objects:
@@ -36,6 +37,8 @@ private:
     Params *params;
     // State object constructed by the Reconstruction class
     State *state;
+    // A reference to Support object
+    Support *support;
 
     // initializes algorithm functions map
     void InitFunctionMap();

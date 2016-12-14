@@ -7,10 +7,15 @@
 //
 
 #include "map"
+#include "algorithm"
 #include "parameters.hpp"
+#include "support.hpp"
 #include "common.h"
 #include "iostream"
 #include "libconfig.h++"
+
+using namespace libconfig;
+Config cfg;
 
 // maps algorithm name to algorithm number
 std::map<std::string, int> algorithm_map;
@@ -26,22 +31,23 @@ d_type phase_max = 10;
 float beta = .9;
 
 // support
-std::vector<int> roi;
-int support_update_step = 5;
-float support_threshold;
-int support_type;
+Support *support_attr;
+PartialCoherence *partial_coherence;
+
 bool d_type_precision;
 
 // when to start averaging iterates
-int iterate_avg_start;
+int avg_iterations;
+int aver_method;
 // number of iterates to average
 
-using namespace libconfig;
+// calculated number of iterations
+int number_iterations;
 
-Params::Params(const char* config_file)
+
+Params::Params(const char* config_file, const dim4 data_dim)
 {
     BuildAlgorithmMap();
-    Config cfg;
     
     // Read the file. If there is an error, report.
     try
@@ -77,27 +83,96 @@ Params::Params(const char* config_file)
                 }
             }
         }
+        number_iterations = alg_switches[alg_switches.size()-1].iterations;
     }
     catch ( const SettingNotFoundException &nfex)
     {
         printf("No 'algorithm_sequence' parameter in configuration file.");
     }
-    
+
+    int * support_area = new int[3];
     try {
         const Setting& root = cfg.getRoot();
-        const Setting &tmp = root["roi"];
-        int count = tmp.getLength();
-        
-        for (int i = 0; i < count; ++i)
+        const Setting &tmp = root["support_area"];
+        for (int i = 0; i < tmp.getLength(); ++i)
         {
-            roi.push_back(tmp[i]);
+            try {
+                support_area[i] = Utils::GetDimension(tmp[i]);
+            }
+            catch ( const SettingTypeException &nfex)
+            {
+                float ftmp = tmp[i];
+                support_area[i] = Utils::GetDimension(int(ftmp * data_dim[i]));
+            }
         }
     }
     catch ( const SettingNotFoundException &nfex)
     {
-        printf("No 'roi' parameter in configuration file.");
+        printf("No 'support_area' parameter in configuration file.");
     }
-    
+    float support_threshold = 0;
+    try {
+        support_threshold = cfg.lookup("support_threshold");
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf("No 'support_threshold' parameter in configuration file.");
+    }
+    int support_sigma = 0;
+    try {
+        support_sigma = cfg.lookup("support_sigma");
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf("No 'support_sigma' parameter in configuration file.");
+    }
+    Trigger *support_trigger = ParseTrigger("support");
+    support_attr = new Support(data_dim, support_area, support_threshold, support_sigma, support_trigger);
+
+    int * roi = new int[3];
+    try {
+        const Setting& root = cfg.getRoot();
+        const Setting &tmp = root["partial_coherence_roi"];
+        for (int i = 0; i < tmp.getLength(); ++i)
+        {
+            try {
+                roi[i] = Utils::GetDimension(tmp[i]);
+            }
+            catch ( const SettingTypeException &nfex)
+            {
+                float ftmp = tmp[i];
+                roi[i] = Utils::GetDimension(int(ftmp * data_dim[i]));
+            }
+        }
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf("No 'partial_coherence_roi' parameter in configuration file.");
+    }
+    int * kernel = new int[3];
+    try {
+        const Setting& root = cfg.getRoot();
+        const Setting &tmp = root["partial_coherence_kernel"];
+        for (int i = 0; i < tmp.getLength(); ++i)
+        {
+            try {
+                kernel[i] = Utils::GetDimension(tmp[i]);
+            }
+            catch ( const SettingTypeException &nfex)
+            {
+                float ftmp = tmp[i];
+                kernel[i] = Utils::GetDimension(int(ftmp * data_dim[i]));
+            }
+        }
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf("No 'partial_coherence_kernel' parameter in configuration file.");
+    }
+
+    Trigger *partial_coherence_trigger = ParseTrigger("partial_coherence");
+    partial_coherence = new PartialCoherence(roi, kernel, partial_coherence_trigger);
+
     try
     {
         amp_threshold = cfg.lookup("amp_threshold");
@@ -142,35 +217,18 @@ Params::Params(const char* config_file)
 
     try
     {
-        support_update_step = cfg.lookup("support_update_step");
-    }
-    catch (const SettingNotFoundException &nfex)
-    {
-        printf("No 'support_update_step' parameter in configuration file.");
-    }
-
-    try
-    {
-        support_threshold = cfg.lookup("support_threshold");
-    } catch (const SettingNotFoundException &nfex)
-    {
-        printf("No 'support_threshold' parameter in configuration file.");
-    }
-
-    try
-    {
-        support_type = cfg.lookup("support_type");
+        avg_iterations = cfg.lookup("avg_iterations");
     } catch (const SettingNotFoundException &nfex) {
-        printf("No 'support_type' parameter in configuration file.");
-    }
-
-    try
-    {
-        iterate_avg_start = cfg.lookup("iterate_avg_start");
-    } catch (const SettingNotFoundException &nfex) {
-        printf("No 'iterate_avg_start' parameter in configuration file.");
+        printf("No 'avg_iterations' parameter in configuration file.");
     }
         
+    try
+    {
+        aver_method = cfg.lookup("aver_method");
+    } catch (const SettingNotFoundException &nfex) {
+        printf("No 'aver_method' parameter in configuration file.");
+    }
+
 }
 
 void Params::BuildAlgorithmMap()
@@ -180,14 +238,47 @@ void Params::BuildAlgorithmMap()
     algorithm_map.insert(std::pair<char*,int>("HIO", ALGORITHM_HIO));
 }
 
-int Params::GetIterationsNumber()
+Trigger * Params::ParseTrigger(std::string trigger_name)
 {
-    return alg_switches[alg_switches.size()-1].iterations;
+    const Setting& root = cfg.getRoot();
+    std::vector<trigger_setting> triggers;
+    int alg = -1;
+    try {
+        alg = algorithm_map[cfg.lookup(trigger_name + "_type")];
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf((std::string("No ") + trigger_name.c_str() + std::string("_type' parameter in configuration file.")).c_str());
+    }
+
+    try {
+        const Setting &tmp = root[(trigger_name + std::basic_string<char>("_triggers")).c_str()];
+        for (int i =0; i < tmp.getLength(); i++)
+        {
+            int start = tmp[i][0];
+            int step = tmp[i][1];
+            if (tmp[i].getLength() > 2)
+            {
+                end = tmp[i][2];
+                end = std::min(end, number_iterations);
+            }
+            else
+            {
+                end = number_iterations;
+            }
+            triggers.push_back(Trigger_setting(start, step, end));
+        }
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf((std::string("No ") + trigger_name + std::string("_triggers' parameter in configuration file.")).c_str());
+    }
+    return (new Trigger(triggers, alg));
 }
 
-int Params::GetSuportUpdateStep()
+int Params::GetNumberIterations()
 {
-    return support_update_step;
+    return number_iterations;
 }
 
 d_type Params::GetAmpThreshold()
@@ -215,14 +306,24 @@ float Params::GetBeta()
     return beta;
 }
 
-std::vector<int> Params::GetRoi()
+int Params::GetAvgIterations()
 {
-    return roi;
+    return avg_iterations;
 }
 
-int Params::GetIterateAvgStart()
+int Params::GetAvrgMethod()
 {
-    return iterate_avg_start;
+    return aver_method;
+}
+
+Support * Params::GetSupport()
+{
+    return support_attr;
+}
+
+PartialCoherence * Params::GetPartialCoherence()
+{
+    return partial_coherence;
 }
 
 std::vector<alg_switch> Params::GetAlgSwitches()
@@ -230,6 +331,95 @@ std::vector<alg_switch> Params::GetAlgSwitches()
     return alg_switches;
 }
 
+//-----------------------------------------------------------------
+// Trigger class
+Trigger::Trigger(std::vector<trigger_setting> triggers, int alg)
+{
+    trig_algorithm = alg;
+    for (int i = 0; i < triggers.size(); i++)
+    {
+        for (int j = triggers[i].start_iteration; j <= triggers[i].end_iteration; j += triggers[i].step_iteration)
+        {
+            trigger_iterations.push_back(j);
+        }
+    }
+    if (triggers.size() > 1)
+    {
+        std::sort(trigger_iterations.begin(), trigger_iterations.end());
+        trigger_iterations.erase( unique(trigger_iterations.begin(), trigger_iterations.end()), trigger_iterations.end());
+    }
+}
+
+std::vector<int> Trigger::GetTriggers()
+{
+    return trigger_iterations;
+}
+
+int Trigger::GetTriggerAlgorithm()
+{
+    return trig_algorithm;
+}
 
 
+//---------------------------------------------------------------------
+// PartialCoherence class
+PartialCoherence::PartialCoherence(int * roi_area, int * kernel_area, Trigger * partial_coherence_trig)
+{
+    partial_coherence_trigger = partial_coherence_trig;
+    roi= roi_area;
+    kernel = kernel_area;
+}
+
+std::vector<int> PartialCoherence::GetTriggers()
+{
+    return partial_coherence_trigger->GetTriggers();
+}
+
+int PartialCoherence::GetTriggerAlgorithm()
+{
+    return partial_coherence_trigger->GetTriggerAlgorithm();
+}
+
+int * PartialCoherence::GetRoi()
+{
+    return roi;
+}
+
+int * PartialCoherence::GetKernel()
+{
+    return kernel;
+}
+
+//------------------------------------------------------------------------
+// class Utils
+int Utils::GetDimension(int dim)
+{
+    int new_dim = dim;
+    while (! IsCorrect(new_dim))
+    {
+        new_dim++;
+    }
+    return new_dim;
+}
+
+bool Utils::IsCorrect(int dim)
+{
+    int sub = dim;
+    while (sub % 2 == 0)
+    {
+        sub = sub/2;
+    }
+    while (sub % 3 == 0)
+    {
+        sub = sub/3;
+    }
+    while (sub % 5 == 0)
+    {
+        sub = sub/5;
+    }
+    if (sub == 1)
+        return true;
+    else
+        return false;
+}
 

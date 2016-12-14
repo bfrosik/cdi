@@ -9,14 +9,53 @@
 #ifndef parameters_hpp
 #define parameters_hpp
 
-#include "stdio.h"
 #include "arrayfire.h"
 #include "common.h"
 #include "vector"
 
-class Reconstruction;
-using namespace af;
+struct Trigger_setting
+{
+    int start_iteration;
+    int step_iteration;
+    int end_iteration;
+    Trigger_setting(int start, int step, int end)
+    {
+        start_iteration = start;
+        step_iteration = step;
+        end_iteration = end;
+    }
+};
+typedef struct Trigger_setting trigger_setting;
 
+
+class Trigger
+{
+protected:
+    std::vector<int> trigger_iterations;
+    int trig_algorithm;
+public:
+    Trigger(std::vector<trigger_setting> triggers, int algorithm);
+    std::vector<int> GetTriggers();
+    int GetTriggerAlgorithm();
+};
+
+class PartialCoherence
+{
+private:
+    int * roi;
+    int * kernel;
+    Trigger * partial_coherence_trigger;
+public:
+    PartialCoherence(int * roi, int * kernel, Trigger * partial_coherence_trigger);
+    std::vector<int> GetTriggers();
+    int GetTriggerAlgorithm();
+    int * GetRoi();
+    int * GetKernel();
+};
+
+class Reconstruction;
+class Support;
+using namespace af;
 
 // This class holds parameters defining the reconstruction process. The parameters are set based on configuration file.
 // Methods of this class are getters.
@@ -25,21 +64,23 @@ class Params
 private:
     // This method creates a map of string definitions for algorithms to numeric identifiers.
     void BuildAlgorithmMap();
+    Trigger * ParseTrigger(std::string trigger_name);
 
 public:
     // Constructor. Takes in configuration file, parses the configuration and sets the parameters accordingly.
-    Params(const char* config_file);
+    Params(const char* config_file, const dim4 data_dim);
 
     // Returns number of all ierations. It is calculated from the "algorithm_sequence" parameter.
-    int GetIterationsNumber();
-    
-    // Returns a three dimentional array containing coordinates defining initial support.
-    // The initial support is cuboid defined by zero coordinates, and roi.
-    std::vector<int> GetRoi();
-    
-    // Returns a number defining number of iterations between support update.
-    int GetSuportUpdateStep();
-    
+    int GetNumberIterations();
+
+    // Returns info for support update. trigger list contains starting iteration, step, and ending iteration
+    // (if missing, run to the end) 
+    Support * GetSupport();
+
+    // Returns info for partial coherence. trigger list contains starting iteration, step, and ending iteration
+    // (if missing, run to the end)
+    PartialCoherence * GetPartialCoherence();
+
     // Returns amplitude threshold. Used by ER and HIO algorithms.
     d_type GetAmpThreshold();
     
@@ -57,14 +98,22 @@ public:
     float GetBeta();
     
     // Returns iteration number at which the amplitudes are averaged.
-    int GetIterateAvgStart();
+    int GetAvgIterations();
 
     // Returns a vector containing algorithm switch sequence.
     // Algorithm switch is defined as a pair of two elements, the first defins an algorithm, and the second defins
     // iteration at which the algorithm stops and switches to a next algorithm.
     std::vector<alg_switch> GetAlgSwitches();
+
+    int GetAvrgMethod();
     
 };
 
+class Utils
+{
+public:
+    static int GetDimension(int dim);
+    static bool IsCorrect(int dim);
+};
 
 #endif /* parameters_hpp */

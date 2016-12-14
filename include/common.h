@@ -25,16 +25,16 @@ struct Alg_switch
 };
 typedef struct Alg_switch alg_switch;
 
-const int ALGORITHM_ER = 0;
-const int ALGORITHM_HIO = 1;
-
-const int SUPPORT_GAUSS = 1;
-const int SUPPORT_BOX = 2;
-const int SUPPORT_PERCENT = 3;
-const int SUPPORT_GAUSS_FILL = 4;
-const int SUPPORT_GAUSS_PERCENT = 5;
-const int SUPPORT_PERCENT_AUTO = 6;
-const int SUPPORT_GAUSS_MINAREA = 7;
+const int ALGORITHM_ER = 1;
+const int ALGORITHM_HIO = 2;
+const int ALGORITHM_LUCY = 3;
+const int ALGORITHM_GAUSS = 4;
+const int ALGORITHM_BOX = 5;
+const int ALGORITHM_PERCENT = 6;
+const int ALGORITHM_GAUSS_FILL = 7;
+const int ALGORITHM_GAUSS_PERCENT = 8;
+const int ALGORITHM_PERCENT_AUTO = 9;
+const int ALGORITHM_GAUSS_MINAREA = 10;
 
 
 #endif /* common_h */
