@@ -7,10 +7,12 @@
 //
 
 #include "stdio.h"
+#include "vector"
+#include "map"
 #include "state.hpp"
 #include "parameters.hpp"
 #include "support.hpp"
-#include "vector"
+#include "algorithm.hpp"
 
 // a reference to params object
 Params *params;
@@ -24,9 +26,11 @@ int total_iter_num = 0;
 std::vector<d_type>  errors;
 
 // current algorithm
-int current_alg = 0;
+Algorithm current_alg = NULL;
 // current index of index switches vector
 int alg_switch_index = 0;
+// mapping of algorithm id to an Algorithm object
+std::map<int, Algorithm> algorithm_map;
 
 // a flag indicating whether to update support
 bool update_support = false;
@@ -51,8 +55,18 @@ State::State(Params* parameters)
 
 void State::Init()
 {
-    current_alg = params->GetAlgSwitches()[0].algorithm;
     total_iter_num = params->GetNumberIterations();
+    // create algorithms that are used in algorithm sequence
+    // and load the objects into a map
+    for (int = 0; i < params->GetAlgSwitches().Length()); i++)
+    {
+        int alg_id = params->GetAlgSwitches()[i].algorithm_id;
+        if (algorithm_map[alg_id] == NULL)
+        {
+            algorithm_map.insert(std::pair<int, Algorithm>(alg_id, Algorithm::GetObject(alg_id)));
+        }
+    }
+    current_alg = algorithm_map[params->GetAlgSwitches()[0].algorithm_id];
 }
 
 State::~State()
@@ -71,7 +85,7 @@ int State::Next()
     // switch to the next algorithm
     {
         alg_switch_index++;
-        current_alg = params->GetAlgSwitches()[alg_switch_index].algorithm;
+        current_alg = algorithm_map[params->GetAlgSwitches()[alg_switch_index].algorithm_id];
     }
 
     // check if update support this iteration
@@ -102,7 +116,7 @@ int State::Next()
     return true;
 }
 
-int State::GetCurrentAlg()
+Algorithm State::GetCurrentAlg()
 {
     return current_alg;
 }

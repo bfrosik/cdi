@@ -15,11 +15,11 @@ typedef float d_type;
 // a pair that defines an algorithm, and an iteration at which the algorithm is replaced by another or the process ends
 struct Alg_switch 
 {
-    int algorithm;
+    int algorithm_id;
     int iterations;
     Alg_switch(int alg, int iter)
     {
-        algorithm = alg;
+        algorithm_id = alg;
         iterations = iter;
     }
 };

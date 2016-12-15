@@ -17,6 +17,8 @@
 using namespace af;
 
 class Params;
+class Reconstruction;
+class Algorithm;
 
 // This class maintain the state of the reconstruction process.
 class State
@@ -31,7 +33,7 @@ public:
     // This initializes the object. It does the following:
     // - sets current algorithm
     // - sets the total number of iterations
-    void Init();
+    void Init(Reconstruction reconstruction);
     
     // This method determines the attributes of the current state (i.e. iteration).
     // It returns false if the program reached the end of iterations, and true otherwise.
@@ -45,7 +47,7 @@ public:
     int GetCurrentIteration();
 
     // Returns an algorithm that should be run in a current state (i.e. iteration).
-    int GetCurrentAlg();
+    Algorithm GetCurrentAlg();
     
     // Returns true if the current state should include support update.
     bool IsUpdateSupport();

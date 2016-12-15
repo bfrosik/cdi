@@ -17,6 +17,7 @@
 #include "support.hpp"
 #include "state.hpp"
 #include "common.h"
+#include "algorithm.hpp"
 
 
 af::array data;
@@ -86,8 +87,9 @@ void Reconstruction::Iterate()
     while (state->Next())
     {
         int current_iteration = state->GetCurrentIteration();
-        (*this.*func_map[state->GetCurrentAlg()])();
-
+        // (*this.*func_map[state->GetCurrentAlg()])();
+        state->GetCurrentAlg().RunAlgorithm(this);
+        
         if (state->IsUpdateSupport())
         {
             support->Update();

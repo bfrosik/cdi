@@ -62,9 +62,8 @@ using namespace af;
 class Params
 {
 private:
-    // This method creates a map of string definitions for algorithms to numeric identifiers.
-    void BuildAlgorithmMap();
     Trigger * ParseTrigger(std::string trigger_name);
+    void BuildAlgorithmMap();
 
 public:
     // Constructor. Takes in configuration file, parses the configuration and sets the parameters accordingly.

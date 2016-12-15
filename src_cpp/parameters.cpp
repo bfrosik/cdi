@@ -18,7 +18,7 @@ using namespace libconfig;
 Config cfg;
 
 // maps algorithm name to algorithm number
-std::map<std::string, int> algorithm_map;
+std::map<std::string, int> algorithm_id_map;
 // vector holding algorithm run sequence, where algorithm run is a pair of algorithm and number of iterations
 std::vector<alg_switch> alg_switches;
 
@@ -79,7 +79,7 @@ Params::Params(const char* config_file, const dim4 data_dim)
                 {
                     iter = tmp[i][j][1];
                     switch_iter = switch_iter + iter;
-                    alg_switches.push_back(Alg_switch(algorithm_map[tmp[i][j][0]], switch_iter));
+                    alg_switches.push_back(Alg_switch(algorithm_id_map[tmp[i][j][0]], switch_iter));
                 }
             }
         }
@@ -234,8 +234,8 @@ Params::Params(const char* config_file, const dim4 data_dim)
 void Params::BuildAlgorithmMap()
 {
     // hardcoded
-    algorithm_map.insert(std::pair<char*,int>("ER", ALGORITHM_ER));
-    algorithm_map.insert(std::pair<char*,int>("HIO", ALGORITHM_HIO));
+    algorithm_id_map.insert(std::pair<char*,int>("ER", ALGORITHM_ER));
+    algorithm_id_map.insert(std::pair<char*,int>("HIO", ALGORITHM_HIO));
 }
 
 Trigger * Params::ParseTrigger(std::string trigger_name)
@@ -244,7 +244,7 @@ Trigger * Params::ParseTrigger(std::string trigger_name)
     std::vector<trigger_setting> triggers;
     int alg = -1;
     try {
-        alg = algorithm_map[cfg.lookup(trigger_name + "_type")];
+        alg = algorithm_id_map[cfg.lookup(trigger_name + "_type")];
     }
     catch ( const SettingNotFoundException &nfex)
     {
