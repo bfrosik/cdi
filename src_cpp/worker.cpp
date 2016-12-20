@@ -25,14 +25,12 @@ d_type norm_data;
 long data_size;
 
 af::array ds_image;
+af::array prev_ds_image;
 af::array rs_amplitudes;
 af::array amplitude_condition;
 af::array averages;
 std::vector<d_type> aver_v;
 af::array kernel;
-
-typedef void (Reconstruction::*func)(void);
-std::map<int, func> func_map;
 
 Reconstruction::Reconstruction(af::array image_data, af::array guess, const char* config_file)
 {
@@ -60,8 +58,7 @@ void Reconstruction::Init()
     }
 
     averages = constant(0.0, data.dims());
-    InitKernel();
-    InitFunctionMap();    
+//    InitKernel();
 
     // initialize other components
     state->Init();
@@ -75,20 +72,12 @@ void Reconstruction::InitKernel()
     kernel = pow(abs(kernel), 2);
 }
 
-void Reconstruction::InitFunctionMap()
-{
-    // create map mapping algorithm name to function pointer
-    func_map.insert(std::pair<int,func>(ALGORITHM_ER, &Reconstruction::Er));
-    func_map.insert(std::pair<int,func>(ALGORITHM_HIO, &Reconstruction::Hio));
-}
-
 void Reconstruction::Iterate()
 {
     while (state->Next())
     {
-        int current_iteration = state->GetCurrentIteration();
-        // (*this.*func_map[state->GetCurrentAlg()])();
-        state->GetCurrentAlg().RunAlgorithm(this);
+        Algorithm * alg  = state->GetCurrentAlg();
+        alg->RunAlgorithm(this);
         
         if (state->IsUpdateSupport())
         {
@@ -99,44 +88,12 @@ void Reconstruction::Iterate()
     }
 }
 
-void Reconstruction::Er()
-{
-    printf("er\n");
-    ModulusProjection();
-    d_type norm_ds_image = GetNorm(ds_image);
-    ds_image *= support->GetSupportArray();
-
-    d_type norm_ds_image_with_support = GetNorm(ds_image);
-    
-    d_type ratio = sqrt(norm_ds_image/norm_ds_image_with_support);
-    ds_image *= ratio;    
-}
-
-void Reconstruction::Hio()
-{
-    printf("hio\n");
-    af::array prev_ds_image = ds_image;
-    ModulusProjection();
-    
-    // find phase
-    d_type norm_ds_image = GetNorm(ds_image);
-    
-    //calculate phase
-    af::array phase = atan2(imag(ds_image), real(ds_image));
-    af::array phase_condition = operator>(params->GetPhaseMin(), phase) && operator<(params->GetPhaseMax(), phase) && (support->GetSupportArray() == 1);
-    replace(ds_image, phase_condition, (prev_ds_image - ds_image * params->GetBeta()));
-    
-    d_type norm_ds_image_with_support = GetNorm(ds_image);
-    
-    d_type ratio = sqrt(norm_ds_image/norm_ds_image_with_support);
-    ds_image *= ratio;
-}
-
 void Reconstruction::ModulusProjection()
 {
+    prev_ds_image = ds_image;
     rs_amplitudes = ifft3(ds_image)*data_size;
     
-    // TODO pcdi
+    // TODO pcdi if subclassed can pass algorithm as parameter and do alg->pcdi()
 
     state->RecordError(sum<d_type>(pow( (abs(rs_amplitudes)-abs(data)) ,2))/norm_data);
     // need to check timing of the expressions below.
@@ -150,6 +107,35 @@ void Reconstruction::ModulusProjection()
     }
     ds_image = fft3(rs_amplitudes)/data_size;
 
+}
+
+void Reconstruction::ModulusConstrainEr()
+{
+    printf("er\n");
+    d_type norm_ds_image = GetNorm(ds_image);
+    ds_image *= support->GetSupportArray();
+
+    d_type norm_ds_image_with_support = GetNorm(ds_image);
+
+    d_type ratio = sqrt(norm_ds_image/norm_ds_image_with_support);
+    ds_image *= ratio;
+}
+
+void Reconstruction::ModulusConstrainHio()
+{
+    printf("hio\n");
+    // find phase
+    d_type norm_ds_image = GetNorm(ds_image);
+
+    //calculate phase
+    af::array phase = atan2(imag(ds_image), real(ds_image));
+    af::array phase_condition = operator>(params->GetPhaseMin(), phase) && operator<(params->GetPhaseMax(), phase) && (support->GetSupportArray() == 1);
+    replace(ds_image, phase_condition, (prev_ds_image - ds_image * params->GetBeta()));
+
+    d_type norm_ds_image_with_support = GetNorm(ds_image);
+
+    d_type ratio = sqrt(norm_ds_image/norm_ds_image_with_support);
+    ds_image *= ratio;
 }
 
 af::array Reconstruction::Convolve()

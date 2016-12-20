@@ -40,25 +40,23 @@ private:
     // A reference to Support object
     Support *support;
 
-    // initializes algorithm functions map
-    void InitFunctionMap();
-
     // initializes kernel for convolution
     void InitKernel();
     
     // This method returns a norm of an array.
     d_type GetNorm(af::array arr);
     
+public:
     // This code is common for ER and HIO algorithms.
     void ModulusProjection();
     
     // Runs one iteration of ER algorithm. It checks if the convolution algorithm should be run in this state, and if so, alters
     // the processing.
-    void Er();
+    void ModulusConstrainEr();
     
     // Runs one iteration of HIO algorithm. It checks if the convolution algorithm should be run in this state, and if so, alters
     // the processing.
-    void Hio();
+    void ModulusConstrainHio();
     
     // This method runs the convolution algorithm on the image array. 
     af::array Convolve();
@@ -67,7 +65,6 @@ private:
     void Average();
     
 public:
-    
     // The class constructor takes data array, an image guess array in reciprocal space, and configuration file. The image guess
     // is typically generated as an complex random array. This image can be also the best outcome of previous calculations. The
     // data is saved and is used for processing. Configuration file is used to construct the Param object.

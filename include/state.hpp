@@ -23,6 +23,9 @@ class Algorithm;
 // This class maintain the state of the reconstruction process.
 class State
 {
+private:
+    void MapAlgorithmObject(int alg_id);
+
 public:
     // Constructor. Takes pointer to the Param object. Uses the Param object to set the initial values.
     State(Params *params);
@@ -33,7 +36,7 @@ public:
     // This initializes the object. It does the following:
     // - sets current algorithm
     // - sets the total number of iterations
-    void Init(Reconstruction reconstruction);
+    void Init();
     
     // This method determines the attributes of the current state (i.e. iteration).
     // It returns false if the program reached the end of iterations, and true otherwise.
@@ -42,12 +45,12 @@ public:
     // It calculates the averaging iteration (current iteration - start of averaging)
     // It updates support at the correct iterations.
     int Next();
-    
+        
     // Returns current iteration number
     int GetCurrentIteration();
 
     // Returns an algorithm that should be run in a current state (i.e. iteration).
-    Algorithm GetCurrentAlg();
+    Algorithm * GetCurrentAlg();
     
     // Returns true if the current state should include support update.
     bool IsUpdateSupport();
