@@ -28,9 +28,13 @@ roi = [32,32,32];
 // partial coherence
 partial_coherence_triggers = ((10, 14));
 partial_coherence_type = "LUCY";
+partial_coherence_iteration_num = 10;
+partial_coherence_normalize = true;
 partial_coherence_roi = [32,32,32];
 //partial_coherence_kernal = [0.5 ,0.5, 0.5];
 partial_coherence_kernel = [17, 22, 26];
+
+regularized_amp = "GAUSS"
 
 avg_iterations = 20;
 

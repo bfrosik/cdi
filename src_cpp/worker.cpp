@@ -15,10 +15,10 @@
 #include "map"
 #include "parameters.hpp"
 #include "support.hpp"
+#include "pcdi.hpp"
 #include "state.hpp"
 #include "common.h"
 #include "algorithm.hpp"
-
 
 af::array data;
 d_type norm_data;
@@ -63,6 +63,7 @@ void Reconstruction::Init()
     // initialize other components
     state->Init();
     support = params->GetSupport();
+    partialCoherence = params->GetPartialCoherence();
 }
 
 void Reconstruction::InitKernel()
@@ -107,6 +108,10 @@ void Reconstruction::ModulusProjection()
     }
     ds_image = fft3(rs_amplitudes)/data_size;
 
+    if (partialCoherence)
+    {
+        partialCoherence->OnTrigger(abs(ds_image), abs(data), this);
+    }
 }
 
 void Reconstruction::ModulusConstrainEr()

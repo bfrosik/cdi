@@ -6,14 +6,18 @@
 //  Copyright © 2016 ArrayFire. All rights reserved.
 //
 
+#include "arrayfire.h"
+#include "iostream"
+#include "libconfig.h++"
 #include "map"
 #include "algorithm"
 #include "parameters.hpp"
 #include "support.hpp"
+#include "pcdi.hpp"
 #include "common.h"
-#include "iostream"
-#include "libconfig.h++"
+#include "util.hpp"
 
+using namespace af;
 using namespace libconfig;
 Config cfg;
 
@@ -126,8 +130,16 @@ Params::Params(const char* config_file, const dim4 data_dim)
     {
         printf("No 'support_sigma' parameter in configuration file.");
     }
-    Trigger *support_trigger = ParseTrigger("support");
-    support_attr = new Support(data_dim, support_area, support_threshold, support_sigma, support_trigger);
+    std::vector<int> support_triggers = ParseTriggers("support");
+    int support_alg = -1;
+    try {
+        support_alg = algorithm_id_map[cfg.lookup("support_type")];
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf((std::string("'No support_type' parameter in configuration file.")).c_str());
+    }
+    support_attr = new Support(data_dim, support_area, support_threshold, support_sigma, support_triggers, support_alg);
 
     int * roi = new int[3];
     try {
@@ -170,8 +182,35 @@ Params::Params(const char* config_file, const dim4 data_dim)
         printf("No 'partial_coherence_kernel' parameter in configuration file.");
     }
 
-    Trigger *partial_coherence_trigger = ParseTrigger("partial_coherence");
-    partial_coherence = new PartialCoherence(roi, kernel, partial_coherence_trigger);
+    std::vector<int> partial_coherence_trigger = ParseTriggers("partial_coherence");
+    int pcdi_alg = -1;
+    try {
+        pcdi_alg = algorithm_id_map[cfg.lookup("partial_coherence_type")];
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf((std::string("'No partial_coherence_type' parameter in configuration file.")).c_str());
+    }
+    bool pcdi_normalize = false;
+    try {
+        pcdi_normalize = cfg.lookup("partial_coherence_normalize");
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf((std::string("'No partial_coherence_normalize' parameter in configuration file.")).c_str());
+    }
+    int pcdi_iter = 1;
+    try {
+        pcdi_iter = cfg.lookup("partial_coherence_iteration_num");
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf((std::string("'No partial_coherence_iteration_num' parameter in configuration file.")).c_str());
+    }
+    if (partial_coherence_trigger.size() > 0)
+    {
+        partial_coherence = new PartialCoherence(this, roi, kernel, partial_coherence_trigger, pcdi_alg, pcdi_normalize, pcdi_iter);
+    }
 
     try
     {
@@ -238,18 +277,11 @@ void Params::BuildAlgorithmMap()
     algorithm_id_map.insert(std::pair<char*,int>("HIO", ALGORITHM_HIO));
 }
 
-Trigger * Params::ParseTrigger(std::string trigger_name)
+std::vector<int> Params::ParseTriggers(std::string trigger_name)
 {
+    std::vector<int> trigger_iterations;
     const Setting& root = cfg.getRoot();
     std::vector<trigger_setting> triggers;
-    int alg = -1;
-    try {
-        alg = algorithm_id_map[cfg.lookup(trigger_name + "_type")];
-    }
-    catch ( const SettingNotFoundException &nfex)
-    {
-        printf((std::string("No ") + trigger_name.c_str() + std::string("_type' parameter in configuration file.")).c_str());
-    }
 
     try {
         const Setting &tmp = root[(trigger_name + std::basic_string<char>("_triggers")).c_str()];
@@ -273,7 +305,21 @@ Trigger * Params::ParseTrigger(std::string trigger_name)
     {
         printf((std::string("No ") + trigger_name + std::string("_triggers' parameter in configuration file.")).c_str());
     }
-    return (new Trigger(triggers, alg));
+
+    for (int i = 0; i < triggers.size(); i++)
+    {
+        for (int j = triggers[i].start_iteration; j <= triggers[i].end_iteration; j += triggers[i].step_iteration)
+        {
+            trigger_iterations.push_back(j);
+        }
+    }
+    if (triggers.size() > 1)
+    {
+        std::sort(trigger_iterations.begin(), trigger_iterations.end());
+        trigger_iterations.erase( unique(trigger_iterations.begin(), trigger_iterations.end()), trigger_iterations.end());
+    }
+
+    return trigger_iterations;
 }
 
 int Params::GetNumberIterations()
@@ -329,97 +375,5 @@ PartialCoherence * Params::GetPartialCoherence()
 std::vector<alg_switch> Params::GetAlgSwitches()
 {
     return alg_switches;
-}
-
-//-----------------------------------------------------------------
-// Trigger class
-Trigger::Trigger(std::vector<trigger_setting> triggers, int alg)
-{
-    trig_algorithm = alg;
-    for (int i = 0; i < triggers.size(); i++)
-    {
-        for (int j = triggers[i].start_iteration; j <= triggers[i].end_iteration; j += triggers[i].step_iteration)
-        {
-            trigger_iterations.push_back(j);
-        }
-    }
-    if (triggers.size() > 1)
-    {
-        std::sort(trigger_iterations.begin(), trigger_iterations.end());
-        trigger_iterations.erase( unique(trigger_iterations.begin(), trigger_iterations.end()), trigger_iterations.end());
-    }
-}
-
-std::vector<int> Trigger::GetTriggers()
-{
-    return trigger_iterations;
-}
-
-int Trigger::GetTriggerAlgorithm()
-{
-    return trig_algorithm;
-}
-
-
-//---------------------------------------------------------------------
-// PartialCoherence class
-PartialCoherence::PartialCoherence(int * roi_area, int * kernel_area, Trigger * partial_coherence_trig)
-{
-    partial_coherence_trigger = partial_coherence_trig;
-    roi= roi_area;
-    kernel = kernel_area;
-}
-
-std::vector<int> PartialCoherence::GetTriggers()
-{
-    return partial_coherence_trigger->GetTriggers();
-}
-
-int PartialCoherence::GetTriggerAlgorithm()
-{
-    return partial_coherence_trigger->GetTriggerAlgorithm();
-}
-
-int * PartialCoherence::GetRoi()
-{
-    return roi;
-}
-
-int * PartialCoherence::GetKernel()
-{
-    return kernel;
-}
-
-//------------------------------------------------------------------------
-// class Utils
-int Utils::GetDimension(int dim)
-{
-    int new_dim = dim;
-    while (! IsCorrect(new_dim))
-    {
-        new_dim++;
-    }
-    return new_dim;
-}
-
-bool Utils::IsCorrect(int dim)
-{
-    int sub = dim;
-    while (sub % 2 == 0)
-    {
-        sub = sub/2;
-    }
-    while (sub % 3 == 0)
-    {
-        sub = sub/3;
-    }
-    while (sub % 5 == 0)
-    {
-        sub = sub/5;
-    }
-    if (sub == 1)
-        return true;
-    else
-        return false;
 }
 

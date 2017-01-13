@@ -9,16 +9,15 @@
 #ifndef state_hpp
 #define state_hpp
 
-#include "arrayfire.h"
 #include "vector"
 #include "common.h"
-
-
-using namespace af;
 
 class Params;
 class Reconstruction;
 class Algorithm;
+namespace af {
+    class array;
+}
 
 // This class maintain the state of the reconstruction process.
 class State

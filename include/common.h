@@ -28,13 +28,14 @@ typedef struct Alg_switch alg_switch;
 const int ALGORITHM_ER = 1;
 const int ALGORITHM_HIO = 2;
 const int ALGORITHM_LUCY = 3;
-const int ALGORITHM_GAUSS = 4;
-const int ALGORITHM_BOX = 5;
-const int ALGORITHM_PERCENT = 6;
-const int ALGORITHM_GAUSS_FILL = 7;
-const int ALGORITHM_GAUSS_PERCENT = 8;
-const int ALGORITHM_PERCENT_AUTO = 9;
-const int ALGORITHM_GAUSS_MINAREA = 10;
+const int ALGORITHM_LUCY_PREV = 4;
+const int ALGORITHM_GAUSS = 5;
+const int ALGORITHM_BOX = 6;
+const int ALGORITHM_PERCENT = 7;
+const int ALGORITHM_GAUSS_FILL = 8;
+const int ALGORITHM_GAUSS_PERCENT = 9;
+const int ALGORITHM_PERCENT_AUTO = 10;
+const int ALGORITHM_GAUSS_MINAREA = 11;
 
 
 #endif /* common_h */

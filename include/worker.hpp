@@ -10,17 +10,18 @@
 #define worker_hpp
 
 #include "stdio.h"
-#include "arrayfire.h"
 #include "vector"
 #include "map"
 #include "common.h"
 
 
-using namespace af;
-
 class Params;
 class State;
 class Support;
+class PartialCoherence;
+#include "arrayfire.h"
+
+using namespace af;
 
 // This class represents a single image phase reconstruction processing.
 // It constructs the following objects:
@@ -39,6 +40,8 @@ private:
     State *state;
     // A reference to Support object
     Support *support;
+    // A reference to PartialCoherence
+    PartialCoherence *partialCoherence;
 
     // initializes kernel for convolution
     void InitKernel();

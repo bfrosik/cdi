@@ -13,6 +13,10 @@
 #include "parameters.hpp"
 #include "support.hpp"
 #include "algorithm.hpp"
+#include "pcdi.hpp"
+#include "arrayfire.h"
+
+using namespace af;
 
 // a reference to params object
 Params *params;
