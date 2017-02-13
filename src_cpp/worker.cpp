@@ -29,7 +29,6 @@ af::array ds_image;
 af::array prev_ds_image;
 af::array rs_amplitudes;
 af::array amplitude_condition;
-//af::array averages;
 std::vector<d_type> aver_v;
 af::array kernel;
 
@@ -46,7 +45,8 @@ void Reconstruction::Init()
 {
     //af_print(data(seq(0,5), seq(0,5), seq(0,5)));
     norm_data = GetNorm(data);
-    amplitude_condition = operator>(params->GetAmpThreshold(), data);
+    //amplitude_condition = operator>(params->GetAmpThreshold(), data);
+    amplitude_condition = data > params->GetAmpThreshold();
     data_size = data.elements();
     
     // multiply the rs_amplitudes by first element of data array and the norm
@@ -62,7 +62,6 @@ void Reconstruction::Init()
 
     //printf("gues norm %lf\n", GetNorm(ds_image));
     //af_print(ds_image(seq(0,5), seq(0,5), seq(0,5)));
-//    averages = constant(0.0, data.dims());
 
     // initialize other components
     state->Init();
@@ -169,24 +168,6 @@ void Reconstruction::ModulusConstrainHio()
 
 void Reconstruction::Average()
 {
-  int aver_method = params->GetAvrgMethod();
-  if (aver_method == 0)
-  {
-//    int averaging_iter = state->GetAveragingIteration();
-//    if (averaging_iter > 0)
-//    {
-//        averages = averages  + abs(ds_image);
-//    printf("average\n");
-//    }
-//    else if (averaging_iter == 0)
-//    {
-//        averages = abs(ds_image);
-//    printf("average\n");
-//    }
-  }
-
-  else if (aver_method == 1)
-  {
     int averaging_iter = state->GetAveragingIteration();
     if (averaging_iter < 0)
     {
@@ -209,53 +190,6 @@ void Reconstruction::Average()
     }
 
     delete [] amplitudes;
-
-  }
-
-  else if (aver_method == 2)
-  {
-//    int averaging_iter = state->GetAveragingIteration();
-//    if (averaging_iter > 0)
-//    {
-//        averages = averages * (averaging_iter - 1)/averaging_iter + abs(ds_image)/averaging_iter;
-//        ds_image = ds_image * averages;
-//    printf("average\n");
-//    }
-//    else if (averaging_iter == 0)
-//    {
-//        averages = abs(ds_image);
-//    printf("average\n");
-//    }
-  }
-
-  else
-  {
-    int averaging_iter = state->GetAveragingIteration();
-    if (averaging_iter < 0)
-    {
-        return;
-    }
-
-    printf("average\n");
-    d_type *amplitudes = abs(ds_image).host<d_type>();
-    std::vector<d_type> v(amplitudes, amplitudes + ds_image.elements());
-    if (averaging_iter > 0)
-    {
-        for (int i = 0; i < aver_v.size(); i++)
-        {
-            aver_v[i] = aver_v[i] * (averaging_iter - 1)/averaging_iter + v[i]/averaging_iter;
-        }
-        af::array aver_a(ds_image.dims(0), ds_image.dims(1), ds_image.dims(2), &aver_v[0]);
-        ds_image = ds_image *aver_a;
-    }
-    else if (averaging_iter == 0)
-    {
-        aver_v = v;
-    }
-
-    delete [] amplitudes;
-
-  }
 }
 
 d_type Reconstruction::GetNorm(af::array arr)
@@ -279,18 +213,13 @@ int Reconstruction::GetCurrentIteration()
 
 af::array Reconstruction::GetImage()
 {
-    int aver_method = params->GetAvrgMethod();
-    if (aver_method == 0)
-    {
-//        ds_image *= averages/params->GetAvgIterations();
-    }
-    else if (aver_method == 1)
+    if (aver_v.size() > 0)
     {
         af::array aver_a(ds_image.dims(0), ds_image.dims(1), ds_image.dims(2), &aver_v[0]);
-        ds_image *= aver_a/params->GetAvgIterations();
+        af::array ratio = (aver_a/params->GetAvgIterations())/ abs(ds_image);
+        ds_image *= ratio;
     }
-    else
-        return ds_image;
+    return ds_image;
 }
 
 std::vector<d_type> Reconstruction::GetErrors()
