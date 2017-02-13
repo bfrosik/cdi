@@ -23,14 +23,16 @@
 af::array data;
 d_type norm_data;
 long data_size;
+int current_iteration;
 
 af::array ds_image;
 af::array prev_ds_image;
 af::array rs_amplitudes;
 af::array amplitude_condition;
-af::array averages;
+//af::array averages;
 std::vector<d_type> aver_v;
 af::array kernel;
+
 
 Reconstruction::Reconstruction(af::array image_data, af::array guess, const char* config_file)
 {
@@ -42,6 +44,7 @@ Reconstruction::Reconstruction(af::array image_data, af::array guess, const char
 
 void Reconstruction::Init()
 {
+    //af_print(data(seq(0,5), seq(0,5), seq(0,5)));
     norm_data = GetNorm(data);
     amplitude_condition = operator>(params->GetAmpThreshold(), data);
     data_size = data.elements();
@@ -57,8 +60,9 @@ void Reconstruction::Init()
         ds_image *= first * GetNorm(ds_image);
     }
 
-    averages = constant(0.0, data.dims());
-//    InitKernel();
+    //printf("gues norm %lf\n", GetNorm(ds_image));
+    //af_print(ds_image(seq(0,5), seq(0,5), seq(0,5)));
+//    averages = constant(0.0, data.dims());
 
     // initialize other components
     state->Init();
@@ -66,20 +70,21 @@ void Reconstruction::Init()
     partialCoherence = params->GetPartialCoherence();
 }
 
-void Reconstruction::InitKernel()
-{
-    // TODO the kernel size will be read from configuration file, (is it roi?)
-    kernel = data(seq(0, 32), seq(0, 32), seq(0,32));
-    kernel = pow(abs(kernel), 2);
-}
+//void Reconstruction::InitKernel()
+//{
+//    // TODO the kernel size will be read from configuration file, (is it roi?)
+//    kernel = data(seq(0, 32), seq(0, 32), seq(0,32));
+//    kernel = pow(abs(kernel), 2);
+//}
 
 void Reconstruction::Iterate()
 {
     while (state->Next())
     {
+        current_iteration = state->GetCurrentIteration();
         Algorithm * alg  = state->GetCurrentAlg();
         alg->RunAlgorithm(this);
-        
+
         if (state->IsUpdateSupport())
         {
             support->Update();
@@ -92,26 +97,40 @@ void Reconstruction::Iterate()
 void Reconstruction::ModulusProjection()
 {
     prev_ds_image = ds_image;
+    //af_print(ds_image(seq(0,5), seq(0,5), seq(0,5)));
     rs_amplitudes = ifft3(ds_image)*data_size;
-    
-    // TODO pcdi if subclassed can pass algorithm as parameter and do alg->pcdi()
+    //af_print(rs_amplitudes(seq(0,5), seq(0,5), seq(0,5)));
+
+    if (partialCoherence != NULL)
+    {
+        if (current_iteration >= partialCoherence->GetTriggers()[0])
+        {
+            af::array rs_amplitudes_adjust = partialCoherence->ApplyPartialCoherence(abs(rs_amplitudes), abs(data), this);
+
+            rs_amplitudes_adjust(rs_amplitudes_adjust == 0) = 1.0;
+            replace(rs_amplitudes_adjust, rs_amplitudes != 0, abs(data)/rs_amplitudes_adjust);
+            rs_amplitudes *= rs_amplitudes_adjust;
+        }
+        else if (current_iteration == (partialCoherence->GetTriggers()[0]-1))
+        {
+            partialCoherence->Init(abs(rs_amplitudes));
+        }
+    }
+
 
     state->RecordError(sum<d_type>(pow( (abs(rs_amplitudes)-abs(data)) ,2))/norm_data);
     // need to check timing of the expressions below.
     // notice that the top one does not work for c64
-    //af::replace(rs_amplitudes, amplitude_condition, data * exp(complex(0, arg(rs_amplitudes))));
-    af::replace(rs_amplitudes, amplitude_condition, data * rs_amplitudes / (abs(rs_amplitudes) + .0001));
+    af::replace(rs_amplitudes, amplitude_condition, data * exp(complex(0, arg(rs_amplitudes))));
+//    af::replace(rs_amplitudes, amplitude_condition, data * rs_amplitudes / (abs(rs_amplitudes) + .0001));
 
     if (params->IsAmpThresholdFillZeros())
     {
         replace(rs_amplitudes, ! amplitude_condition, 0);
     }
     ds_image = fft3(rs_amplitudes)/data_size;
+    //af_print(ds_image(seq(0,5), seq(0,5), seq(0,5)));
 
-    if (partialCoherence)
-    {
-        partialCoherence->OnTrigger(abs(ds_image), abs(data), this);
-    }
 }
 
 void Reconstruction::ModulusConstrainEr()
@@ -130,23 +149,22 @@ void Reconstruction::ModulusConstrainHio()
 {
     printf("hio\n");
     // find phase
+    //af_print(ds_image(seq(0,5), seq(0,5), seq(0,5)));
     d_type norm_ds_image = GetNorm(ds_image);
+    printf("norm_ds_image %fl\n", norm_ds_image);
 
     //calculate phase
     af::array phase = atan2(imag(ds_image), real(ds_image));
-    af::array phase_condition = operator>(params->GetPhaseMin(), phase) && operator<(params->GetPhaseMax(), phase) && (support->GetSupportArray() == 1);
+    // set to true (1) elements that are greater than phase min and less than phase max, and support is 1
+    af::array phase_condition = (phase > params->GetPhaseMin()) && (phase < params->GetPhaseMax()) && (support->GetSupportArray() == 1);
+    // replace the elements that above condition is 1 with prev_ds_image - ds_image * params->GetBeta()
     replace(ds_image, phase_condition, (prev_ds_image - ds_image * params->GetBeta()));
 
     d_type norm_ds_image_with_support = GetNorm(ds_image);
+    //printf("norm_ds_image_with_support %fl\n", norm_ds_image_with_support);
 
     d_type ratio = sqrt(norm_ds_image/norm_ds_image_with_support);
     ds_image *= ratio;
-}
-
-af::array Reconstruction::Convolve()
-{
-    printf("convolve\n");
-    return af::convolve(ds_image, kernel);
 }
 
 void Reconstruction::Average()
@@ -154,17 +172,17 @@ void Reconstruction::Average()
   int aver_method = params->GetAvrgMethod();
   if (aver_method == 0)
   {
-    int averaging_iter = state->GetAveragingIteration();
-    if (averaging_iter > 0)
-    {
-        averages = averages  + abs(ds_image);
-    printf("average\n");
-    }
-    else if (averaging_iter == 0)
-    { 
-        averages = abs(ds_image);
-    printf("average\n");
-    }
+//    int averaging_iter = state->GetAveragingIteration();
+//    if (averaging_iter > 0)
+//    {
+//        averages = averages  + abs(ds_image);
+//    printf("average\n");
+//    }
+//    else if (averaging_iter == 0)
+//    {
+//        averages = abs(ds_image);
+//    printf("average\n");
+//    }
   }
 
   else if (aver_method == 1)
@@ -196,18 +214,18 @@ void Reconstruction::Average()
 
   else if (aver_method == 2)
   {
-    int averaging_iter = state->GetAveragingIteration();
-    if (averaging_iter > 0)
-    {
-        averages = averages * (averaging_iter - 1)/averaging_iter + abs(ds_image)/averaging_iter;
-        ds_image = ds_image * averages;
-    printf("average\n");
-    }
-    else if (averaging_iter == 0)
-    { 
-        averages = abs(ds_image);
-    printf("average\n");
-    }
+//    int averaging_iter = state->GetAveragingIteration();
+//    if (averaging_iter > 0)
+//    {
+//        averages = averages * (averaging_iter - 1)/averaging_iter + abs(ds_image)/averaging_iter;
+//        ds_image = ds_image * averages;
+//    printf("average\n");
+//    }
+//    else if (averaging_iter == 0)
+//    {
+//        averages = abs(ds_image);
+//    printf("average\n");
+//    }
   }
 
   else
@@ -245,12 +263,26 @@ d_type Reconstruction::GetNorm(af::array arr)
     return sum<d_type>(pow(abs(arr), 2));
 }
 
+af::array Reconstruction::CalculateRatio(af::array arr1, af::array arr2)
+{
+    printf("calculate ratio\n");
+    af::array ratio = af::constant(1.0, arr1.dims());
+    printf("created array\n");
+    //replace(ratio, amplitude_condition, ds_image);
+    return ratio;
+}
+
+int Reconstruction::GetCurrentIteration()
+{
+    return state->GetCurrentIteration();
+}
+
 af::array Reconstruction::GetImage()
 {
     int aver_method = params->GetAvrgMethod();
     if (aver_method == 0)
     {
-        ds_image *= averages/params->GetAvgIterations();
+//        ds_image *= averages/params->GetAvgIterations();
     }
     else if (aver_method == 1)
     {

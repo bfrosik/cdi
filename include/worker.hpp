@@ -61,11 +61,11 @@ public:
     // the processing.
     void ModulusConstrainHio();
     
-    // This method runs the convolution algorithm on the image array. 
-    af::array Convolve();
-    
     // Averages amplitudes
     void Average();
+
+    // calculates ratio of two arrays only for elements when divident is non zero
+    af::array CalculateRatio(af::array arr1, af::array arr2);
     
 public:
     // The class constructor takes data array, an image guess array in reciprocal space, and configuration file. The image guess
@@ -86,6 +86,8 @@ public:
     // algorithms should be modified by applying convolution or updating support. This method returns false if all iterations have
     // been completed (i.e. the code reached last state), and true otherwise. Typically this method will be run in a while loop.
     void Iterate();
+
+    int GetCurrentIteration();
 
     af::array GetImage();
     std::vector<d_type>  GetErrors();

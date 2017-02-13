@@ -118,7 +118,7 @@ int State::Next()
         update_support = false;
     }
 
-    // check if update partial coherence this iteration
+/*    // check if update partial coherence this iteration
     if (params->GetPartialCoherence()->GetTriggers()[partial_coherence_triggers_index] == current_iter)
     {
         update_kernel = true;
@@ -128,9 +128,16 @@ int State::Next()
     {
         update_kernel = false;
     }
-
+*/
     // calculate the averaging iteration.
-    averaging_iter = current_iter - total_iter_num + params->GetAvgIterations();
+    if ((total_iter_num - params->GetAvgIterations()) < 0)
+    {
+        averaging_iter = current_iter;
+    }
+    else
+    {
+        averaging_iter = current_iter - (total_iter_num - params->GetAvgIterations());
+    }
 
     return true;
 }

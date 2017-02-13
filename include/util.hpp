@@ -19,11 +19,21 @@ public:
     // dimensions.
     // The method returns the array with the sub-array centered and preserved values. All other elements of the array
     // that are beyound the sub-array are zeroed out.
-    static af::array CropCenter(af::array arr, int roix, int roiy, int roiz);
+    static af::array CropCenter(af::array arr, int * roi);
+
+    // This method takes a 3D array, and dimensions of sub-array. It is assumed that the dimensions do not extend array's
+    // dimensions.
+    // The method returns the array with the sub-array centered and preserved values. All other elements of the array
+    // that are beyound the sub-array are zeroed out.
+    static af::array CropRoi(af::array arr, int * roi);
 
     // This method finds the maximum value in the given array arr, places it in the center, shifting circular the content,
     // in all dimensions.
-    static af::array CenterMax(af::array arr);
+    static af::array CenterMax(af::array arr, int * kernel);
+
+    // This method finds the maximum value in the given array arr, places it in the left corner, shifting circular the content,
+    // in all dimensions.
+    static af::array ShiftMax(af::array arr, int * kernel);
 };
 
 #endif /* util_hpp */

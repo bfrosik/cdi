@@ -92,6 +92,9 @@ public:
     // iteration at which the algorithm stops and switches to a next algorithm.
     std::vector<alg_switch> GetAlgSwitches();
 
+    // Returns a constant indication a scheme for modifying data when calculation ratio in modulus projection
+    int GetRegularizedAmp();
+
     int GetAvrgMethod();
     
 };

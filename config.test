@@ -1,14 +1,14 @@
 // parameters for data preparation
-aliens = ((115,177,0,136,187,10));
-binning = [3,3,2];
+//aliens = ((115,177,0,136,187,10));
+binning = [2,2,2];
 center_shift = [0,0,0];
 
 // 
-algorithm_sequence = ((3, ("ER",2), ("HIO", 2), ("ER", 2)), (2, ("ER",3), ("HIO",3)))
-//algorithm_sequence = ((1, ("ER",1)))
+//algorithm_sequence = ((3, ("ER",2), ("HIO", 2), ("ER", 2)), (2, ("ER",3), ("HIO",3)))
+algorithm_sequence = ((1, ("ER",2), ("HIO", 2), ("ER", 2)))
 
-amp_threshold = 1000.0;
-amp_threshold_fill_zeros = false;
+amp_threshold = 1.0;
+amp_threshold_fill_zeros = true;
 
 phase_min = 0.7;
 phase_max = 10.0;
@@ -27,11 +27,11 @@ roi = [32,32,32];
 
 // partial coherence
 partial_coherence_triggers = ((10, 14));
-partial_coherence_type = "LUCY";
+//partial_coherence_type = "LUCY";
 partial_coherence_iteration_num = 10;
 partial_coherence_normalize = true;
-partial_coherence_roi = [32,32,32];
-//partial_coherence_kernal = [0.5 ,0.5, 0.5];
+partial_coherence_roi = [10, 10, 10];
+partial_coherence_kernal = [0.5 ,0.5, 0.5];
 partial_coherence_kernel = [17, 22, 26];
 
 regularized_amp = "GAUSS"

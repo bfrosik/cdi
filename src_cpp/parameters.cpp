@@ -7,6 +7,7 @@
 //
 
 #include "arrayfire.h"
+#include <string.h>
 #include "iostream"
 #include "libconfig.h++"
 #include "map"
@@ -36,7 +37,7 @@ float beta = .9;
 
 // support
 Support *support_attr;
-PartialCoherence *partial_coherence;
+PartialCoherence *partial_coherence = NULL;
 
 bool d_type_precision;
 
@@ -47,6 +48,8 @@ int aver_method;
 
 // calculated number of iterations
 int number_iterations;
+
+int regularized_amp = REGULARIZED_AMPLITUDE_NONE;
 
 
 Params::Params(const char* config_file, const dim4 data_dim)
@@ -141,49 +144,8 @@ Params::Params(const char* config_file, const dim4 data_dim)
     }
     support_attr = new Support(data_dim, support_area, support_threshold, support_sigma, support_triggers, support_alg);
 
-    int * roi = new int[3];
-    try {
-        const Setting& root = cfg.getRoot();
-        const Setting &tmp = root["partial_coherence_roi"];
-        for (int i = 0; i < tmp.getLength(); ++i)
-        {
-            try {
-                roi[i] = Utils::GetDimension(tmp[i]);
-            }
-            catch ( const SettingTypeException &nfex)
-            {
-                float ftmp = tmp[i];
-                roi[i] = Utils::GetDimension(int(ftmp * data_dim[i]));
-            }
-        }
-    }
-    catch ( const SettingNotFoundException &nfex)
-    {
-        printf("No 'partial_coherence_roi' parameter in configuration file.");
-    }
-    int * kernel = new int[3];
-    try {
-        const Setting& root = cfg.getRoot();
-        const Setting &tmp = root["partial_coherence_kernel"];
-        for (int i = 0; i < tmp.getLength(); ++i)
-        {
-            try {
-                kernel[i] = Utils::GetDimension(tmp[i]);
-            }
-            catch ( const SettingTypeException &nfex)
-            {
-                float ftmp = tmp[i];
-                kernel[i] = Utils::GetDimension(int(ftmp * data_dim[i]));
-            }
-        }
-    }
-    catch ( const SettingNotFoundException &nfex)
-    {
-        printf("No 'partial_coherence_kernel' parameter in configuration file.");
-    }
 
-    std::vector<int> partial_coherence_trigger = ParseTriggers("partial_coherence");
-    int pcdi_alg = -1;
+    int pcdi_alg = 0;
     try {
         pcdi_alg = algorithm_id_map[cfg.lookup("partial_coherence_type")];
     }
@@ -191,25 +153,71 @@ Params::Params(const char* config_file, const dim4 data_dim)
     {
         printf((std::string("'No partial_coherence_type' parameter in configuration file.")).c_str());
     }
-    bool pcdi_normalize = false;
-    try {
-        pcdi_normalize = cfg.lookup("partial_coherence_normalize");
-    }
-    catch ( const SettingNotFoundException &nfex)
+
+    if (pcdi_alg > 0)
     {
-        printf((std::string("'No partial_coherence_normalize' parameter in configuration file.")).c_str());
-    }
-    int pcdi_iter = 1;
-    try {
-        pcdi_iter = cfg.lookup("partial_coherence_iteration_num");
-    }
-    catch ( const SettingNotFoundException &nfex)
-    {
-        printf((std::string("'No partial_coherence_iteration_num' parameter in configuration file.")).c_str());
-    }
-    if (partial_coherence_trigger.size() > 0)
-    {
-        partial_coherence = new PartialCoherence(this, roi, kernel, partial_coherence_trigger, pcdi_alg, pcdi_normalize, pcdi_iter);
+        int * roi = new int[3];
+        try {
+            const Setting& root = cfg.getRoot();
+            const Setting &tmp = root["partial_coherence_roi"];
+            for (int i = 0; i < tmp.getLength(); ++i)
+            {
+                try {
+                    roi[i] = Utils::GetDimension(tmp[i]);
+                }
+                catch ( const SettingTypeException &nfex)
+                {
+                    float ftmp = tmp[i];
+                    roi[i] = Utils::GetDimension(int(ftmp * data_dim[i]));
+                }
+            }
+        }
+        catch ( const SettingNotFoundException &nfex)
+        {
+            printf("No 'partial_coherence_roi' parameter in configuration file.");
+        }
+        int * kernel = new int[3];
+        try {
+            const Setting& root = cfg.getRoot();
+            const Setting &tmp = root["partial_coherence_kernel"];
+            for (int i = 0; i < tmp.getLength(); ++i)
+            {
+                try {
+                    kernel[i] = Utils::GetDimension(tmp[i]);
+                }
+                catch ( const SettingTypeException &nfex)
+                {
+                    float ftmp = tmp[i];
+                    kernel[i] = Utils::GetDimension(int(ftmp * data_dim[i]));
+                }
+            }
+        }
+        catch ( const SettingNotFoundException &nfex)
+        {
+            printf("No 'partial_coherence_kernel' parameter in configuration file.");
+        }
+
+        std::vector<int> partial_coherence_trigger = ParseTriggers("partial_coherence");
+        bool pcdi_normalize = false;
+        try {
+            pcdi_normalize = cfg.lookup("partial_coherence_normalize");
+        }
+        catch ( const SettingNotFoundException &nfex)
+        {
+            printf((std::string("'No partial_coherence_normalize' parameter in configuration file.")).c_str());
+        }
+        int pcdi_iter = 1;
+        try {
+            pcdi_iter = cfg.lookup("partial_coherence_iteration_num");
+        }
+        catch ( const SettingNotFoundException &nfex)
+        {
+            printf((std::string("'No partial_coherence_iteration_num' parameter in configuration file.")).c_str());
+        }
+        if (partial_coherence_trigger.size() > 0)
+        {
+            partial_coherence = new PartialCoherence(this, roi, kernel, partial_coherence_trigger, pcdi_alg, pcdi_normalize, pcdi_iter);
+        }
     }
 
     try
@@ -256,6 +264,28 @@ Params::Params(const char* config_file, const dim4 data_dim)
 
     try
     {
+        const char *reg_amp = cfg.lookup("regularized_amp");
+        if (strcmp (reg_amp, "GAUSS") == 0)
+        {
+            regularized_amp = REGULARIZED_AMPLITUDE_GAUSS;
+        }
+        else if (strcmp (reg_amp, "POISSON") == 0)
+        {
+            regularized_amp = REGULARIZED_AMPLITUDE_POISSON;
+        }
+        else if (strcmp (reg_amp, "UNIFORM") == 0)
+        {
+            regularized_amp = REGULARIZED_AMPLITUDE_UNIFORM;
+        }
+        // else it is initialized
+    }
+    catch (const SettingNotFoundException &nfex)
+    {
+        printf("No 'regularized_amp' parameter in configuration file.");
+    }
+
+    try
+    {
         avg_iterations = cfg.lookup("avg_iterations");
     } catch (const SettingNotFoundException &nfex) {
         printf("No 'avg_iterations' parameter in configuration file.");
@@ -275,6 +305,8 @@ void Params::BuildAlgorithmMap()
     // hardcoded
     algorithm_id_map.insert(std::pair<char*,int>("ER", ALGORITHM_ER));
     algorithm_id_map.insert(std::pair<char*,int>("HIO", ALGORITHM_HIO));
+    algorithm_id_map.insert(std::pair<char*,int>("LUCY", ALGORITHM_LUCY));
+    algorithm_id_map.insert(std::pair<char*,int>("LUCY_PREV", ALGORITHM_LUCY_PREV));
 }
 
 std::vector<int> Params::ParseTriggers(std::string trigger_name)
@@ -357,9 +389,9 @@ int Params::GetAvgIterations()
     return avg_iterations;
 }
 
-int Params::GetAvrgMethod()
+int Params::GetRegularizedAmp()
 {
-    return aver_method;
+    return regularized_amp;
 }
 
 Support * Params::GetSupport()
@@ -375,5 +407,10 @@ PartialCoherence * Params::GetPartialCoherence()
 std::vector<alg_switch> Params::GetAlgSwitches()
 {
     return alg_switches;
+}
+
+int Params::GetAvrgMethod()
+{
+    return aver_method;
 }
 
