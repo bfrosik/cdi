@@ -199,11 +199,77 @@ def crop(image, dims):
     self.imd.point_data.scalars=self.image[self.cropobj].ravel()
     return self.imd
 
-def write_image_data(filename, image):
-    writer = tvtk.StructuredPointsWriter()
-    writer.file_name = filename
-    writer.file_type = 'binary'
-    writer.set_input(image.ravel())
-    writer.write()
+def write_image_data(filename, image_r, image_i, data):
+    #writer = tvtk.StructuredPointsWriter()
+    #writer.file_name = filename
+    #writer.file_type = 'binary'
+    #writer.set_input(image.ravel())
+    #writer.write()
+    from pyevtk.hl import gridToVTK
+
+    image_abs = np.absolute(image_r + image_i*1j)
+    max_amp = np.amax(image_abs)
+    image_abs = image_abs/max_amp
+    phases = np.arctan2(image_i, image_r)
+    dims = image_r.shape
+
+    x = np.arange(0, int(dims[0])+1)
+    y = np.arange(0, int(dims[1])+1)
+    z = np.arange(0, int(dims[2])+1)
+
+    gridToVTK("./abs", x,y,z, cellData = {'abs':image_abs})
+    gridToVTK("./phases", x,y,z, cellData = {'phases':phases})
+    gridToVTK("./data", x,y,z, cellData = {'data':data})
+
+def display(image_r, image_i, data):
+    #from PIL import Image
+
+    #img = Image.fromarray(data, 'RGB')
+    #img.save('data.png')
+    #img.show()
+    from numpy import sin, cos, pi
+    from skimage import measure
+    import matplotlib.pyplot as plt
+    #from mpl_toolkits.mplot3d import Axes3D
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+
+    def fun(x, y, z):
+        return cos(x) + cos(y) + cos(z)
+
+    image_abs = np.absolute(image_r + image_i*1j)
+    print 'image_r', image_r
+    print 'image_i', image_i
+    print 'image_abs', image_abs
+    print 'max_r', np.amax(image_r)
+    print 'max_i', np.amax(image_i)
+    max_amp = np.amax(image_abs)
+    print 'max', max_amp
+    image_abs = image_abs/max_amp
+    phases = np.arctan2(image_i, image_r)
+
+    dims = data.shape
+    print 'dims', dims
+    x, y, z = np.mgrid[-1:1:31j, -1:1:31j, -1:1:31j]
+    print 'x', x
+    print 'y', y
+    print 'z', z
+    #vol = fun(x, y, z)
+    #vol = data/850
+    vol = image_abs
+    print 'vol', vol
+    #verts, faces = measure.marching_cubes(vol, 0, spacing=(0.1, 0.1, 0.1))
+    verts, faces = measure.marching_cubes(vol, 0)
+    print 'verts', verts
+    print 'faces', faces
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot_trisurf(verts[:, 0], verts[:,1], faces, verts[:, 2],
+                cmap='Spectral', lw=1)
+    plt.show()
+
+
+
+
 
 

@@ -194,9 +194,13 @@ def do_reconstruction(proc, data, conf):
     er = fast_module.get_errors()
     image_r = np.asarray(fast_module.get_image_r())
     image_i = np.asarray(fast_module.get_image_i())
-    image = image_r + 1j*image_i
-    np.reshape(image, dims)
-    return image, er
+    #image = image_r + 1j*image_i
+    #np.reshape(image, dims)
+
+    image_r = np.reshape(image_r, dims)
+    image_i = np.reshape(image_i, dims)
+
+    return image_r, image_i, er
     
 def reconstruction(proc, filename, conf):
     """
@@ -236,8 +240,10 @@ def reconstruction(proc, filename, conf):
 
     data = prepare_data(config_map, data)
 
-    image, errors = do_reconstruction(proc, data, conf)
-    #ut.write_image_data('ph.vtk', image)
+    image_r, image_i, errors = do_reconstruction(proc, data, conf)
+    ut.write_image_data('ph.vtk', image_r, image_i, data)
+    ut.display(image_r, image_i, data)
+    image = image_r + 1j*image_i
     return image, errors
     
 
