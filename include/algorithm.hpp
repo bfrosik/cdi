@@ -29,4 +29,16 @@ public:
     void ModulusConstrain();
 };
 
+class HioNorm : public Algorithm
+{
+public:
+    void ModulusConstrain();
+};
+
+class ErNorm : public Algorithm
+{
+public:
+    void ModulusConstrain();
+};
+
 #endif /*algorithm_hpp */

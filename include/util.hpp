@@ -34,6 +34,7 @@ public:
     // This method finds the maximum value in the given array arr, places it in the left corner, shifting circular the content,
     // in all dimensions.
     static af::array ShiftMax(af::array arr, int * kernel);
+
 };
 
 #endif /* util_hpp */

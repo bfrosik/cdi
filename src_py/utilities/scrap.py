@@ -151,8 +151,8 @@ def binning(array, binsizes):
 
 def get_centered(array, center_shift):
     """
-    This function finds a greatest value in the array, and puts it in a center of a new array. The extra elements in the new 
-    array are set to 0.
+    This function finds a greatest value in the array, and puts it in a center of a new array. The dimentions of the new array are
+    supported by the opencl library. The extra elements in the new array are set to 0.
 
     Parameters
     ----------
@@ -172,12 +172,13 @@ def get_centered(array, center_shift):
     shape = array.shape
     new_shape = []
     shift = []
-    # find new shape that can fit the array with max_coordinate in center
+    # find new shape that can fit the array with max_coordinate in center and 
+    # which has dimensions supported by opencl
     for ax in range(len(shape)):
         if max_coordinates[ax] <= int(shape[ax]/2):
-            new_shape.append(2*(shape[ax] - max_coordinates[ax]))
+            new_shape.append(get_opencl_dim(2*(shape[ax] - max_coordinates[ax]), 2))
         else:
-            new_shape.append(2*max_coordinates[ax])       
+            new_shape.append(get_opencl_dim(2*max_coordinates[ax], 2))        
         shift.append(int(new_shape[ax]/2) - max_coordinates[ax])
 
     centered = np.zeros(tuple(new_shape), dtype=array.dtype)
@@ -187,35 +188,163 @@ def get_centered(array, center_shift):
 
     return centered    
 
-def zero_pad(array, pad):
-    """
-    This function adds to each dimension of the array elements defined by pad. The elements are added to the 
-    beginning of array and end by the same number, so the original array is centered. The dimentions of the new array are
-    supported by the opencl library. 
+
+def crop(image, dims):
+    self.SetCrop(self.CropX, self.CropY, self.CropZ)
+    dims = list(self.image[self.cropobj].shape)
+    if len(dims)==2:
+        dims.append(1)
+    self.imd.dimensions = tuple(dims)
+    self.imd.extent =  0, dims[2]-1, 0, dims[1]-1, 0, dims[0]-1
+    self.imd.point_data.scalars=self.image[self.cropobj].ravel()
+    return self.imd
+
+def SetCrop(self, CropX, CropY, CropZ):
+        dims = list(self.Array.shape)
+        if len(dims)==2:
+            dims.append(1)
+        
+        if dims[0] > CropX and CropX > 0:
+            self.CropX=CropX
+        else:
+            self.CropX=dims[0]
+        
+        if dims[1] > CropY and CropY > 0:
+            self.CropY=CropY
+        else:
+            self.CropY=dims[1]
+        
+        if dims[2] > CropZ and CropZ > 0:
+            self.CropZ=CropZ
+        else:
+            self.CropZ=dims[2]
+
+        start1=dims[0]/2-self.CropX/2
+        end1=dims[0]/2+self.CropX/2
+        if start1==end1:
+            end1=end1+1
+        start2=dims[1]/2-self.CropY/2
+        end2=dims[1]/2+self.CropY/2
+        if start2==end2:
+            end2=end2+1
+        start3=dims[2]/2-self.CropZ/2
+        end3=dims[2]/2+self.CropZ/2
+        if start3==end3:
+            end3=end3+1
+        
+        self.cropobj=( slice(start1,end1,None), slice(start2,end2,None), 
+                                                    slice(start3,end3,None) )
+def WriteStructuredGrid(image_abs, phases, mode="split"):
+        sgwriter=tvtk.StructuredGridWriter()
+        sgwriter.file_type='binary'
+        if args.has_key("mode"):
+          if mode=="split":
+            sgwriter.file_name="test_Amp.vtk"
+            sgwriter.set_input(GetStructuredGrid(mode="Amp"))
+            sgwriter.write()
+            sgwriter.file_name="test_Ph.vtk"
+            sgwriter.set_input(GetStructuredGrid(mode="Phase"))
+            sgwriter.write()
+        else: 
+          sgwriter.file_name=str('.').join(filenamebase)+ext
+          sgwriter.file_type='binary'
+          sgwriter.set_input(self.GetStructuredGrid())
+          sgwriter.write()
+        
+    
+def write_image_data(image_abs, phases):
+    from tvtk.api import tvtk, write_data
+    from vtk.util import numpy_support
+    import vtk
+
+    #from tvtk.api import tvtk, write_data
+    spwriter=tvtk.StructuredPointsWriter()
+    spwriter.file_name='ftest.vtk'
+    spwriter.file_type='binary'
+ 
+    imd=tvtk.ImageData()
+    
+    #f = tvtk.FloatArray()
+    #f.from_array(np.ravel(image_abs))
+    
+    #spwriter.set_input_data(f)
+    #spwriter.write()
+
+    #write_data(VTK_image_abs, 'ftest.vtk')
+
+
+    #import vtk
+    #from vtk.util import numpy_support
+    ##from pyevtk.hl import gridToVTK
+    #from evtk.hl import gridToVTK, pointsToVTK    
+
+    #shape = image_abs.shape
     
 
-    Parameters
-    ----------
-    array : array
-        the array to pad
+    #VTK_image_abs = numpy_support.numpy_to_vtk(num_array=image_abs.ravel(), deep=True, array_type=vtk.VTK_FLOAT)
+    
+    #writer = tvtk.StructuredPointsWriter()
+    #writer.file_name = filename
+    #writer.file_type = 'binary'
+    #writer.set_input(image.ravel())
+    #writer.write()
 
-    pad : list
-        list of three pad values, for each dimension
-        
-    Returns
-    -------
-    array : array
-        the padded array
-    """
-    # calculate the opencl dimensions
-    dims = array.shape
-    x_dim = get_opencl_dim(dims[0] + 2*pad[0], 2)
-    x_pad = (x_dim - dims[0])/2
-    y_dim = get_opencl_dim(dims[1] + 2*pad[1], 2)
-    y_pad = (y_dim - dims[1])/2
-    z_dim = get_opencl_dim(dims[2] + 2*pad[2], 2)
-    z_pad = (z_dim - dims[2])/2
-    return np.lib.pad(array, ((x_pad, x_pad),(y_pad, y_pad), (z_pad, z_pad)), 'constant', constant_values=((0.0,0.0),(0.0,0.0),(0.0,0.0)))
+
+    #dims = image_abs.shape
+
+    #x = np.arange(0, int(dims[0])+1)
+    #y = np.arange(0, int(dims[1])+1)
+    #z = np.arange(0, int(dims[2])+1)
+
+    #gridToVTK("./abs", x,y,z, cellData = {'abs':image_abs})
+    #gridToVTK("./phases", x,y,z, cellData = {'phases':phases})
+
+
+def display1(image_abs, phases):
+    #shape = image_abs.shape
+    #image = np.zeros(tuple(image_abs.shape), dtype='float32')
+
+    # this supports 3D arrays
+    #image[0:shape[0], 0:shape[1], 0:shape[2]] = image_abs
+    tf.imsave('image.tif', image_abs.astype('float32'))
+    tf.imsave('phases.tif', phases)
+
+
+def display(image_abs, phases):
+
+    #from PIL import Image
+
+    #img = Image.fromarray(data, 'RGB')
+    #img.save('data.png')
+    #img.show()
+    from numpy import sin, cos, pi
+    from skimage import measure
+    import matplotlib.pyplot as plt
+    #from mpl_toolkits.mplot3d import Axes3D
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+
+    def fun(x, y, z):
+        return cos(x) + cos(y) + cos(z)
+
+    x, y, z = np.mgrid[-1:1:131j, -1:1:131j, -1:1:131j]
+    #print 'x', x
+    #print 'y', y
+    #print 'z', z
+    #vol = fun(x, y, z)
+
+    vol = image_abs
+    #print 'vol', vol
+    #verts, faces = measure.marching_cubes(vol, 0, spacing=(0.1, 0.1, 0.1))
+    verts, faces = measure.marching_cubes(vol, 0)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot_trisurf(verts[:, 0], verts[:,1], faces, verts[:, 2],
+                cmap='Spectral', lw=1)
+    plt.show()
+
+write_image_data(None, None)
+
 
 
 

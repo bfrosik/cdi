@@ -1,0 +1,53 @@
+Ross's flow
+-----------
+
+1. ER
+
+- amplitudes(reciprocical) = ifft(image)
+
+- normalize: amplitudes * data array size
+
+- record error = sum(abs(amplitudes)-abs(data))^2/sum(data)^2  
+
+- apply amplitude threshold on the amplitudes
+
+- image = fft(amplitudes)
+
+- normalize: image / data array size
+
+- image_norm_prev
+
+- image * support
+
+- image_norm
+
+- image * sqrt(image_norm/image_norm_prev)
+
+
+2. Phase Constrained HIO
+
+- amplitudes(reciprocical) = ifft(image)
+
+- normalize: amplitudes * data array size
+
+- record error = sum(abs(amplitudes)-abs(data))^2/sum(data)^2   
+
+- apply amplitude threshold on the amplitudes
+
+- image = fft(amplitudes)
+
+- normalize: image / data array size
+
+- image_norm_prev
+
+- phases
+
+- phase condition: (phase < params->GetPhaseMin()) || (phase > params->GetPhaseMax()) || (support->GetSupportArray() == 0)
+
+- for phase condition and support replace image with prev_image - image * beta
+
+- image_norm
+
+- image * sqrt(image_norm/image_norm_prev)
+
+

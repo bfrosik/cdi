@@ -57,9 +57,15 @@ visualization.
 
 import numpy as np
 import src_py.utilities.utils as ut
+import src_py.utilities.utils_post as ut_post
+#import src_py.utilities.CXDVizNX as disp
 import pylibconfig2 as cfg
 import os
 import scipy.fftpack as sf
+import src_py.cyth.bridge_cpu as bridge_cpu
+import src_py.cyth.bridge_opencl as bridge_opencl
+#import src_py.cyth.bridge_cuda as bridge_cuda
+import tifffile as tf
 
 __author__ = "Barbara Frosik"
 __copyright__ = "Copyright (c) 2016, UChicago Argonne, LLC."
@@ -120,6 +126,7 @@ def prepare_data(config_map, data):
     
     # zero out the noise
     data = np.where(data < config_map.amp_threshold, 0, data)
+    print (data.shape)
 
     # zero out the aliens
     try:
@@ -144,7 +151,15 @@ def prepare_data(config_map, data):
         center_shift = tuple(config_map.center_shift)
     except AttributeError:
         center_shift = (0,0,0)
+
     data = ut.get_centered(data, center_shift)
+
+    # zero pad array
+    try:
+        pad = tuple(config_map.zero_pad)
+    except AttributeError:
+        center_shift = (0,0,0)
+    data = ut.zero_pad(data, pad)
 
     # shift data
     data=sf.fftshift(data)
@@ -170,32 +185,29 @@ def do_reconstruction(proc, data, conf):
         
     Returns
     -------
-    image : array
-        a 3D np array containing reconstructed image
+    image_r : array
+        a 3D np real part array containing reconstructed image
+        
+    image_i : array
+        a 3D np imaginary part array containing reconstructed image
         
     er : array
         a vector containing mean error for each iteration
     """
-    
     if proc == 'cpu':
-        from src_py.cyth.bridge_cpu import *
-    elif proc == 'opencl':
-        from src_py.cyth.bridge_opencl import *
-    elif proc == 'cuda':
-        from src_py.cyth.bridge_cuda import *
-    else:
-        print 'unrecognized processor, only "cpu", "opencl", and "cuda" are valid'
-        return None, None
+        bridge = bridge_cpu
+    elif proc == 'opencl': 
+        bridge = bridge_opencl
+    #elif proc == 'cuda': 
+    #    bridge = bridge_cuda
     
     dims = data.shape
-    fast_module = PyBridge()
+    fast_module = bridge.PyBridge()
     data_l = data.flatten().tolist()
     fast_module.start_calc(data_l, dims, conf)
     er = fast_module.get_errors()
     image_r = np.asarray(fast_module.get_image_r())
     image_i = np.asarray(fast_module.get_image_i())
-    #image = image_r + 1j*image_i
-    #np.reshape(image, dims)
 
     image_r = np.reshape(image_r, dims)
     image_i = np.reshape(image_i, dims)
@@ -230,20 +242,37 @@ def reconstruction(proc, filename, conf):
 
     data = ut.get_array_from_tif(filename)
     if len(data.shape) > 3:
-        print "this program supports 3d images only"
+        print ("this program supports 3d images only")
         return None, None
 
     config_map = read_config(conf)
     if config_map is None:
-        print "can't read configuration file"
+        print ("can't read configuration file")
         return None, None
 
     data = prepare_data(config_map, data)
 
     image_r, image_i, errors = do_reconstruction(proc, data, conf)
-    ut.write_image_data('ph.vtk', image_r, image_i, data)
-    ut.display(image_r, image_i, data)
-    image = image_r + 1j*image_i
+
+    dims = image_r.shape
+    print ('dims', dims)
+
+    image_abs1 = np.absolute(image_r + image_i*1j)
+    image_abs = np.transpose(image_abs1,(2,1,0))
+    #image_abs = np.swapaxes(image_abs_in, 0, 1)
+    #image_abs = np.swapaxes(image_abs_in, 1,2)
+
+    max_amp = np.amax(image_abs)
+    print ('max', max_amp)
+    #image_abs = image_abs/max_amp
+    phases = np.arctan2(image_i, image_r)
+    #ut.write_image_data(image_abs, phases)
+    #ut.display1(image_abs, phases)
+    #ut.display(image_abs, phases)
+    image = 1000*image_r + 1000j*image_i
+
+    ut_post.write_to_vtk(conf, image, 'test')
+    #disp.save(image)
     return image, errors
     
 

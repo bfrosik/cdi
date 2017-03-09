@@ -74,7 +74,7 @@ af::array Utils::CenterMax(af::array arr, int * kernel)
 {
     printf("in CenterMax dims %i %i %i %i\n", arr.dims()[0], arr.dims()[1], arr.dims()[2], arr.dims()[0]*arr.dims()[1]*arr.dims()[2]);
     //find indexes of max
-    d_type *arr_values = arr.host<d_type>();
+    d_type *arr_values = abs(arr).host<d_type>();
     std::vector<d_type> v(arr_values, arr_values + arr.elements());
     std::vector<d_type>::iterator result = std::max_element(v.begin(), v.end());
     int max_offset = result - v.begin();
@@ -86,7 +86,6 @@ af::array Utils::CenterMax(af::array arr, int * kernel)
     printf("max indexes %i %i %i\n", x_max, y_max, z_max);
     printf("in CenterMax5\n");
 
-    // TODO ask Ross if the abs should be applied before figuring out maximum
 
     af::array shifted = af::shift(arr, arr.dims()[0]/2-x_max, arr.dims()[1]/2-y_max, arr.dims()[2]/2-z_max );
     printf("in CenterMax6\n");
@@ -98,7 +97,7 @@ af::array Utils::ShiftMax(af::array arr, int * kernel)
 {
     printf("in ShiftMax dims %i %i %i %i\n", arr.dims()[0], arr.dims()[1], arr.dims()[2], arr.dims()[0]*arr.dims()[1]*arr.dims()[2]);
     //find indexes of max
-    d_type *arr_values = arr.host<d_type>();
+    d_type *arr_values = abs(arr).host<d_type>();
     std::vector<d_type> v(arr_values, arr_values + arr.elements());
     std::vector<d_type>::iterator result = std::max_element(v.begin(), v.end());
     int max_offset = result - v.begin();
@@ -108,8 +107,6 @@ af::array Utils::ShiftMax(af::array arr, int * kernel)
     int y_max = max_offset / arr.dims()[0] % arr.dims()[1];
     int z_max = max_offset/ (arr.dims()[0] * arr.dims()[1]);
     printf("ShiftMax max indexes %i %i %i\n", x_max, y_max, z_max);
-
-    // TODO ask Ross if the abs should be applied before figuring out maximum
 
     af::array shifted = af::shift(arr, -x_max, -y_max, -z_max );
     return shifted;

@@ -29,18 +29,6 @@ struct Trigger_setting
 };
 typedef struct Trigger_setting trigger_setting;
 
-
-//class Trigger
-//{
-//protected:
-//    std::vector<int> trigger_iterations;
-//    int trig_algorithm;
-//public:
-//    Trigger(std::vector<trigger_setting> triggers, int algorithm);
-//    std::vector<int> GetTriggers();
-//    int GetTriggerAlgorithm();
-//};
-
 class Reconstruction;
 class Support;
 class PartialCoherence;
@@ -95,8 +83,6 @@ public:
     // Returns a constant indication a scheme for modifying data when calculation ratio in modulus projection
     int GetRegularizedAmp();
 
-    int GetAvrgMethod();
-    
 };
 
 

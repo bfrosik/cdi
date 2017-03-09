@@ -41,10 +41,8 @@ PartialCoherence *partial_coherence = NULL;
 
 bool d_type_precision;
 
-// when to start averaging iterates
-int avg_iterations;
-int aver_method;
 // number of iterates to average
+int avg_iterations;
 
 // calculated number of iterations
 int number_iterations;
@@ -284,20 +282,6 @@ Params::Params(const char* config_file, const dim4 data_dim)
         printf("No 'regularized_amp' parameter in configuration file.");
     }
 
-    try
-    {
-        avg_iterations = cfg.lookup("avg_iterations");
-    } catch (const SettingNotFoundException &nfex) {
-        printf("No 'avg_iterations' parameter in configuration file.");
-    }
-        
-    try
-    {
-        aver_method = cfg.lookup("aver_method");
-    } catch (const SettingNotFoundException &nfex) {
-        printf("No 'aver_method' parameter in configuration file.");
-    }
-
 }
 
 void Params::BuildAlgorithmMap()
@@ -305,6 +289,8 @@ void Params::BuildAlgorithmMap()
     // hardcoded
     algorithm_id_map.insert(std::pair<char*,int>("ER", ALGORITHM_ER));
     algorithm_id_map.insert(std::pair<char*,int>("HIO", ALGORITHM_HIO));
+    algorithm_id_map.insert(std::pair<char*,int>("ER_NORM", ALGORITHM_ER_NORM));
+    algorithm_id_map.insert(std::pair<char*,int>("HIO_NORM", ALGORITHM_HIO_NORM));
     algorithm_id_map.insert(std::pair<char*,int>("LUCY", ALGORITHM_LUCY));
     algorithm_id_map.insert(std::pair<char*,int>("LUCY_PREV", ALGORITHM_LUCY_PREV));
 }
@@ -409,8 +395,4 @@ std::vector<alg_switch> Params::GetAlgSwitches()
     return alg_switches;
 }
 
-int Params::GetAvrgMethod()
-{
-    return aver_method;
-}
 

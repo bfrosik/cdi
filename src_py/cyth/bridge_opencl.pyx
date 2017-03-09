@@ -25,9 +25,9 @@ cdef class PyBridge:
     def __dealloc__(self):
         del self.thisptr
     def start_calc_with_guess(self, data_r, guess_r, guess_i, dims, config):
-        self.thisptr.StartCalcWithGuess(data_r, guess_r, guess_i, dims, config)
+        self.thisptr.StartCalcWithGuess(data_r, guess_r, guess_i, dims, config.encode())
     def start_calc(self, data_r, dims, config):
-        self.thisptr.StartCalc(data_r, dims, config)
+        self.thisptr.StartCalc(data_r, dims, config.encode())
     def start_calc_multiple(self, data_r, dims, config, no_threads):
         self.thisptr.StartCalcMultiple(data_r, dims, config, no_threads)
     def get_image_r(self):

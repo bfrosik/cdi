@@ -37,3 +37,19 @@ void Er::ModulusConstrain()
 {
     rec->ModulusConstrainEr();
 }
+
+//-------------------------------------------------------------------
+// Hio sub-class
+
+void HioNorm::ModulusConstrain()
+{
+    rec->ModulusConstrainHioNorm();
+}
+
+//-------------------------------------------------------------------
+// Er sub-class
+
+void ErNorm::ModulusConstrain()
+{
+    rec->ModulusConstrainErNorm();
+}

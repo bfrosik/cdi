@@ -43,30 +43,20 @@ private:
     // A reference to PartialCoherence
     PartialCoherence *partialCoherence;
 
-    // initializes kernel for convolution
-    void InitKernel();
-    
-    // This method returns a norm of an array.
+    // This method returns sum of squares of all elements in the array
     d_type GetNorm(af::array arr);
     
-public:
-    // This code is common for ER and HIO algorithms.
-    void ModulusProjection();
-    
-    // Runs one iteration of ER algorithm. It checks if the convolution algorithm should be run in this state, and if so, alters
-    // the processing.
-    void ModulusConstrainEr();
-    
-    // Runs one iteration of HIO algorithm. It checks if the convolution algorithm should be run in this state, and if so, alters
-    // the processing.
-    void ModulusConstrainHio();
-    
+    // This method calculates ratio of amplitudes and correction arrays replacing zero divider with 1.
+    af::array GetRatio(af::array ar, af::array correction);
+
     // Averages amplitudes
     void Average();
 
-    // calculates ratio of two arrays only for elements when divident is non zero
-    af::array CalculateRatio(af::array arr1, af::array arr2);
-    
+    // This method applies amplitude threshold constraint to correct the amplitudes of rs_amplitudes
+    // i.e. if data amplitude is over the threshold, the rs_amplitudes value is modified.
+    // Other values are either zeroed out or intact depending on configuration.
+    void AmplitudeThreshold();
+
 public:
     // The class constructor takes data array, an image guess array in reciprocal space, and configuration file. The image guess
     // is typically generated as an complex random array. This image can be also the best outcome of previous calculations. The
@@ -88,6 +78,21 @@ public:
     void Iterate();
 
     int GetCurrentIteration();
+
+    // This code is common for ER and HIO algorithms.
+    void ModulusProjection();
+
+    // Runs one iteration of ER algorithm.
+    void ModulusConstrainEr();
+
+    // Runs one iteration of ER with normalizing algorithm. 
+    void ModulusConstrainErNorm();
+
+    // Runs one iteration of HIO algorithm. 
+    void ModulusConstrainHio();
+
+    // Runs one iteration of HIO with normalizing algorithm. 
+    void ModulusConstrainHioNorm();
 
     af::array GetImage();
     std::vector<d_type>  GetErrors();

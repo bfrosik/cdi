@@ -90,6 +90,14 @@ void State::MapAlgorithmObject(int alg_id)
     {
         algorithm_map[alg_id] = new Er;
     }
+    else if (alg_id == ALGORITHM_HIO_NORM)
+    {
+        algorithm_map[alg_id] = new HioNorm;
+    }
+    else if(alg_id == ALGORITHM_ER_NORM)
+    {
+        algorithm_map[alg_id] = new ErNorm;
+    }
 }
 
 int State::Next()
@@ -150,6 +158,7 @@ Algorithm * State::GetCurrentAlg()
 void State::RecordError(d_type error)
 {
     errors.push_back(error);
+    printf("iter, error %i %fl\n", current_iter, error);
 }
 
 int State::GetCurrentIteration()
