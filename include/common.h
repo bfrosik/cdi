@@ -15,11 +15,11 @@ typedef float d_type;
 // a pair that defines an algorithm, and an iteration at which the algorithm is replaced by another or the process ends
 struct Alg_switch 
 {
-    int algorithm;
+    int algorithm_id;
     int iterations;
     Alg_switch(int alg, int iter)
     {
-        algorithm = alg;
+        algorithm_id = alg;
         iterations = iter;
     }
 };
@@ -27,14 +27,21 @@ typedef struct Alg_switch alg_switch;
 
 const int ALGORITHM_ER = 1;
 const int ALGORITHM_HIO = 2;
-const int ALGORITHM_LUCY = 3;
-const int ALGORITHM_GAUSS = 4;
-const int ALGORITHM_BOX = 5;
-const int ALGORITHM_PERCENT = 6;
-const int ALGORITHM_GAUSS_FILL = 7;
-const int ALGORITHM_GAUSS_PERCENT = 8;
-const int ALGORITHM_PERCENT_AUTO = 9;
-const int ALGORITHM_GAUSS_MINAREA = 10;
+const int ALGORITHM_ER_NORM = 3;
+const int ALGORITHM_HIO_NORM = 4;
+const int ALGORITHM_LUCY = 13;
+const int ALGORITHM_LUCY_PREV = 14;
+const int ALGORITHM_GAUSS = 15;
+const int ALGORITHM_BOX = 16;
+const int ALGORITHM_PERCENT = 17;
+const int ALGORITHM_GAUSS_FILL = 18;
+const int ALGORITHM_GAUSS_PERCENT = 19;
+const int ALGORITHM_PERCENT_AUTO = 20;
+const int ALGORITHM_GAUSS_MINAREA = 21;
 
+const int REGULARIZED_AMPLITUDE_NONE = 0;
+const int REGULARIZED_AMPLITUDE_GAUSS = 1;
+const int REGULARIZED_AMPLITUDE_POISSON = 2;
+const int REGULARIZED_AMPLITUDE_UNIFORM = 3;
 
 #endif /* common_h */

@@ -9,23 +9,22 @@
 #ifndef support_hpp
 #define support_hpp
 
-#include "arrayfire.h"
 #include "common.h"
 #include "vector"
+#include "arrayfire.h"
 
 using namespace af;
-
-class Trigger;
 
 class Support
 {
 private:
     af::array support_array;
-    Trigger * support_trigger;
+    std::vector<int> triggers;
+    int algorithm;
     float threshold;
     int sigma;
 public:
-    Support(const dim4 data_dim, int * area, float threshold, int sigma, Trigger * support_trigger);
+    Support(const dim4 data_dim, int * area, float threshold, int sigma, std::vector<int> support_triggers, int alg);
     void Update();
     std::vector<int> GetTriggers();
     int GetTriggerAlgorithm();

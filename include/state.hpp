@@ -9,18 +9,22 @@
 #ifndef state_hpp
 #define state_hpp
 
-#include "arrayfire.h"
 #include "vector"
 #include "common.h"
 
-
-using namespace af;
-
 class Params;
+class Reconstruction;
+class Algorithm;
+namespace af {
+    class array;
+}
 
 // This class maintain the state of the reconstruction process.
 class State
 {
+private:
+    void MapAlgorithmObject(int alg_id);
+
 public:
     // Constructor. Takes pointer to the Param object. Uses the Param object to set the initial values.
     State(Params *params);
@@ -40,12 +44,12 @@ public:
     // It calculates the averaging iteration (current iteration - start of averaging)
     // It updates support at the correct iterations.
     int Next();
-    
+        
     // Returns current iteration number
     int GetCurrentIteration();
 
     // Returns an algorithm that should be run in a current state (i.e. iteration).
-    int GetCurrentAlg();
+    Algorithm * GetCurrentAlg();
     
     // Returns true if the current state should include support update.
     bool IsUpdateSupport();

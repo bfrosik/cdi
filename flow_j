@@ -1,0 +1,69 @@
+Jess flow
+---------
+
+1. ModulusProjection
+
+- amplitudes(reciprocical) = fft(image)
+
+- amplitude_abs = abs(amplitudes)
+
+--- pcdi (modifies amplitude_abs) 
+
+--- if update coherence(pcdi trigger)
+
+------- do partial coherence on (2*amplitudes_abs_previous - amplitudes_abs, data_abs)
+
+------- cut out center of the above two arrays of the roi size
+
+------- if normalize amplitudes_abs = sqrt( amplitudes_abs^2 / sum(amplitudes_abs^2) * sum(data_abs^2) )
+
+------- if symmetrize_data both arrays a = center(a) + center(a.flip(flip(flip()))))
+
+------- if not use previous, coherence = do Lucy(amplitudes_abs^2, data_abs^2) 
+
+------- find max element in coherence and center it
+
+------- cut a kernel size subarray centered, and return it as coherence (kernel hardcoded to 17 in each dim)
+
+------- if symmetrize_kernal kernal+flipdim(flipdim(flipdim(kernal,1),2),3)/norm_after*norm_before
+
+------- normalize coherence abs(coh)/norm_coh
+
+--- amplitudes_abs = sqrt(fftconvolve(abs(amplitudes), coherence)
+
+- apply ratio amplitudes * amplitudes_abs/data_abs
+
+- image = ifft(amplitudes)
+
+- record error = sum(abs(amplitudes)-abs(data))^2/sum(data)^2
+
+
+2. 
+
+- if trigger 
+
+--- shrink_wrap 
+
+--- update support
+
+- if trigger
+
+--- phase constraint
+
+3.1.ER
+
+- image * support
+
+
+2.2 HIO
+
+- image * support + (1 - support) * (prev_image - image * beta))
+
+
+
+
+
+
+
+
+

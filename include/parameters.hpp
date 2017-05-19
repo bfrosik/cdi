@@ -9,9 +9,11 @@
 #ifndef parameters_hpp
 #define parameters_hpp
 
-#include "arrayfire.h"
 #include "common.h"
 #include "vector"
+#include "arrayfire.h"
+
+using namespace af;
 
 struct Trigger_setting
 {
@@ -27,44 +29,17 @@ struct Trigger_setting
 };
 typedef struct Trigger_setting trigger_setting;
 
-
-class Trigger
-{
-protected:
-    std::vector<int> trigger_iterations;
-    int trig_algorithm;
-public:
-    Trigger(std::vector<trigger_setting> triggers, int algorithm);
-    std::vector<int> GetTriggers();
-    int GetTriggerAlgorithm();
-};
-
-class PartialCoherence
-{
-private:
-    int * roi;
-    int * kernel;
-    Trigger * partial_coherence_trigger;
-public:
-    PartialCoherence(int * roi, int * kernel, Trigger * partial_coherence_trigger);
-    std::vector<int> GetTriggers();
-    int GetTriggerAlgorithm();
-    int * GetRoi();
-    int * GetKernel();
-};
-
 class Reconstruction;
 class Support;
-using namespace af;
+class PartialCoherence;
 
 // This class holds parameters defining the reconstruction process. The parameters are set based on configuration file.
 // Methods of this class are getters.
 class Params
 {
 private:
-    // This method creates a map of string definitions for algorithms to numeric identifiers.
+    std::vector<int> ParseTriggers(std::string trigger_name);
     void BuildAlgorithmMap();
-    Trigger * ParseTrigger(std::string trigger_name);
 
 public:
     // Constructor. Takes in configuration file, parses the configuration and sets the parameters accordingly.
@@ -105,15 +80,10 @@ public:
     // iteration at which the algorithm stops and switches to a next algorithm.
     std::vector<alg_switch> GetAlgSwitches();
 
-    int GetAvrgMethod();
-    
+    // Returns a constant indication a scheme for modifying data when calculation ratio in modulus projection
+    int GetRegularizedAmp();
+
 };
 
-class Utils
-{
-public:
-    static int GetDimension(int dim);
-    static bool IsCorrect(int dim);
-};
 
 #endif /* parameters_hpp */

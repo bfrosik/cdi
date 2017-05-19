@@ -7,10 +7,16 @@
 //
 
 #include "stdio.h"
+#include "vector"
+#include "map"
 #include "state.hpp"
 #include "parameters.hpp"
 #include "support.hpp"
-#include "vector"
+#include "algorithm.hpp"
+#include "pcdi.hpp"
+#include "arrayfire.h"
+
+using namespace af;
 
 // a reference to params object
 Params *params;
@@ -24,9 +30,12 @@ int total_iter_num = 0;
 std::vector<d_type>  errors;
 
 // current algorithm
-int current_alg = 0;
+Algorithm * current_alg = NULL;
 // current index of index switches vector
 int alg_switch_index = 0;
+
+// mapping of algorithm id to an Algorithm object
+std::map<int, Algorithm*> algorithm_map;
 
 // a flag indicating whether to update support
 bool update_support = false;
@@ -51,12 +60,44 @@ State::State(Params* parameters)
 
 void State::Init()
 {
-    current_alg = params->GetAlgSwitches()[0].algorithm;
     total_iter_num = params->GetNumberIterations();
+    // create algorithms that are used in algorithm sequence
+    // and load the objects into a map
+    for (int i = 0; i < params->GetAlgSwitches().size(); i++)
+    {
+        int alg_id = params->GetAlgSwitches()[i].algorithm_id;
+        if (algorithm_map[alg_id] == 0)
+        {
+            MapAlgorithmObject(alg_id);
+        }
+    }
+    current_alg = algorithm_map[params->GetAlgSwitches()[0].algorithm_id];
 }
 
 State::~State()
 {
+}
+
+void State::MapAlgorithmObject(int alg_id)
+{
+    // TODO consider refactoring if there are many subclasses
+    // this method is called only during initialization, so it might be ok
+    if (alg_id == ALGORITHM_HIO)
+    {
+        algorithm_map[alg_id] = new Hio;
+    }
+    else if(alg_id == ALGORITHM_ER)
+    {
+        algorithm_map[alg_id] = new Er;
+    }
+    else if (alg_id == ALGORITHM_HIO_NORM)
+    {
+        algorithm_map[alg_id] = new HioNorm;
+    }
+    else if(alg_id == ALGORITHM_ER_NORM)
+    {
+        algorithm_map[alg_id] = new ErNorm;
+    }
 }
 
 int State::Next()
@@ -71,7 +112,7 @@ int State::Next()
     // switch to the next algorithm
     {
         alg_switch_index++;
-        current_alg = params->GetAlgSwitches()[alg_switch_index].algorithm;
+        current_alg = algorithm_map[params->GetAlgSwitches()[alg_switch_index].algorithm_id];
     }
 
     // check if update support this iteration
@@ -85,7 +126,7 @@ int State::Next()
         update_support = false;
     }
 
-    // check if update partial coherence this iteration
+/*    // check if update partial coherence this iteration
     if (params->GetPartialCoherence()->GetTriggers()[partial_coherence_triggers_index] == current_iter)
     {
         update_kernel = true;
@@ -95,14 +136,21 @@ int State::Next()
     {
         update_kernel = false;
     }
-
+*/
     // calculate the averaging iteration.
-    averaging_iter = current_iter - total_iter_num + params->GetAvgIterations();
+    if ((total_iter_num - params->GetAvgIterations()) < 0)
+    {
+        averaging_iter = current_iter;
+    }
+    else
+    {
+        averaging_iter = current_iter - (total_iter_num - params->GetAvgIterations());
+    }
 
     return true;
 }
 
-int State::GetCurrentAlg()
+Algorithm * State::GetCurrentAlg()
 {
     return current_alg;
 }
@@ -110,6 +158,7 @@ int State::GetCurrentAlg()
 void State::RecordError(d_type error)
 {
     errors.push_back(error);
+    printf("iter, error %i %fl\n", current_iter, error);
 }
 
 int State::GetCurrentIteration()

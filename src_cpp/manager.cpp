@@ -58,7 +58,7 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim,
 
 std::vector<d_type> Manager::GetImageR()
 {
-    af::array image = rec->GetImage();
+    af::array image = af::transpose(rec->GetImage());
 
     d_type *image_r = real(image).host<d_type>();
     std::vector<d_type> v(image_r, image_r + image.elements());
@@ -69,7 +69,7 @@ std::vector<d_type> Manager::GetImageR()
 
 std::vector<d_type> Manager::GetImageI()
 {
-    af::array image = rec->GetImage();
+    af::array image = af::transpose(rec->GetImage());
 
     d_type *image_i = imag(image).host<d_type>();
     std::vector<d_type> v(image_i, image_i + image.elements());

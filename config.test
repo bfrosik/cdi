@@ -1,17 +1,18 @@
 // parameters for data preparation
-aliens = ((115,177,0,136,187,10));
-binning = [3,3,2];
+//aliens = ((115,177,0,136,187,10));
+binning = [2,2,2];
 center_shift = [0,0,0];
+zero_pad = [2,2,2]
 
 // 
-algorithm_sequence = ((3, ("ER",2), ("HIO", 2), ("ER", 2)), (2, ("ER",3), ("HIO",3)))
-//algorithm_sequence = ((1, ("ER",1)))
+//algorithm_sequence = ((3, ("ER",2), ("HIO", 2), ("ER", 2)), (2, ("ER",3), ("HIO",3)))
+algorithm_sequence = ((2, ("ER",10), ("HIO", 20)))
 
-amp_threshold = 1000.0;
-amp_threshold_fill_zeros = false;
+amp_threshold = 2.0;
+amp_threshold_fill_zeros = true;
 
-phase_min = 0.7;
-phase_max = 10.0;
+phase_min = -2.0;
+phase_max = 2.0;
 beta = .9;
 
 // support
@@ -26,12 +27,43 @@ support_area = [0.5, 0.5, 0.5];
 roi = [32,32,32];
 
 // partial coherence
+// if type is not defined, partial coherence is not applied
+// partial_coherence_type = "LUCY";
 partial_coherence_triggers = ((10, 14));
-partial_coherence_type = "LUCY";
-partial_coherence_roi = [32,32,32];
-//partial_coherence_kernal = [0.5 ,0.5, 0.5];
-partial_coherence_kernel = [17, 22, 26];
+partial_coherence_iteration_num = 10;
+partial_coherence_normalize = true;
+partial_coherence_roi = [32, 32, 32];
+partial_coherence_kernel = [32, 32, 32];
+
+regularized_amp = "GAUSS"
 
 avg_iterations = 20;
 
-aver_method = 3;
+// wavelength (Roos has it 1.39
+lamda = .13933;
+// delta (degrees) (I think Ross has it as tth, 0.352032910127)
+delta = 30.1;
+// gamma (degrees) (Ross has it 0.502131225799)
+gamma = 14.0;
+// camera distance (m) (Ross has it  0.938)                    %
+arm=0.6350;
+// angular step size (Ross has it 0.000349065850399)
+dth=0.01;
+
+// dx, dy, dz ???
+coordinates = [0.003125, 0.00438596491, 0.015151515];
+
+// detector pixel sixe
+pixel = [55.0e-6, 55.0e-6];
+
+// save in two vtk files
+save_two_files = False;
+
+// size to crop the image array
+//crop = [60,144,120]
+
+// not used in Ross code
+recenter_rec = 1;
+det_px = 55.0e-6;
+dtilt=0.0;
+
