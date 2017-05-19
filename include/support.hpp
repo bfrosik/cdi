@@ -24,7 +24,7 @@ private:
     int algorithm;
     float threshold;
     int sigma;
-    af:array InitDistribution(const dim4 data_dim, int sgma, int angle);
+    af::array InitDistribution(const dim4 data_dim, int sgma, int angle);
     
 public:
     Support(const dim4 data_dim, int * area, float threshold, int sigma, std::vector<int> support_triggers, int alg);
