@@ -7,7 +7,7 @@ read af_dir
 export LD_LIBRARY_PATH=/usr/local/lib:$af_dir/lib/
 
 AF='AF_DIR'
-sed -i 's?'$AF_DIR'?'$af_dir'?g' src_py/cyth/*.pyx
+sed -i 's?'$AF'?'$af_dir'?g' src_py/cyth/*.pyx
 
 echo -n "enter LibConfig installation directory > "
 read lc_dir
