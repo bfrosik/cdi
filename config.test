@@ -6,7 +6,7 @@ zero_pad = [2,2,2]
 
 // 
 //algorithm_sequence = ((3, ("ER",2), ("HIO", 2), ("ER", 2)), (2, ("ER",3), ("HIO",3)))
-algorithm_sequence = ((1, ("ER",10), ("HIO", 20)))
+algorithm_sequence = ((2, ("ER",10), ("HIO", 20)))
 
 amp_threshold = 2.0;
 amp_threshold_fill_zeros = true;
@@ -28,7 +28,7 @@ roi = [32,32,32];
 
 // partial coherence
 // if type is not defined, partial coherence is not applied
-partial_coherence_type = "LUCY";
+// partial_coherence_type = "LUCY";
 partial_coherence_triggers = ((10, 14));
 partial_coherence_iteration_num = 10;
 partial_coherence_normalize = true;

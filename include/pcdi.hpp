@@ -17,7 +17,7 @@ private:
     int * roi;
     int * kernel;
     std::vector<int> triggers;
-    int trigger_index = 0;
+    int trigger_index;
     int algorithm;
     bool normalize;
     int iteration_num;

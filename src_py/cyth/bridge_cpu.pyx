@@ -1,8 +1,9 @@
 # distutils: language = c++
-# distutils: include_dirs = ['include', 'include/af/include',]
+# distutils: include_dirs = ['include', 'AF_DIR/include', 'LC_DIR/library/include',]
 # distutils: sources = ['src_cpp/algorithm.cpp', 'src_cpp/bridge.cpp', 'src_cpp/manager.cpp', 'src_cpp/parameters.cpp', 'src_cpp/pcdi.cpp', 'src_cpp/state.cpp', 'src_cpp/support.cpp', 'src_cpp/util.cpp', 'src_cpp/worker.cpp']
 # distutils: libraries = ['afcpu',  'config++',]
-# distutils: library_dirs = lib
+# distutils: library_dirs = ['AF_DIR/lib', 'LC_DIR/library/lib', ]
+
 
 from libcpp.vector cimport vector
 from libcpp.string cimport string

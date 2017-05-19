@@ -15,6 +15,7 @@ PartialCoherence::PartialCoherence(Params * params, int * roi_area, int * kernel
 {
     params = params;
     triggers = partial_coherence_trigger;
+    trigger_index = 0;
     algorithm = alg;
     roi= roi_area;
     kernel = kernel_area;

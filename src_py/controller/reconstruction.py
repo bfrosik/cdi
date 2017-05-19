@@ -270,6 +270,8 @@ def reconstruction(proc, filename, conf):
     #ut.display1(image_abs, phases)
     #ut.display(image_abs, phases)
     image = 1000*image_r + 1000j*image_i
+    
+    np.save("/local/bfrosik/cdi/npar", image)
 
     ut_post.write_to_vtk(conf, image, 'test')
     #disp.save(image)
