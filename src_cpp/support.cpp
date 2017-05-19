@@ -19,9 +19,9 @@ Support::Support(const dim4 data_dim, int * support_area, float th, int sgma, st
     algorithm = alg;
     support_array = constant(0, data_dim, u32);
     support_array( seq(0, support_area[0]-1), seq(0, support_area[1]-1), seq(0, support_area[2]-1) ) = 1;
-    if alg == ALGORITHM_GAUSS
+    if (alg == ALGORITHM_GAUSS)
     {
-        angle = 0;
+        int angle = 0;
         distribution = InitDistribution(data_dim, sigma, angle);
     }
 }
@@ -56,7 +56,7 @@ af::array Support::GetSupportArray()
     return support_array;
 }
 
-af:array Support::InitDistribution(const dim4 data_dim, int sgma, int angle)
+af::array Support::InitDistribution(const dim4 data_dim, int sgma, int angle)
 {
     return support_array;
 }
