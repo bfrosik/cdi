@@ -13,6 +13,6 @@ echo -n "enter LibConfig installation directory > "
 read lc_dir
 #lc_dir=/local/bfrosik/libconfig-1.5
 
-LC_DIR=LC_DIR
-sed -i 's?'$LC_DIR'?'$lc_dir'?g' src_py/cyth/*.pyx
+LC='LC_DIR'
+sed -i 's?'$LC'?'$lc_dir'?g' src_py/cyth/*.pyx
 python setup.py build_ext --inplace
