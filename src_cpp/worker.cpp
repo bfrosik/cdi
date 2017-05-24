@@ -118,7 +118,7 @@ void Reconstruction::ModulusProjection()
     AmplitudeThreshold();
     
     // The rs_amplitudes_abs is impacted by pcdi, if configured
-    rs_amplitudes *= GetRatio(rs_amplitudes_abs, abs(data));
+    rs_amplitudes *= GetRatio(abs(data), rs_amplitudes_abs);
     printf("3rs_amplitude norm %fl\n", GetNorm(rs_amplitudes));
 
     state->RecordError(GetNorm(abs(rs_amplitudes)-abs(data))/norm_data);
@@ -212,8 +212,11 @@ void Reconstruction::AmplitudeThreshold()
 
 af::array Reconstruction::GetRatio(af::array ar, af::array correction)
 {
-    ar(ar == 0.0) = 1.0;
-    return correction/ar;
+    // ar(ar == 0.0) = 1.0;
+    // return correction/ar;
+    correction(correction == 0.0) = ar(correction == 0.0);
+    correction(ar == 0.0) = 1.0;
+    return ar/correction;
 }
 
 d_type Reconstruction::GetNorm(af::array arr)
