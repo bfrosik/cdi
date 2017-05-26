@@ -344,7 +344,7 @@ def write_to_vtk(conf, ar, filename):
     else:
         sg.point_data.scalars=amps
         sg.point_data.scalars.name="Amp"
-        ph=tvtk.DoubleArray()
+        ph=tvtk.FloatArray()
         ph.from_array(phases)
         ph.name="Phase"
         sg.point_data.add_array(ph)
