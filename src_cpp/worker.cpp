@@ -231,8 +231,7 @@ int Reconstruction::GetCurrentIteration()
 
 af::array Reconstruction::GetImage()
 {
-
-    return ds_image;
+    return ds_image.T();
 }
 
 std::vector<d_type> Reconstruction::GetErrors()
