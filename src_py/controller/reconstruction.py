@@ -257,8 +257,8 @@ def reconstruction(proc, filename, conf):
     dims = image_r.shape
     print ('dims', dims)
 
-    image_abs1 = np.absolute(image_r + image_i*1j)
-    image_abs = np.transpose(image_abs1,(2,1,0))
+    image_abs = np.absolute(image_r + image_i*1j)
+    #image_abs = np.transpose(image_abs1,(2,1,0))
     #image_abs = np.swapaxes(image_abs_in, 0, 1)
     #image_abs = np.swapaxes(image_abs_in, 1,2)
 
@@ -269,7 +269,7 @@ def reconstruction(proc, filename, conf):
     #ut.write_image_data(image_abs, phases)
     #ut.display1(image_abs, phases)
     #ut.display(image_abs, phases)
-    image = 1000*image_r + 1000j*image_i
+    image = image_r + 1j*image_i
     
     np.save("/local/bfrosik/cdi/npar", image)
 
