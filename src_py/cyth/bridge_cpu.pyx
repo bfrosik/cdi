@@ -35,4 +35,4 @@ cdef class PyBridge:
     def get_image_i(self):
         return self.thisptr.GetImageI()
     def get_errors(self):
-return self.thisptr.GetErrors()
+        return self.thisptr.GetErrors()
