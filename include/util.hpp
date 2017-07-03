@@ -35,6 +35,13 @@ public:
     // in all dimensions.
     static af::array ShiftMax(af::array arr, int * kernel);
 
+    // This method finds the maximum value in the given array arr, places it in the center, shifting circular the content,
+    // in all dimensions.
+    static af::array CenterMax(af::array arr);
+
+    static int * GetMaxIndices(af::array arr);
+    static af::array fftshift(af::array arr);
+    static af::array ifftshift(af::array arr);
 };
 
 #endif /* util_hpp */

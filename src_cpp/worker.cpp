@@ -23,15 +23,13 @@
 
 af::array data;
 d_type norm_data;
-long data_size;
 int current_iteration;
 
 af::array ds_image;
 af::array prev_ds_image;
-af::array rs_amplitudes;
-af::array amplitude_condition;
+//af::array amplitude_condition;
 std::vector<d_type> aver_v;
-af::array kernel;
+//af::array kernel;
 
 
 Reconstruction::Reconstruction(af::array image_data, af::array guess, const char* config_file)
@@ -44,31 +42,23 @@ Reconstruction::Reconstruction(af::array image_data, af::array guess, const char
 
 void Reconstruction::Init()
 {
-    //af_print(data(seq(0,5), seq(0,5), seq(0,5)));
-    norm_data = GetNorm(data);
-    printf("norm_data %fl\n", norm_data);
-    amplitude_condition = data > params->GetAmpThreshold();
-    data_size = data.elements();
-    
-    // multiply the rs_amplitudes by first element of data array and the norm
-
-    af::array first_array = data(0);
-    d_type *host_first_data = real(first_array).host<d_type>();
-    d_type first = host_first_data[0];
-    printf("first %fl\n", first);
-    delete [] host_first_data;
-    if (first != 0)
-    {
-        ds_image *= first * GetNorm(ds_image);
-    }
-
-    //printf("gues norm %lf\n", GetNorm(ds_image));
-    //af_print(ds_image(seq(0,5), seq(0,5), seq(0,5)));
-
     // initialize other components
     state->Init();
     support = params->GetSupport();
     partialCoherence = params->GetPartialCoherence();
+    //amplitude_condition = data > params->GetAmpThreshold()
+    
+    // apply twin if set
+    if (params->GetTwin() >= 0)
+    {
+        ds_image(seq(data.dims()[0]/2, data.dims()[0]-1), seq(data.dims()[1]/2, data.dims()[1]-1)) = 0;
+    }
+
+    norm_data = GetNorm(data);
+    // multiply the rs_amplitudes by max element of data array and the norm
+    d_type max_data = af::max<d_type>(data);
+    ds_image *= max_data * GetNorm(ds_image);
+
 }
 
 
@@ -76,64 +66,62 @@ void Reconstruction::Iterate()
 {
     while (state->Next())
     {
+        if (state->IsUpdateSupport())
+        {
+            support->Update(ds_image);
+        }
+
         current_iteration = state->GetCurrentIteration();
         Algorithm * alg  = state->GetCurrentAlg();
         alg->RunAlgorithm(this);
 
-        if (state->IsUpdateSupport())
-        {
-            support->Update();
-        }
-
-        Average();
+       // Average();
     }
-    if (aver_v.size() > 0)
+/*    if (aver_v.size() > 0)
     {
         printf("averaging\n");
         af::array aver_a(ds_image.dims(0), ds_image.dims(1), ds_image.dims(2), &aver_v[0]);
-        ds_image *= GetRatio(abs(ds_image), abs(aver_a));
+        //ds_image *= GetRatio(abs(ds_image), abs(aver_a));
         ds_image *= support->GetSupportArray();
-    }
-
-    af_print(ds_image(seq(0,5), seq(0,5), seq(0,5)));
+    }*/
 }
 
 void Reconstruction::ModulusProjection()
 {
-    printf("mod proj\n");
+    printf("------------------current iteration %i -----------------\n", current_iteration);
     prev_ds_image = ds_image;
-    //af_print(ds_image(seq(0,5), seq(0,5), seq(0,5)));
-    rs_amplitudes = ifft3(ds_image)*data_size;
-    //af_print(rs_amplitudes(seq(0,5), seq(0,5), seq(0,5)));
-    af::array rs_amplitudes_abs = abs(rs_amplitudes);
+    af::array rs_amplitudes = ifft3(ds_image);
+    state->RecordError( GetNorm(abs(rs_amplitudes)(rs_amplitudes > 0)-abs(data)(rs_amplitudes > 0))/norm_data );
+    printf("data norm, ampl norm before ratio %fl %fl\n", GetNorm(data), GetNorm(rs_amplitudes));
+
     if (partialCoherence != NULL)
     {
         if (current_iteration >= partialCoherence->GetTriggers()[0])
         {
-            rs_amplitudes_abs = partialCoherence->ApplyPartialCoherence(abs(rs_amplitudes), abs(data), current_iteration);
+            //rs_amplitudes_abs = partialCoherence->ApplyPartialCoherence(abs(rs_amplitudes), abs(data), current_iteration);
         }
         partialCoherence->SetPrevious(abs(rs_amplitudes));
     }
 
-    AmplitudeThreshold();
+    af::array temp = af::complex(0, af::arg(rs_amplitudes));
+    rs_amplitudes = data * exp(temp);
+    printf("ampl norm after ratio %fl\n", GetNorm(rs_amplitudes));
     
-    // The rs_amplitudes_abs is impacted by pcdi, if configured
-    rs_amplitudes *= GetRatio(abs(data), rs_amplitudes_abs);
-    printf("3rs_amplitude norm %fl\n", GetNorm(rs_amplitudes));
-
-    state->RecordError(GetNorm(abs(rs_amplitudes)-abs(data))/norm_data);
-
-    ds_image = fft3(rs_amplitudes)/data_size;
-
-    
-    printf("ds_image norm %fl\n", GetNorm(ds_image));
+    ds_image = fft3(rs_amplitudes);
 
 }
 
 void Reconstruction::ModulusConstrainEr()
 {
     printf("er\n");
+    printf("image norm before support %fl\n", GetNorm(ds_image));    
     ds_image *= support->GetSupportArray();
+    if (state->IsApplyTwin())
+    {
+        ds_image(seq(data.dims()[0]/2, data.dims()[0]-1), seq(data.dims()[1]/2, data.dims()[1]-1)) = 0;
+    }
+
+    printf("image norm after support %fl\n", GetNorm(ds_image));
 }
 
 void Reconstruction::ModulusConstrainErNorm()
@@ -152,9 +140,13 @@ void Reconstruction::ModulusConstrainErNorm()
 void Reconstruction::ModulusConstrainHio()
 {
     printf("hio\n");
-    printf("ds_image norm %fl\n",GetNorm(ds_image));
-    ds_image = ds_image*support->GetSupportArray() + (1 - support->GetSupportArray())*(prev_ds_image - ds_image * params->GetBeta());
-    printf("ds_image norm %fl\n",GetNorm(ds_image));
+    printf("image norm before support %fl\n",GetNorm(ds_image));
+    ds_image(support->GetSupportArray() == 0) = (prev_ds_image - ds_image * params->GetBeta())(support->GetSupportArray() == 0);
+    if (state->IsApplyTwin())
+    {
+        ds_image(seq(data.dims()[0]/2, data.dims()[0]-1), seq(data.dims()[1]/2, data.dims()[1]-1)) = (prev_ds_image - ds_image * params->GetBeta())(seq(data.dims()[0]/2, data.dims()[0]-1), seq(data.dims()[1]/2, data.dims()[1]-1));
+    }
+    printf("image norm after support %fl\n",GetNorm(ds_image));
 }
 
 void Reconstruction::ModulusConstrainHioNorm()
@@ -201,25 +193,16 @@ void Reconstruction::Average()
 
 void Reconstruction::AmplitudeThreshold()
 {
-    af::replace(rs_amplitudes, amplitude_condition, data * exp(complex(0, arg(rs_amplitudes))));
+/*    af::replace(rs_amplitudes, amplitude_condition, data * exp(complex(0, arg(rs_amplitudes))));
     printf("1rs_amplitude norm %fl\n", GetNorm(rs_amplitudes));
     if (params->IsAmpThresholdFillZeros())
     {
         rs_amplitudes *= amplitude_condition;
     }
-    printf("2rs_amplitude norm %fl\n", GetNorm(rs_amplitudes));
+    printf("2rs_amplitude norm %fl\n", GetNorm(rs_amplitudes));*/
 }   
 
-af::array Reconstruction::GetRatio(af::array ar, af::array correction)
-{
-    // ar(ar == 0.0) = 1.0;
-    // return correction/ar;
-    correction(correction == 0.0) = ar(correction == 0.0);
-    correction(ar == 0.0) = 1.0;
-    return ar/correction;
-}
-
-d_type Reconstruction::GetNorm(af::array arr)
+double Reconstruction::GetNorm(af::array arr)
 {
     return sum<d_type>(pow(abs(arr), 2));
 }
@@ -231,13 +214,14 @@ int Reconstruction::GetCurrentIteration()
 
 af::array Reconstruction::GetImage()
 {
-    return ds_image.T();
+    return ds_image;
 }
 
 std::vector<d_type> Reconstruction::GetErrors()
 {
     return state->GetErrors();
 }
+
 
 
 

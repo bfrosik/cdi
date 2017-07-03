@@ -47,6 +47,8 @@ int avg_iterations;
 // calculated number of iterations
 int number_iterations;
 
+int twin;
+
 int regularized_amp = REGULARIZED_AMPLITUDE_NONE;
 
 
@@ -102,12 +104,14 @@ Params::Params(const char* config_file, const dim4 data_dim)
         for (int i = 0; i < tmp.getLength(); ++i)
         {
             try {
-                support_area[i] = Utils::GetDimension(tmp[i]);
+                //support_area[i] = Utils::GetDimension(tmp[i]);
+                support_area[i] = tmp[i];
             }
             catch ( const SettingTypeException &nfex)
             {
                 float ftmp = tmp[i];
-                support_area[i] = Utils::GetDimension(int(ftmp * data_dim[i]));
+                //support_area[i] = Utils::GetDimension(int(ftmp * data_dim[i]));
+                support_area[i] = int(ftmp * data_dim[i]);
             }
         }
     }
@@ -122,6 +126,14 @@ Params::Params(const char* config_file, const dim4 data_dim)
     catch ( const SettingNotFoundException &nfex)
     {
         printf("No 'support_threshold' parameter in configuration file.");
+    }
+    bool support_threshold_adjust = true;
+    try {
+        support_threshold_adjust = cfg.lookup("support_threshold_adjust");
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf("No 'support_threshold_adjust' parameter in configuration file.");
     }
     int support_sigma = 0;
     try {
@@ -140,7 +152,7 @@ Params::Params(const char* config_file, const dim4 data_dim)
     {
         printf((std::string("'No support_type' parameter in configuration file.")).c_str());
     }
-    support_attr = new Support(data_dim, support_area, support_threshold, support_sigma, support_triggers, support_alg);
+    support_attr = new Support(data_dim, support_area, support_threshold, support_threshold_adjust, support_sigma, support_triggers, support_alg);
 
 
     int pcdi_alg = 0;
@@ -281,6 +293,14 @@ Params::Params(const char* config_file, const dim4 data_dim)
     {
         printf("No 'regularized_amp' parameter in configuration file.");
     }
+    twin = -1;
+    try {
+        twin = cfg.lookup("twin");
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf("No 'twin' parameter in configuration file.");
+    }
 
 }
 
@@ -293,6 +313,7 @@ void Params::BuildAlgorithmMap()
     algorithm_id_map.insert(std::pair<char*,int>("HIO_NORM", ALGORITHM_HIO_NORM));
     algorithm_id_map.insert(std::pair<char*,int>("LUCY", ALGORITHM_LUCY));
     algorithm_id_map.insert(std::pair<char*,int>("LUCY_PREV", ALGORITHM_LUCY_PREV));
+    algorithm_id_map.insert(std::pair<char*,int>("GAUSS", ALGORITHM_GAUSS));
 }
 
 std::vector<int> Params::ParseTriggers(std::string trigger_name)
@@ -378,6 +399,11 @@ int Params::GetAvgIterations()
 int Params::GetRegularizedAmp()
 {
     return regularized_amp;
+}
+
+int Params::GetTwin()
+{
+    return twin;
 }
 
 Support * Params::GetSupport()

@@ -75,6 +75,9 @@ public:
     // Returns iteration number at which the amplitudes are averaged.
     int GetAvgIterations();
 
+    // Returns iteration number at which the "twin" gets zeroed out.
+    int GetTwin();
+
     // Returns a vector containing algorithm switch sequence.
     // Algorithm switch is defined as a pair of two elements, the first defins an algorithm, and the second defins
     // iteration at which the algorithm stops and switches to a next algorithm.

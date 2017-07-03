@@ -57,6 +57,9 @@ public:
     // Returns true if the current state should include partial coherence update.
     bool IsUpdatePartialCoherence();
 
+    // Returns true if the current state should apply twin.
+    bool IsApplyTwin();
+
     // Returns the difference of current iteration and iteration of averaging start
     int GetAveragingIteration();
     

@@ -167,6 +167,25 @@ def prepare_data(config_map, data):
     return data
     
 
+def prepare_data1(config_map, data):
+    rdata=tf.imread("/home/phoebus/BFROSIK/CDI/S149/Staff14-3_S0149.tif")
+    rdata=np.where( rdata < 2, 0, rdata)
+
+#Crop in first dim around brightest pixel. This speeds things up a lot. 
+    cdata=rdata[76-32:76+32,:,:]
+    dims=cdata.shape
+    print "dims/2", np.array(dims)/2.
+    data=np.sqrt(cdata)
+
+#Sqrt and center the brightest pixel in the other two dims
+    print np.unravel_index(np.argmax(cdata), cdata.shape)
+#data=np.roll(data, -1, 0)
+    data=np.roll(data, 10, 1)
+    data=np.roll(data, -5, 2)
+    data=np.fft.fftshift(data)
+    print data[0,0,0], data.max()
+    return data
+
 def do_reconstruction(proc, data, conf):
     """
     This function calls a bridge method corresponding to the requested processor type. The bridge method is an access to the CFM
@@ -201,13 +220,20 @@ def do_reconstruction(proc, data, conf):
     #elif proc == 'cuda': 
     #    bridge = bridge_cuda
     
-    dims = data.shape
+    dims1 = data.shape
+    dims = (dims1[1], dims1[2], dims1[0])
+    #dims = dims1
+    print 'data norm in reconstruction',  sum(sum(sum(abs(data)**2)))
     fast_module = bridge.PyBridge()
+
+    #data_l = np.ravel(data, order='C').tolist()
     data_l = data.flatten().tolist()
     fast_module.start_calc(data_l, dims, conf)
     er = fast_module.get_errors()
     image_r = np.asarray(fast_module.get_image_r())
     image_i = np.asarray(fast_module.get_image_i())
+
+    dims = dims1
 
     image_r = np.reshape(image_r, dims)
     image_i = np.reshape(image_i, dims)
@@ -258,9 +284,6 @@ def reconstruction(proc, filename, conf):
     print ('dims', dims)
 
     image_abs = np.absolute(image_r + image_i*1j)
-    #image_abs = np.transpose(image_abs1,(2,1,0))
-    #image_abs = np.swapaxes(image_abs_in, 0, 1)
-    #image_abs = np.swapaxes(image_abs_in, 1,2)
 
     max_amp = np.amax(image_abs)
     print ('max', max_amp)
@@ -271,9 +294,15 @@ def reconstruction(proc, filename, conf):
     #ut.display(image_abs, phases)
     image = image_r + 1j*image_i
     
-    np.save("/local/bfrosik/cdi/npar", image)
+    from tvtk.api import tvtk, write_data
+    id=tvtk.ImageData()
+    id.point_data.scalars=1000*abs(image.ravel(order='F'))
+    id.dimensions=image.shape
+    write_data(id, "simple.vtk")
 
-    ut_post.write_to_vtk(conf, image, 'test')
+    #np.save("/local/bfrosik/cdi/npar", image)
+
+    #ut_post.write_to_vtk(conf, image, 'test')
     #disp.save(image)
     return image, errors
     

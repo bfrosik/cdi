@@ -44,7 +44,7 @@ private:
     PartialCoherence *partialCoherence;
 
     // This method returns sum of squares of all elements in the array
-    d_type GetNorm(af::array arr);
+    double GetNorm(af::array arr);
     
     // This method calculates ratio of amplitudes and correction arrays replacing zero divider with 1.
     af::array GetRatio(af::array ar, af::array correction);
@@ -56,6 +56,8 @@ private:
     // i.e. if data amplitude is over the threshold, the rs_amplitudes value is modified.
     // Other values are either zeroed out or intact depending on configuration.
     void AmplitudeThreshold();
+
+    d_type CalculateError();
 
 public:
     // The class constructor takes data array, an image guess array in reciprocal space, and configuration file. The image guess

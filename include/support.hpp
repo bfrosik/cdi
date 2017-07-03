@@ -23,12 +23,15 @@ private:
     std::vector<int> triggers;
     int algorithm;
     float threshold;
+    bool threshold_adjust;
     int sigma;
+    int twin;
     af::array InitDistribution(const dim4 data_dim, int sgma, int angle);
+    af::array GaussConvFft(af::array ds_image);
     
 public:
-    Support(const dim4 data_dim, int * area, float threshold, int sigma, std::vector<int> support_triggers, int alg);
-    void Update();
+    Support(const dim4 data_dim, int * area, float threshold, bool threshold_adjust, int sigma, std::vector<int> support_triggers, int alg);
+    void Update(const af::array ds_image);
     std::vector<int> GetTriggers();
     int GetTriggerAlgorithm();
     int GetSigma();

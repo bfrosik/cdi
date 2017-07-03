@@ -52,6 +52,8 @@ int partial_coherence_triggers_index = 0;
 // index relative to averaging iterations
 int averaging_iter = 0;
 
+bool apply_twin = false;
+
 
 State::State(Params* parameters)
 {
@@ -147,6 +149,11 @@ int State::Next()
         averaging_iter = current_iter - (total_iter_num - params->GetAvgIterations());
     }
 
+    if (current_iter == params->GetTwin())
+    {
+        apply_twin = true;
+    }
+
     return true;
 }
 
@@ -174,6 +181,11 @@ bool State::IsUpdateSupport()
 bool State::IsUpdatePartialCoherence()
 {
     return update_kernel;
+}
+
+bool State::IsApplyTwin()
+{
+    return apply_twin;
 }
 
 int State::GetAveragingIteration()
