@@ -44,3 +44,4 @@ cdef class PyBridge:
     def get_coherence(self):
         return self.thisptr.GetCoherenceV()
 
+
