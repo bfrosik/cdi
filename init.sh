@@ -13,6 +13,9 @@ read lc_dir
 LC='LC_DIR'
 sed -i 's?'$LC'?'$lc_dir'?g' src_py/cyth/*.pyx
 
-export LD_LIBRARY_PATH=$lc_dir/lib/.libs:/usr/local/lib:$af_dir/lib/
+echo -n "enter cuda installation directory > "
+read cuda_dir
+
+export LD_LIBRARY_PATH=$lc_dir/lib/.libs:/usr/local/lib:$af_dir/lib/:$cuda_dir/lib64:$cuda_dir/nvvm/lib64
 
 python setup.py build_ext --inplace

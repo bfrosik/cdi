@@ -4,7 +4,6 @@
 
 #include "vector"
 
-class Params;
 //class Reconstruction;
 namespace af {
     class array;
@@ -13,27 +12,31 @@ namespace af {
 class PartialCoherence
 {
 private:
-    Params *params;
-    int * roi;
+    std::vector<int> roi;
     int * kernel;
+    int crop[6];
     std::vector<int> triggers;
     int trigger_index;
     int algorithm;
     bool normalize;
     int iteration_num;
+    bool clip;
 
-    af::array DeconvLucy(af::array image, af::array filter, int iter_num);
-    void OnTrigger(af::array abs_image, af::array abs_data);
-    void TuneLucyCoherence();
+    void DeconvLucy(af::array image, af::array filter, int iter_num);
+    void OnTrigger(af::array abs_image);
+    void TuneLucyCoherence(af::array);
     int GetTriggerAlgorithm();
-    int * GetRoi();
+    std::vector<int> GetRoi();
     int * GetKernel();
+    af::array fftConvolve(af::array arr, af::array kernel);
 
 public:
-    PartialCoherence(Params * params, int * roi, int * kernel, std::vector<int> partial_coherence_trigger, int alg, bool pcdi_normalize, int pcdi_iter);
+    PartialCoherence(std::vector<int> roi, int * kernel, std::vector<int> partial_coherence_trigger, int alg, bool pcdi_normalize, int pcdi_iter, bool pcdi_clip);
+    void Init(af::array data);
     void SetPrevious(af::array abs_amplitudes);
     std::vector<int> GetTriggers();
-    af::array ApplyPartialCoherence(af::array abs_image, af::array abs_data, int current_iteration);
+    af::array ApplyPartialCoherence(af::array abs_image, int current_iteration);
+    af::array GetKernelArray();
 };
 
 #endif /* pcdi_hpp */

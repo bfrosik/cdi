@@ -28,7 +28,7 @@ using namespace af;
 // 1. Params, which is initialized from configuration file, and keeps the attributes that do not change during processing.
 // 2. State, which keeps the variables that mutate during processing.
 // The class does calculations defined by the configuration file. The result of the calculation is an image that is a close
-// match to the recoprocical space data in the opposite space.
+// match to the reciprocal space data in the opposite space.
 
 class Reconstruction
 {
@@ -56,6 +56,12 @@ private:
     // i.e. if data amplitude is over the threshold, the rs_amplitudes value is modified.
     // Other values are either zeroed out or intact depending on configuration.
     void AmplitudeThreshold();
+    
+    // vectorize support array at the end of iterations
+    void VectorizeSupport();
+
+    // vectorize coherence array at the end of iterations
+    void VectorizeCoherence();
 
     d_type CalculateError();
 
@@ -82,22 +88,26 @@ public:
     int GetCurrentIteration();
 
     // This code is common for ER and HIO algorithms.
-    void ModulusProjection();
+    af::array ModulusProjection();
 
     // Runs one iteration of ER algorithm.
-    void ModulusConstrainEr();
+    void ModulusConstrainEr(af::array);
 
     // Runs one iteration of ER with normalizing algorithm. 
-    void ModulusConstrainErNorm();
+    void ModulusConstrainErNorm(af::array);
 
     // Runs one iteration of HIO algorithm. 
-    void ModulusConstrainHio();
+    void ModulusConstrainHio(af::array);
 
     // Runs one iteration of HIO with normalizing algorithm. 
-    void ModulusConstrainHioNorm();
+    void ModulusConstrainHioNorm(af::array);
 
     af::array GetImage();
     std::vector<d_type>  GetErrors();
+    std::vector<float> GetSupportVector();
+    std::vector<double> GetCoherenceVector();
+    std::vector<d_type> GetCoherenceVectorR();
+    std::vector<d_type> GetCoherenceVectorI();
 
 };
 

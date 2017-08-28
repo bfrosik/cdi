@@ -3,42 +3,45 @@
 #define algorithm_hpp
 
 class Reconstruction;
+#include "arrayfire.h"
+
+using namespace af;
 
 class Algorithm
 {
 public:   
     // Using strategy pattern. The RunAlgorihm calls sequence of methods
-    // overriden by concrete classes
+    // overridden by concrete classes
     void RunAlgorithm(Reconstruction * reconstruction);
     
-    // the following methods are overriden in concrete algorithms
+    // the following methods are overridden in concrete algorithms
     // they are part of strategy pattern
-    void ModulusProjection();
-    virtual void ModulusConstrain();
+    af::array ModulusProjection();
+    virtual void ModulusConstrain(af::array);
 };
 
 class Hio : public Algorithm
 {
 public:
-    void ModulusConstrain();
+    void ModulusConstrain(af::array);
 };
 
 class Er : public Algorithm
 {
 public:
-    void ModulusConstrain();
+    void ModulusConstrain(af::array);
 };
 
 class HioNorm : public Algorithm
 {
 public:
-    void ModulusConstrain();
+    void ModulusConstrain(af::array);
 };
 
 class ErNorm : public Algorithm
 {
 public:
-    void ModulusConstrain();
+    void ModulusConstrain(af::array);
 };
 
 #endif /*algorithm_hpp */

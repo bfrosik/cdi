@@ -4,14 +4,16 @@ binning = [2,2,2];
 center_shift = [0,0,0];
 zero_pad = [0,0,0]
 
+data_type = "double";
 // 
 //algorithm_sequence = ((3, ("ER",2), ("HIO", 2), ("ER", 2)), (2, ("ER",3), ("HIO",3)))
-//algorithm_sequence = ((2, ("ER",20), ("HIO", 10)), (1, ("ER",10)))
-algorithm_sequence = ((1, ("ER",30), ("HIO", 20), ("ER", 20)))
+//algorithm_sequence = ((1, ("ER",2)))
+algorithm_sequence = ((2, ("ER",15), ("HIO", 10), ("ER", 5)))
+matlab_order = false;
 
 // twin defines at which iteration to cut half of the array(i.e. multiply by 0s), it is done in ER/HIO
 // if negative, no action
-twin = -1;
+twin = 2;
 
 amp_threshold = 2.0;
 amp_threshold_fill_zeros = true;
@@ -23,28 +25,31 @@ beta = .9;
 // support
 // trigger list contains starting iteration, step, and ending iteration (if missing, run to the end)
 //support_triggers = ((5, 5, 300), (1, 2));
-support_triggers = ((20, 5, 300));
+support_triggers = ((5, 5, 300));
 support_type = "GAUSS";
-support_threshold = 0.00001;
+support_threshold = 0.1;
 support_threshold_adjust = false;
 support_sigma = 1;
-support_area = [.333, .333, .333];
+support_area = [64,64,64];
 //support_area = [15, 15, 15];
 
 roi = [32,32,32];
 
 // partial coherence
 // if type is not defined, partial coherence is not applied
-// partial_coherence_type = "LUCY";
-partial_coherence_triggers = ((10, 14));
-partial_coherence_iteration_num = 10;
+partial_coherence_type = "LUCY";
+partial_coherence_triggers = ((14, 15));
+partial_coherence_iteration_num = 20;
 partial_coherence_normalize = true;
-partial_coherence_roi = [32, 32, 32];
-partial_coherence_kernel = [32, 32, 32];
+// this is an area that will determine coherence, coherence array will come with this size
+partial_coherence_roi = [32,32,32];
+// this is an area of the coherence array that will be used to apply coherence to amplitudes
+partial_coherence_kernel = [32,32,32];
+partial_coherence_clip = false;
 
 regularized_amp = "GAUSS"
 
-avg_iterations = 20;
+avg_iterations = 10;
 
 // wavelength (Roos has it 1.39
 lamda = .13933;

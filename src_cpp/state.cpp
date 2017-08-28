@@ -50,7 +50,7 @@ bool update_kernel = false;
 int partial_coherence_triggers_index = 0;
 
 // index relative to averaging iterations
-int averaging_iter = 0;
+bool averaging = false;
 
 bool apply_twin = false;
 
@@ -108,7 +108,6 @@ int State::Next()
     {
         return false;
     }
-
     // figure out current alg
     if (params->GetAlgSwitches()[alg_switch_index].iterations == current_iter)
     // switch to the next algorithm
@@ -116,9 +115,9 @@ int State::Next()
         alg_switch_index++;
         current_alg = algorithm_map[params->GetAlgSwitches()[alg_switch_index].algorithm_id];
     }
-
+ 
     // check if update support this iteration
-    if (params->GetSupport()->GetTriggers()[support_triggers_index] == current_iter)
+    if ((params->GetSupport()->GetTriggers().size() > 0) && (params->GetSupport()->GetTriggers()[support_triggers_index] == current_iter))
     {
         update_support = true;
         support_triggers_index++;
@@ -128,30 +127,16 @@ int State::Next()
         update_support = false;
     }
 
-/*    // check if update partial coherence this iteration
-    if (params->GetPartialCoherence()->GetTriggers()[partial_coherence_triggers_index] == current_iter)
-    {
-        update_kernel = true;
-        partial_coherence_triggers_index++;
-    }
-    else
-    {
-        update_kernel = false;
-    }
-*/
-    // calculate the averaging iteration.
-    if ((total_iter_num - params->GetAvgIterations()) < 0)
-    {
-        averaging_iter = current_iter;
-    }
-    else
-    {
-        averaging_iter = current_iter - (total_iter_num - params->GetAvgIterations());
-    }
+    // calculate if during the iteration should do averaging.
+    averaging = ( current_iter >= (total_iter_num - params->GetAvgIterations()) );
 
     if (current_iter == params->GetTwin())
     {
         apply_twin = true;
+    }
+    else
+    {
+        apply_twin = false;
     }
 
     return true;
@@ -188,9 +173,9 @@ bool State::IsApplyTwin()
     return apply_twin;
 }
 
-int State::GetAveragingIteration()
+bool State::IsAveragingIteration()
 {
-    return averaging_iter;
+    return averaging;
 }
 
 std::vector<d_type>  State::GetErrors()

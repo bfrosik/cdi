@@ -44,8 +44,11 @@ private:
 public:
     // Constructor. Takes in configuration file, parses the configuration and sets the parameters accordingly.
     Params(const char* config_file, const dim4 data_dim);
+    
+    // returns data type (float/double). Used by python code
+    std::string GetDataType();
 
-    // Returns number of all ierations. It is calculated from the "algorithm_sequence" parameter.
+    // Returns number of all iterations. It is calculated from the "algorithm_sequence" parameter.
     int GetNumberIterations();
 
     // Returns info for support update. trigger list contains starting iteration, step, and ending iteration
@@ -59,9 +62,13 @@ public:
     // Returns amplitude threshold. Used by ER and HIO algorithms.
     d_type GetAmpThreshold();
     
-    // Returns true if the ER/HIO algorims should fill the image if not met amplitude threshold condition with zeros.
+    // Returns true if the ER/HIO algorithms should fill the image if not met amplitude threshold condition with zeros.
     // Returns false, if the values should not be modified.
     bool IsAmpThresholdFillZeros();
+    
+    // Returns true if the modulus projector follows Matlab algorithm, i.e. first apply fft to go into reciprocal space, 
+    // then ifft to direct space. Retirn false if reverse order.
+    bool IsMatlabOrder();
     
     // Returns minimum phase value for the HIO processing.
     d_type GetPhaseMin();
@@ -79,7 +86,7 @@ public:
     int GetTwin();
 
     // Returns a vector containing algorithm switch sequence.
-    // Algorithm switch is defined as a pair of two elements, the first defins an algorithm, and the second defins
+    // Algorithm switch is defined as a pair of two elements, the first defines an algorithm, and the second defines
     // iteration at which the algorithm stops and switches to a next algorithm.
     std::vector<alg_switch> GetAlgSwitches();
 

@@ -62,10 +62,10 @@ import src_py.utilities.utils_post as ut_post
 import pylibconfig2 as cfg
 import os
 import scipy.fftpack as sf
-import src_py.cyth.bridge_cpu as bridge_cpu
+#import src_py.cyth.bridge_cpu as bridge_cpu
 import src_py.cyth.bridge_opencl as bridge_opencl
-#import src_py.cyth.bridge_cuda as bridge_cuda
 import tifffile as tf
+
 
 __author__ = "Barbara Frosik"
 __copyright__ = "Copyright (c) 2016, UChicago Argonne, LLC."
@@ -99,11 +99,11 @@ def read_config(config):
 
 def prepare_data(config_map, data):
     """
-    This function prepares raw data for reconstruction. It usees configured parameters. The preparation consists of the following steps:
-    1. clearing the noise - the values below an amplitude threashold are set to zero
-    2. removing the "aliens" - aliens are areas that are effect of interferrence. The area is manually set in a configuration file 
+    This function prepares raw data for reconstruction. It uses configured parameters. The preparation consists of the following steps:
+    1. clearing the noise - the values below an amplitude threshold are set to zero
+    2. removing the "aliens" - aliens are areas that are effect of interference. The area is manually set in a configuration file 
     after inspecting the data.
-    3. binning - adding amplitudes of several consequitive points. Binning can be done in any dimention.
+    3. binning - adding amplitudes of several consecutive points. Binning can be done in any dimension.
     4. amplitudes are set to sqrt
     5. centering - finding the greatest amplitude and locating it at a center of new array. Typically several new rows/columns/slices
     are added. These are filled with zeros. When changing the dimension the code finds the smallest possible dimension that is 
@@ -166,7 +166,6 @@ def prepare_data(config_map, data):
 
     return data
     
-
 def prepare_data1(config_map, data):
     rdata=tf.imread("/home/phoebus/BFROSIK/CDI/S149/Staff14-3_S0149.tif")
     rdata=np.where( rdata < 2, 0, rdata)
@@ -182,14 +181,27 @@ def prepare_data1(config_map, data):
 #data=np.roll(data, -1, 0)
     data=np.roll(data, 10, 1)
     data=np.roll(data, -5, 2)
+    print 'data max before shift',data[0,0,0], data.max()
     data=np.fft.fftshift(data)
-    print data[0,0,0], data.max()
+    print 'data max after shift',data[0,0,0], data.max()
+    return data
+
+def prepare_data2(config_map, data):
+    print np.unravel_index(np.argmax(data), data.shape)
+#data=np.roll(data, -1, 0)
+    #data=np.roll(data, 10, 1)
+    #data=np.roll(data, -5, 2)
+    data=np.roll(data, 1, 0)
+    data=np.roll(data, 1, 1)
+    data=np.roll(data, 1, 2)
+    data=np.fft.fftshift(data)
+    print 'data at 0 and max', data[0,0,0], data.max()
     return data
 
 def do_reconstruction(proc, data, conf):
     """
     This function calls a bridge method corresponding to the requested processor type. The bridge method is an access to the CFM
-    (Calc Fast Module). When reconstraction is completed the function retrieves results from the CFM.
+    (Calc Fast Module). When reconstruction is completed the function retrieves results from the CFM.
     
     Parameters
     ----------
@@ -217,12 +229,9 @@ def do_reconstruction(proc, data, conf):
         bridge = bridge_cpu
     elif proc == 'opencl': 
         bridge = bridge_opencl
-    #elif proc == 'cuda': 
-    #    bridge = bridge_cuda
-    
+
     dims1 = data.shape
     dims = (dims1[1], dims1[2], dims1[0])
-    #dims = dims1
     print 'data norm in reconstruction',  sum(sum(sum(abs(data)**2)))
     fast_module = bridge.PyBridge()
 
@@ -232,13 +241,18 @@ def do_reconstruction(proc, data, conf):
     er = fast_module.get_errors()
     image_r = np.asarray(fast_module.get_image_r())
     image_i = np.asarray(fast_module.get_image_i())
+    support = np.asarray(fast_module.get_support())
+    coherence = np.asarray(fast_module.get_coherence())
+    #coherence = 0
 
     dims = dims1
 
     image_r = np.reshape(image_r, dims)
     image_i = np.reshape(image_i, dims)
+    support = np.reshape(support, dims)
 
-    return image_r, image_i, er
+    #print coherence.shape
+    return image_r, image_i, er, support, coherence
     
 def reconstruction(proc, filename, conf):
     """
@@ -276,9 +290,11 @@ def reconstruction(proc, filename, conf):
         print ("can't read configuration file")
         return None, None
 
-    data = prepare_data(config_map, data)
+    data = prepare_data2(config_map, data)
 
-    image_r, image_i, errors = do_reconstruction(proc, data, conf)
+    print 'data size', data.shape
+
+    image_r, image_i, errors, support, coherence = do_reconstruction(proc, data, conf)
 
     dims = image_r.shape
     print ('dims', dims)
@@ -296,13 +312,54 @@ def reconstruction(proc, filename, conf):
     
     from tvtk.api import tvtk, write_data
     id=tvtk.ImageData()
-    id.point_data.scalars=1000*abs(image.ravel(order='F'))
+    id.point_data.scalars=abs(image.ravel(order='F'))
     id.dimensions=image.shape
     write_data(id, "simple.vtk")
 
+    id1=tvtk.ImageData()
+    id1.point_data.scalars=support.ravel(order='F')
+    id1.dimensions=support.shape
+    write_data(id1, "support.vtk")
+
+    coh_size = int(round(coherence.shape[0]**(1./3.)))
+    coh_dims = (coh_size, coh_size, coh_size,)
+    print 'coherence dims', coh_dims
+    
+    #coherence = np.reshape(coherence, (33,33,33,)).astype(int)
+    coherence = np.reshape(coherence, coh_dims)
+    x_pad_pre = (dims[0] - coh_size)/2
+    x_pad_post = dims[0] - x_pad_pre - coh_size
+    y_pad_pre = (dims[1] - coh_size)/2
+    y_pad_post = dims[1] - x_pad_pre - coh_size
+    z_pad_pre = (dims[2] - coh_size)/2
+    z_pad_post = dims[2] - x_pad_pre - coh_size
+    coh = np.lib.pad(coherence, ((x_pad_pre, x_pad_post),(y_pad_pre, y_pad_post), (z_pad_pre, z_pad_post)), 'constant', constant_values=((0.0,0.0),(0.0,0.0),(0.0,0.0)))
+    coh = ut.flip(coh,0)
+    coh = ut.flip(coh,1)
+    coh = ut.flip(coh,2)
+    fft_coh = sf.ifftn(np.fft.fftshift(coh))
+    import numpy
+    np.fft.fftshift(fft_coh)
+    
+
+    #dims = support.shape
+    id2=tvtk.ImageData()
+    #id2.point_data.scalars=abs(fft_coh.ravel(order='F'))
+    id2.point_data.scalars=coherence.ravel(order='F')
+    # assuming coherence is a cube
+    id2.dimensions=coh_dims
+    write_data(id2, "coherence.vtk")
+
+    tf.imsave("coherence.tif", np.ceil(1000*abs(coherence)).astype(np.int32)) 
+    #for i in range(coh_size):
+    #    fname = 'coh/coherence'+str(i)+'.tif'
+    #    tf.imsave(fname, coherence[i,:,:])
+    
+    #np.transpose(coherence.astype(int), (0, 2,1))
+    #tf.imsave('coherence.tif', coherence)
     #np.save("/local/bfrosik/cdi/npar", image)
 
-    #ut_post.write_to_vtk(conf, image, 'test')
+    ut_post.write_to_vtk(conf, image, 'test')
     #disp.save(image)
     return image, errors
     

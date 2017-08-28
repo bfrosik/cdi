@@ -7,15 +7,18 @@
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 
+
 cdef extern from "../include/bridge.hpp":
     cdef cppclass Bridge:
         Bridge() except +
         void StartCalcWithGuess(vector[float], vector[float], vector[float], vector[int], string)
         void StartCalc(vector[float], vector[int], string)
         void StartCalcMultiple(vector[float], vector[int], string, int)
-        vector[float] GetImageR();
-        vector[float] GetImageI();
-        vector[float] GetErrors();
+        vector[double] GetImageR()
+        vector[double] GetImageI()
+        vector[double] GetErrors()
+        vector[float] GetSupportV()
+        vector[double] GetCoherenceV()
 
 
 cdef class PyBridge:
@@ -35,4 +38,9 @@ cdef class PyBridge:
     def get_image_i(self):
         return self.thisptr.GetImageI()
     def get_errors(self):
-return self.thisptr.GetErrors()
+        return self.thisptr.GetErrors()
+    def get_support(self):
+        return self.thisptr.GetSupportV()
+    def get_coherence(self):
+        return self.thisptr.GetCoherenceV()
+

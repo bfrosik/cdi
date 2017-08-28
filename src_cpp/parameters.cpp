@@ -27,6 +27,11 @@ std::map<std::string, int> algorithm_id_map;
 // vector holding algorithm run sequence, where algorithm run is a pair of algorithm and number of iterations
 std::vector<alg_switch> alg_switches;
 
+std::string data_type;
+
+//use the matlab order (fft/ifft in modulus projector)
+bool matlab_order = true;
+
 // amplitude threshold
 d_type amp_threshold;
 bool amp_threshold_fill_zeros;
@@ -97,7 +102,7 @@ Params::Params(const char* config_file, const dim4 data_dim)
         printf("No 'algorithm_sequence' parameter in configuration file.");
     }
 
-    int * support_area = new int[3];
+    std::vector<int> support_area;
     try {
         const Setting& root = cfg.getRoot();
         const Setting &tmp = root["support_area"];
@@ -105,13 +110,13 @@ Params::Params(const char* config_file, const dim4 data_dim)
         {
             try {
                 //support_area[i] = Utils::GetDimension(tmp[i]);
-                support_area[i] = tmp[i];
+                support_area.push_back(tmp[i]);
             }
             catch ( const SettingTypeException &nfex)
             {
                 float ftmp = tmp[i];
                 //support_area[i] = Utils::GetDimension(int(ftmp * data_dim[i]));
-                support_area[i] = int(ftmp * data_dim[i]);
+                support_area.push_back(int(ftmp * data_dim[i]));
             }
         }
     }
@@ -153,7 +158,7 @@ Params::Params(const char* config_file, const dim4 data_dim)
         printf((std::string("'No support_type' parameter in configuration file.")).c_str());
     }
     support_attr = new Support(data_dim, support_area, support_threshold, support_threshold_adjust, support_sigma, support_triggers, support_alg);
-
+    printf("created support\n");
 
     int pcdi_alg = 0;
     try {
@@ -166,25 +171,29 @@ Params::Params(const char* config_file, const dim4 data_dim)
 
     if (pcdi_alg > 0)
     {
-        int * roi = new int[3];
+        std::vector<int>  roi;
         try {
             const Setting& root = cfg.getRoot();
             const Setting &tmp = root["partial_coherence_roi"];
             for (int i = 0; i < tmp.getLength(); ++i)
             {
                 try {
-                    roi[i] = Utils::GetDimension(tmp[i]);
+                    roi.push_back(Utils::GetDimension(tmp[i]));
                 }
                 catch ( const SettingTypeException &nfex)
                 {
                     float ftmp = tmp[i];
-                    roi[i] = Utils::GetDimension(int(ftmp * data_dim[i]));
+                    roi.push_back(Utils::GetDimension(int(ftmp * data_dim[i])));
                 }
             }
         }
         catch ( const SettingNotFoundException &nfex)
         {
-            printf("No 'partial_coherence_roi' parameter in configuration file.");
+            printf("No 'partial_coherence_kernel' parameter in configuration file. Setting the dimensions to roi");
+            int * kernel = new int[3];
+            kernel[0] = roi[0];
+            kernel[1] = roi[1];
+            kernel[2] = roi[2];
         }
         int * kernel = new int[3];
         try {
@@ -216,6 +225,14 @@ Params::Params(const char* config_file, const dim4 data_dim)
         {
             printf((std::string("'No partial_coherence_normalize' parameter in configuration file.")).c_str());
         }
+        bool pcdi_clip = false;
+        try {
+            pcdi_clip = cfg.lookup("partial_coherence_clip");
+        }
+        catch ( const SettingNotFoundException &nfex)
+        {
+            printf((std::string("'No partial_coherence_clip' parameter in configuration file.")).c_str());
+        }
         int pcdi_iter = 1;
         try {
             pcdi_iter = cfg.lookup("partial_coherence_iteration_num");
@@ -226,8 +243,17 @@ Params::Params(const char* config_file, const dim4 data_dim)
         }
         if (partial_coherence_trigger.size() > 0)
         {
-            partial_coherence = new PartialCoherence(this, roi, kernel, partial_coherence_trigger, pcdi_alg, pcdi_normalize, pcdi_iter);
+            partial_coherence = new PartialCoherence(roi, kernel, partial_coherence_trigger, pcdi_alg, pcdi_normalize, pcdi_iter, pcdi_clip);
         }
+    }
+
+    try
+    {
+        avg_iterations = cfg.lookup("avg_iterations");
+    }
+    catch(const SettingNotFoundException &nfex)
+    {
+        printf("No 'avg_iterations' parameter in configuration file.");
     }
 
     try
@@ -302,6 +328,22 @@ Params::Params(const char* config_file, const dim4 data_dim)
         printf("No 'twin' parameter in configuration file.");
     }
 
+    try {
+        matlab_order = cfg.lookup("matlab_order");
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf("No 'matlab_order' parameter in configuration file., setting to true");
+    }
+//    try {
+//        data_type = cfg.lookup("data_type");
+//    }
+//    catch ( const SettingNotFoundException &nfex)
+//    {
+//        printf((std::string("'No data_type' parameter in configuration file. Setting to double.")).c_str());
+//        data_type = "double";
+//    }
+
 }
 
 void Params::BuildAlgorithmMap()
@@ -361,6 +403,11 @@ std::vector<int> Params::ParseTriggers(std::string trigger_name)
     return trigger_iterations;
 }
 
+//std::string Params::GetDataType()
+//{
+//    return data_type;
+//}
+
 int Params::GetNumberIterations()
 {
     return number_iterations;
@@ -374,6 +421,11 @@ d_type Params::GetAmpThreshold()
 bool Params::IsAmpThresholdFillZeros()
 {
     return amp_threshold_fill_zeros;
+}
+
+bool Params::IsMatlabOrder()
+{
+    return matlab_order;
 }
 
 d_type Params::GetPhaseMin()

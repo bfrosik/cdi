@@ -10,7 +10,9 @@
 #define common_h
 
 // defines the type of the data; can be float or double
-typedef float d_type;
+typedef double d_type;
+const int nD = 3;
+
 
 // a pair that defines an algorithm, and an iteration at which the algorithm is replaced by another or the process ends
 struct Alg_switch 

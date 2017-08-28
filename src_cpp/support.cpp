@@ -12,51 +12,58 @@
 #include "util.hpp"
 
 
-Support::Support(const dim4 data_dim, int * support_area, float th, bool threshold_adjust, int sgma, std::vector<int> support_triggers, int alg)
+Support::Support(const dim4 data_dim, std::vector<int> support_area, float th, bool threshold_adjust, int sgma, std::vector<int> support_triggers, int alg)
 {
     threshold = th;
     threshold_adjust = threshold_adjust;
     sigma = sgma;
     triggers = support_triggers;
     algorithm = alg;
-    support_array = constant(0, data_dim, u32);
+    af::array ones = constant(1, Utils::Int2Dim4(support_area), u32);
+    support_array = Utils::PadAround(ones, data_dim, 0);
     
-    // center support
-    int x1 = (data_dim[0] - support_area[0])/2;
-    int x2 = (data_dim[0] + support_area[0])/2;
-    int y1 = (data_dim[1] - support_area[1])/2;
-    int y2 = (data_dim[1] + support_area[1])/2;
-    int z1 = (data_dim[2] - support_area[2])/2;
-    int z2 = (data_dim[2] + support_area[2])/2;
-    support_array( seq(x1, x2), seq(y1, y2), seq(z1, z2) ) = 1;
-    printf("support bounds %i %i %i %i %i %i\n", x1, x2, y1, y2, z1, z2);
+    printf("support sum %i\n", sum<int>(support_array));
 
     if (alg == ALGORITHM_GAUSS)
     {
         int alpha = 1;
-        distribution = InitDistribution(data_dim, sigma, alpha);
-        printf("distribution norm %f\n", sum<d_type>(pow(abs(distribution), 2)));
+        //distribution = InitDistribution(data_dim, sigma, alpha);
+        d_type *sigmas = new d_type[nD];
+        for (int i=0; i<nD; i++)
+        {
+            sigmas[i] = data_dim[i]/(2.0*af::Pi*sigma);
+        } 
+        printf("calculated sigma %f\n", sigmas[0]);
+        distribution = Utils::ReverseGaussDistribution(data_dim, sigmas, alpha);
+        //distribution = Utils::GaussDistribution(data_dim, sigmas, alpha);
+        printf("distribution norm, sum %f %f\n", sum<d_type>(pow(distribution, 2)), sum<d_type>(distribution));
     }
 }
 
 void Support::Update(const af::array ds_image)
 {
-    af::array convag = GaussConvFft(abs(ds_image));
+    printf("updating support\n");
+    af::array convag = GaussConvFft(abs(ds_image).copy());
     d_type max_convag = af::max<d_type>(convag);
     convag = convag/max_convag;
-    support_array = convag >= (threshold * max_convag);
-    // if the support is too small, adjust threshold
-    if (threshold_adjust)
-    {
-        dim4 dims = ds_image.dims();
-        int min_support_norm = .01 * int(dims[0])*int(dims[1])*int(dims[2]);
-        while (sum<d_type>(pow(abs(support_array), 2)) < min_support_norm )
-        {
-            threshold = threshold/10;
-            support_array = convag >= (threshold * max_convag);
-        }
-    }
-    printf("support norm %f\n", sum<d_type>(pow(abs(support_array), 2)));
+    printf("convag sum max %f \n", sum<d_type>(convag));
+    support_array = (convag >= threshold);
+    
+// if the support is too small, adjust threshold
+//    if (threshold_adjust)
+//    {        
+//        dim4 dims = ds_image.dims();
+//        float min_support_norm = .01 * int(dims[0])*int(dims[1])*int(dims[2]);
+//        printf("min support norm %f\n", min_support_norm);
+//        float temp_threshold = threshold;
+//        while (sum<d_type>(pow(abs(support_array), 2)) < min_support_norm )
+//        {
+//            temp_threshold = temp_threshold/10;
+//            support_array = (convag >= (temp_threshold * max_convag));
+//            printf("in while loop support sum %f\n", sum<d_type>(support_array));
+//        }
+//    }
+    printf("support sum %f\n", sum<d_type>(support_array));
 }
 
 std::vector<int> Support::GetTriggers()
@@ -79,61 +86,52 @@ float Support::GetThreshold()
     return threshold;
 }
 
-af::array Support::GetSupportArray()
+af::array Support::GetSupportArray(bool twin)
 {
-    return support_array;
+    if (twin)
+    {
+        dim4 dims = support_array.dims();
+        af::array temp = constant(0, dims, u32);
+        //temp( af::seq(dims[0]/2), af::seq(dims[1]/2), span, span) = 1;
+        temp( span, af::seq((dims[1]+1)/2), af::seq((dims[2]+1)/2), span) = 1;
+        return support_array * temp;
+    }
+    else
+    {
+        return support_array;
+    }
 }
 
-/*
-af::array Support::InitDistribution(const dim4 data_dim, int sgma, int alpha)
-{
-    // calculate multiplier
-    double x_mult = -2 * alpha * pow(af::Pi*sgma/data_dim[0],2);
-    double y_mult = -2 * alpha * pow(af::Pi*sgma/data_dim[1],2);
-    double z_mult = -2 * alpha * pow(af::Pi*sgma/data_dim[2],2);
 
-    af::array x = exp((pow(range(data_dim, 0)-data_dim[0]/2+1, 2) * x_mult));
-    af::array y = exp((pow(range(data_dim, 1)-data_dim[1]/2+1, 2) * y_mult));
-    af::array z = exp((pow(range(data_dim, 2)-data_dim[2]/2+1, 2) * z_mult));
-    return x * y * z;
-}
-
-af::array Support::GaussConvFft(af::array ds_image)
+af::array Support::GaussConvFft(af::array ds_image_abs)
 {
-    d_type image_sum = sum<d_type>(abs(ds_image));
-    af::array ds_amplitudes = fft3(ds_image);
-    af::dim4 dims = ds_amplitudes.dims();
-    af::array ds_amplitudes_centered = Utils::CenterMax(ds_amplitudes);
-    af::array convag = real(ifft3(ds_amplitudes_centered * distribution));
-    //af::array convag = abs(ifft3(ds_amplitudes_centered * distribution));
+    d_type image_sum = sum<d_type>(ds_image_abs);
+    af::array rs_amplitudes = Utils::fft(ds_image_abs);
+    //af::array rs_amplitudes = Utils::ifft(ds_image_abs);
+    af::array amp_dist = rs_amplitudes * distribution;
+    af::array convag = real(Utils::ifft(amp_dist));
+    //af::array convag = real(Utils::fft(amp_dist));
     convag(convag < 0) = 0;
-    convag *= image_sum/sum<d_type>(convag);
-    return convag;
-
-}
-*/
-
-af::array Support::InitDistribution(const dim4 data_dim, int sgma, int alpha)
-{
-    // calculate multiplier
-    double x_mult = -2 * alpha * pow(af::Pi*sgma/data_dim[0],2);
-    double y_mult = -2 * alpha * pow(af::Pi*sgma/data_dim[1],2);
-    double z_mult = -2 * alpha * pow(af::Pi*sgma/data_dim[2],2);
-
-    af::array x = exp(pow(data_dim[0]/2 - abs(range(data_dim, 0)-(data_dim[0]+1)/2), 2) * x_mult);
-    af::array y = exp(pow(data_dim[1]/2 - abs(range(data_dim, 1)-(data_dim[1]+1)/2), 2) * y_mult);
-    af::array z = exp(pow(data_dim[1]/2 - abs(range(data_dim, 2)-(data_dim[2]+1)/2), 2) * z_mult);
-    return x * y * z;
-}
-
-af::array Support::GaussConvFft(af::array ds_image)
-{
-    d_type image_sum = sum<d_type>(abs(ds_image));
-    af::array ds_amplitudes = fft3(ds_image);
-    af::array convag = real(ifft3(ds_amplitudes * distribution));
-    convag(convag < 0) = 0;
-    convag *= image_sum/sum<d_type>(convag);
+    d_type correction = image_sum/sum<d_type>(convag);
+    convag *= correction;
     return convag;
 }
+
+//af::array Support::GaussConvFft(af::array ds_image_abs)
+//{
+// 
+//    d_type image_sum = sum<d_type>(ds_image_abs);
+//    printf("abs image sum %f\n", image_sum);
+//    af::array rs_amplitudes = Utils::fft(ds_image_abs);
+//    dim4 dims = rs_amplitudes.dims();
+//    af::shift(rs_amplitudes, dims[0]/2, dims[1]/2, dims[2]/2, dims[3]/2);
+//    af::array amp_distrib = Utils::ifft(rs_amplitudes * distribution);
+//    af::shift(amp_distrib, dims[0]/2, dims[1]/2, dims[2]/2, dims[3]/2);
+//    af::array convag = real(amp_distrib);
+//    convag(convag < 0) = 0;
+//    d_type correction = image_sum/sum<d_type>(convag);
+//    convag *= correction;
+//    return convag;
+//}
 
 

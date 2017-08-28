@@ -61,7 +61,7 @@ public:
     bool IsApplyTwin();
 
     // Returns the difference of current iteration and iteration of averaging start
-    int GetAveragingIteration();
+    bool IsAveragingIteration();
     
     // Stores the error
     void RecordError(d_type error);

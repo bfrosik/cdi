@@ -48,7 +48,7 @@
 
 """
 Please make sure the installation :ref:`pre-requisite-reference-label` are met.
-This module is a suite of utility mehods.
+This module is a suite of utility methods.
 """
 
 import tifffile as tf

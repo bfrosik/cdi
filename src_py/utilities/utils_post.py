@@ -166,6 +166,7 @@ class DispalyParams:
         Cstar[1] = (2*m.pi/self.lamda)*self.dth*dQdth[1]
         Cstar[2] = (2*m.pi/self.lamda)*self.dth*dQdth[2]
 
+
         denom=np.dot( Astar, np.cross(Bstar,Cstar) )
         A=2*m.pi*np.cross(Bstar,Cstar)/denom
         B=2*m.pi*np.cross(Cstar,Astar)/denom
@@ -186,7 +187,7 @@ def crop_array_center(ar, crop):
         array to be cropped
 
     crop : tuple
-        the dimension of new croped array
+        the dimension of new cropped array
 
     Returns
     -------

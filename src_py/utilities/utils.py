@@ -157,7 +157,7 @@ def get_centered(array, center_shift):
     Parameters
     ----------
     array : array
-        the original array to be centerred
+        the original array to be centered
         
     center_shift : list
         a list defining shift of the center
@@ -165,7 +165,7 @@ def get_centered(array, center_shift):
     Returns
     -------
     array : array
-        the centerred array
+        the centered array
     """
     max_coordinates = list(np.unravel_index(np.argmax(array), array.shape))
     max_coordinates = np.add(max_coordinates, center_shift)
@@ -190,7 +190,7 @@ def get_centered(array, center_shift):
 def zero_pad(array, pad):
     """
     This function adds to each dimension of the array elements defined by pad. The elements are added to the 
-    beginning of array and end by the same number, so the original array is centered. The dimentions of the new array are
+    beginning of array and end by the same number, so the original array is centered. The dimensions of the new array are
     supported by the opencl library. 
     
 
@@ -216,6 +216,21 @@ def zero_pad(array, pad):
     z_dim = get_opencl_dim(dims[2] + 2*pad[2], 2)
     z_pad = (z_dim - dims[2])/2
     return np.lib.pad(array, ((x_pad, x_pad),(y_pad, y_pad), (z_pad, z_pad)), 'constant', constant_values=((0.0,0.0),(0.0,0.0),(0.0,0.0)))
+
+def flip(m, axis):
+    """
+    Copied from numpy 1.12.0.
+
+    """
+    if not hasattr(m, 'ndim'):
+        m = asarray(m)
+    indexer = [slice(None)] * m.ndim
+    try:
+        indexer[axis] = slice(None, None, -1)
+    except IndexError:
+        raise ValueError("axis=%i is invalid for the %i-dimensional input array"
+                         % (axis, m.ndim))
+    return m[tuple(indexer)]
 
 
 

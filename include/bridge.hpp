@@ -16,11 +16,13 @@
 class Bridge
 {
 public:
-void StartCalcWithGuess(std::vector<d_type> data_buffer_r, std::vector<d_type> guess_buffer_r, std::vector<d_type> guess_buffer_i, std::vector<int> dim, const std::string & config);
+void StartCalcWithGuess(std::vector<float> data_buffer_r, std::vector<float> guess_buffer_r, std::vector<float> guess_buffer_i, std::vector<int> dim, const std::string & config);
 
-void StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config);
-void StartCalcMultiple(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config, int nu_threads);
+void StartCalc(std::vector<float> data_buffer_r, std::vector<int> dim, std::string const & config);
+void StartCalcMultiple(std::vector<float> data_buffer_r, std::vector<int> dim, std::string const & config, int nu_threads);
 
+std::vector<float> GetSupportV();
+std::vector<d_type> GetCoherenceV();
 std::vector<d_type> GetImageR();
 std::vector<d_type> GetImageI();
 std::vector<d_type> GetErrors();

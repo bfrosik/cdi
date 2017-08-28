@@ -13,9 +13,11 @@ cdef extern from "../include/bridge.hpp":
         void StartCalcWithGuess(vector[float], vector[float], vector[float], vector[int], string)
         void StartCalc(vector[float], vector[int], string)
         void StartCalcMultiple(vector[float], vector[int], string, int)
-        vector[float] GetImageR();
-        vector[float] GetImageI();
-        vector[float] GetErrors();
+        vector[double] GetImageR()
+        vector[double] GetImageI()
+        vector[double] GetErrors()
+        vector[float] GetSupportV()
+        vector[double] GetCoherenceV()
 
 
 cdef class PyBridge:
@@ -36,4 +38,8 @@ cdef class PyBridge:
         return self.thisptr.GetImageI()
     def get_errors(self):
         return self.thisptr.GetErrors()
+    def get_support(self):
+        return self.thisptr.GetSupportV()
+    def get_coherence(self):
+        return self.thisptr.GetCoherenceV()
 

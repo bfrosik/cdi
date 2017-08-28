@@ -38,7 +38,7 @@ public:
 
     // This method starts calculations. The Manager uses workers to perform the calculations. The parameters define
     // calculations type. 
-    // This method is aimed for multithreaded calculations. User defines number of threads through parameter.
+    // This method is aimed for multi-threaded calculations. User defines number of threads through parameter.
     // This method takes data, for the reconstruction algorithm. To perform the reconstruction the code will generate 
     // the guess parameter. The dim parameter conveys data dimensions, since the data is passed in a c-like buffer.
     // The config parameter defines configuration file.
@@ -53,6 +53,12 @@ public:
     // This method returns calculation results. The returned vector contains error values for each iteration.
     std::vector<d_type> GetErrors();
  
+    // This method returns final support array.
+    std::vector<float> GetSupportV();
+
+    // This method returns final coherence array.
+    std::vector<double> GetCoherenceV();
+
 };
 
 

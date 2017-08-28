@@ -1,6 +1,9 @@
 #ifndef util_hpp
 #define util_hpp
 
+#include "arrayfire.h"
+#include "common.h"
+
 namespace af {
     class array;
 }
@@ -15,17 +18,28 @@ public:
     // This is a helper method. Returns true if the given dimension is supported by opencl library, and false otherwise.
     static bool IsDimCorrect(int dim);
 
-    // This method takes a 3D array, and dimensions of sub-array. It is assumed that the dimensions do not extend array's
-    // dimensions.
-    // The method returns the array with the sub-array centered and preserved values. All other elements of the array
-    // that are beyound the sub-array are zeroed out.
-    static af::array CropCenter(af::array arr, int * roi);
+    // Returns dim4 instance with given dimensions.
+    static af::dim4 Int2Dim4(std::vector<int> dim);
 
-    // This method takes a 3D array, and dimensions of sub-array. It is assumed that the dimensions do not extend array's
+    // This method takes a 3D array, and dimensions of sub-array. It is assumed that the dimensions do not extend array
+    // dimensions.
+    // The method returns a cropped array to the given dimensions with the maximum centered and preserved values. 
+    static af::array CropCenter(af::array arr, af::dim4 roi);
+    
+    static af::array fftshift(af::array arr);
+    static af::array fft(af::array arr);
+    static af::array ifft(af::array arr);
+
+    // This method takes a 3D array, and dimensions of sub-array. It is assumed that the dimensions do not extend array
+    // dimensions.
+    // The method returns the sub-array centered and preserved values.
+    static af::array CropRoi(af::array arr, int * roi);
+
+    // This method takes a 3D array, and dimensions of sub-array. It is assumed that the dimensions do not extend array
     // dimensions.
     // The method returns the array with the sub-array centered and preserved values. All other elements of the array
-    // that are beyound the sub-array are zeroed out.
-    static af::array CropRoi(af::array arr, int * roi);
+    // that are beyond the sub-array are zeroed out.
+    static af::array CropCenterZeroPad(af::array arr, int * roi);
 
     // This method finds the maximum value in the given array arr, places it in the center, shifting circular the content,
     // in all dimensions.
@@ -39,9 +53,15 @@ public:
     // in all dimensions.
     static af::array CenterMax(af::array arr);
 
-    static int * GetMaxIndices(af::array arr);
-    static af::array fftshift(af::array arr);
-    static af::array ifftshift(af::array arr);
+    static void GetMaxIndices(af::array arr, int* indices);
+    static af::array ReverseGaussDistribution(const af::dim4, d_type *, int);
+    static af::array GaussDistribution(const af::dim4, d_type *, int);
+    
+    // pads symmetrically around array arr to the size on new_dims with the constant value pad
+    static af::array PadAround(af::array arr, af::dim4 new_dims, d_type pad);
+    static af::array PadAround(af::array arr, af::dim4 new_dims, int pad);
+
+    static af::array GetRatio(af::array, af::array );
 };
 
 #endif /* util_hpp */
