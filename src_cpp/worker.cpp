@@ -31,7 +31,7 @@ af::array aver;
 int aver_iter;
 std::vector<d_type> aver_v;
 std::vector<float> support_vector;
-std::vector<double> coherence_vector;
+std::vector<d_type> coherence_vector;
 
 
 Reconstruction::Reconstruction(af::array image_data, af::array guess, const char* config_file)
@@ -312,20 +312,19 @@ double Reconstruction::GetNorm(af::array arr)
 
 void Reconstruction::VectorizeSupport()
 {
-    // support is int, but the host does not support int, so convert to float
     af::array a = support->GetSupportArray().as(f32);
     float *support_v = a.host<float>();
     std::vector<float> v(support_v, support_v + a.elements());
     support_vector = v;
     delete [] support_v;
-}
+ }
 
 void Reconstruction::VectorizeCoherence()
 {
     // get the partial coherence as double, so it will work for float and double data types
-    af::array a = partialCoherence->GetKernelArray().as(f64);
-    double *coherence_v = a.host<double>();
-    std::vector<double> v(coherence_v, coherence_v + a.elements());
+    af::array a = partialCoherence->GetKernelArray();
+    d_type *coherence_v = a.host<d_type>();
+    std::vector<d_type> v(coherence_v, coherence_v + a.elements());
     coherence_vector = v;
     delete [] coherence_v;
 }
@@ -350,7 +349,7 @@ std::vector<float> Reconstruction::GetSupportVector()
     return support_vector;
 }
 
-std::vector<double> Reconstruction::GetCoherenceVector()
+std::vector<d_type> Reconstruction::GetCoherenceVector()
 {
     return coherence_vector;
 }

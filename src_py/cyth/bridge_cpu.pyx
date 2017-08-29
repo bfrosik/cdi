@@ -14,11 +14,11 @@ cdef extern from "../include/bridge.hpp":
         void StartCalcWithGuess(vector[float], vector[float], vector[float], vector[int], string)
         void StartCalc(vector[float], vector[int], string)
         void StartCalcMultiple(vector[float], vector[int], string, int)
-        vector[double] GetImageR()
-        vector[double] GetImageI()
-        vector[double] GetErrors()
+        vector[def_type] GetImageR()
+        vector[def_type] GetImageI()
+        vector[def_type] GetErrors()
         vector[float] GetSupportV()
-        vector[double] GetCoherenceV()
+        vector[def_type] GetCoherenceV()
 
 
 cdef class PyBridge:

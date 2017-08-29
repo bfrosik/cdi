@@ -151,7 +151,8 @@ af::array PartialCoherence::fftConvolve(af::array arr, af::array kernel)
         dims_fft_padded[i] = Utils::GetDimension(dims_input[i] + dims_kernel[i] - 1);
     }
     
-    af::array kernel_padded = Utils::PadAround(kernel, dims_input, 0.0);
+    d_type pad = 0;
+    af::array kernel_padded = Utils::PadAround(kernel, dims_input, pad);
     
     af::array coh_padded = real( Utils::ifft( Utils::fft(arr) * Utils::fft(kernel_padded) ) ); 
     return coh_padded;

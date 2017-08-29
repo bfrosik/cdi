@@ -9,8 +9,8 @@
 #ifndef common_h
 #define common_h
 
-// defines the type of the data; can be float or double
-typedef double d_type;
+// defines the type of the data; can be float or double. The def_type will get replaced when running initializing script.
+typedef def_type d_type;
 const int nD = 3;
 
 

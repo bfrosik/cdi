@@ -105,7 +105,7 @@ public:
     af::array GetImage();
     std::vector<d_type>  GetErrors();
     std::vector<float> GetSupportVector();
-    std::vector<double> GetCoherenceVector();
+    std::vector<d_type> GetCoherenceVector();
     std::vector<d_type> GetCoherenceVectorR();
     std::vector<d_type> GetCoherenceVectorI();
 

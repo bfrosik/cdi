@@ -57,7 +57,7 @@ public:
     std::vector<float> GetSupportV();
 
     // This method returns final coherence array.
-    std::vector<double> GetCoherenceV();
+    std::vector<d_type> GetCoherenceV();
 
 };
 

@@ -18,4 +18,12 @@ read cuda_dir
 
 export LD_LIBRARY_PATH=$lc_dir/lib/.libs:/usr/local/lib:$af_dir/lib/:$cuda_dir/lib64:$cuda_dir/nvvm/lib64
 
+echo -n "enter data type (float/double) > "
+read data_type
+
+def='def_type'
+sed -i 's?'$def'?'$data_type'?g' src_py/cyth/*.pyx
+sed -i 's?'$def'?'$data_type'?g' include/common.h
+
+
 python setup.py build_ext --inplace

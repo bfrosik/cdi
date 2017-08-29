@@ -6,7 +6,7 @@
 //  Copyright © 2016 ArrayFire. All rights reserved.
 //
 
-
+#include "typeinfo"
 #include "arrayfire.h"
 #include "worker.hpp"
 #include "manager.hpp"
@@ -49,9 +49,17 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim,
 
 
     af::randomEngine r(AF_RANDOM_ENGINE_MERSENNE, (uint)time(0));
-    //af::array guess = randu(data.dims(), c64, r);
-    af::array guess = randu(data.dims(), c64, r);
-     
+    d_type test1 = 0;
+    double test2 = 0;
+    af::array guess;
+    if (typeid(test1) == typeid(test2))
+    {
+        guess = randu(data.dims(), c64, r);
+    }
+    else
+    {
+        guess = randu(data.dims(), c32, r);
+    }
     Reconstruction reconstruction(data, guess, config.c_str());
     reconstruction.Init();
     rec = &reconstruction;
@@ -94,7 +102,7 @@ std::vector<float> Manager::GetSupportV()
     return rec->GetSupportVector();
 }
 
-std::vector<double> Manager::GetCoherenceV()
+std::vector<d_type> Manager::GetCoherenceV()
 {
     return rec->GetCoherenceVector();
 }
