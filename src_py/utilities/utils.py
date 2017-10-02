@@ -215,15 +215,19 @@ def zero_pad(array, pad):
     y_pad = (y_dim - dims[1])/2
     z_dim = get_opencl_dim(dims[2] + 2*pad[2], 2)
     z_pad = (z_dim - dims[2])/2
-    return np.lib.pad(array, ((x_pad, x_pad),(y_pad, y_pad), (z_pad, z_pad)), 'constant', constant_values=((0.0,0.0),(0.0,0.0),(0.0,0.0)))
+    return np.lib.pad(array, ((x_pad, x_pad),(y_pad, y_pad), (z_pad, z_pad)), 'constant', constant_values=((0.0,0.0),(0.0,0.0),(0.0,0.0))).copy()
+
+def crop_center(arr, new_size):
+    size = arr.shape
+    return arr[ (size[0]-new_size[0])/2 : (size[0]-new_size[0])/2 + new_size[0], (size[1]-new_size[1])/2 : (size[1]-new_size[1])/2 + new_size[1], (size[2]-new_size[2])/2 : (size[2]-new_size[2])/2 + new_size[2]]
 
 def flip(m, axis):
     """
     Copied from numpy 1.12.0.
 
     """
-    if not hasattr(m, 'ndim'):
-        m = asarray(m)
+    #if not hasattr(m, 'ndim'):
+    #    m = asarray(m)
     indexer = [slice(None)] * m.ndim
     try:
         indexer[axis] = slice(None, None, -1)
@@ -231,6 +235,8 @@ def flip(m, axis):
         raise ValueError("axis=%i is invalid for the %i-dimensional input array"
                          % (axis, m.ndim))
     return m[tuple(indexer)]
+
+
 
 
 

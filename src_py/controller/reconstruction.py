@@ -57,11 +57,13 @@ visualization.
 
 import numpy as np
 import src_py.utilities.utils as ut
-import src_py.utilities.utils_post as ut_post
+#import src_py.utilities.utils_post as ut_post
+import src_py.utilities.disp as ut_post
 #import src_py.utilities.CXDVizNX as disp
 import pylibconfig2 as cfg
 import os
 import scipy.fftpack as sf
+import scipy.io as sio
 #import src_py.cyth.bridge_cpu as bridge_cpu
 import src_py.cyth.bridge_opencl as bridge_opencl
 import tifffile as tf
@@ -230,6 +232,8 @@ def do_reconstruction(proc, data, conf):
     elif proc == 'opencl': 
         bridge = bridge_opencl
 
+    data = np.swapaxes(data,1,2)
+
     dims1 = data.shape
     dims = (dims1[1], dims1[2], dims1[0])
     print 'data norm in reconstruction',  sum(sum(sum(abs(data)**2)))
@@ -250,6 +254,18 @@ def do_reconstruction(proc, data, conf):
     image_r = np.reshape(image_r, dims)
     image_i = np.reshape(image_i, dims)
     support = np.reshape(support, dims)
+
+    #image = image_r + image_i*1j
+    print 'imager in python 0'
+    print image_r[0:6,0:6,0:6]
+    print 'imager in python middle'
+    ir = image_r*1000
+    print ir[63:67,63:67,63:67]
+    
+
+    image_r = np.swapaxes(image_r, 2,0)
+    image_i = np.swapaxes(image_i, 2,0)
+    support = np.swapaxes(support, 2,0)
 
     #print coherence.shape
     return image_r, image_i, er, support, coherence
@@ -309,6 +325,13 @@ def reconstruction(proc, filename, conf):
     #ut.display1(image_abs, phases)
     #ut.display(image_abs, phases)
     image = image_r + 1j*image_i
+    # save image and support in .mat files
+    image_dict = {}
+    support_dict = {}
+    image_dict['pnm'] = image
+    sio.savemat('/local/bfrosik/test/pnm.mat', image_dict)
+    support_dict['support'] = support
+    sio.savemat('/local/bfrosik/test/support.mat', support_dict)
     
     from tvtk.api import tvtk, write_data
     id=tvtk.ImageData()
@@ -359,8 +382,8 @@ def reconstruction(proc, filename, conf):
     #tf.imsave('coherence.tif', coherence)
     #np.save("/local/bfrosik/cdi/npar", image)
 
-    ut_post.write_to_vtk(conf, image, 'test')
-    #disp.save(image)
-    return image, errors
+    #ut_post.save_results_vtk(conf, image, support)
+    print 'image, support shape', image.shape, support.shape
+    #return image, None
     
 

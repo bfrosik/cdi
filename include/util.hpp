@@ -27,6 +27,7 @@ public:
     static af::array CropCenter(af::array arr, af::dim4 roi);
     
     static af::array fftshift(af::array arr);
+    static af::array ifftshift(af::array arr);
     static af::array fft(af::array arr);
     static af::array ifft(af::array arr);
 

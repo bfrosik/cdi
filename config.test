@@ -4,12 +4,10 @@ binning = [2,2,2];
 center_shift = [0,0,0];
 zero_pad = [0,0,0]
 
-data_type = "double";
-// 
 //algorithm_sequence = ((3, ("ER",2), ("HIO", 2), ("ER", 2)), (2, ("ER",3), ("HIO",3)))
-//algorithm_sequence = ((1, ("ER",2)))
-algorithm_sequence = ((2, ("ER",15), ("HIO", 10), ("ER", 5)))
-matlab_order = false;
+//algorithm_sequence = ((1, ("ER",6)))
+algorithm_sequence = ((1, ("ER",19), ("HIO", 10), ("ER", 10)))
+matlab_order = true;
 
 // twin defines at which iteration to cut half of the array(i.e. multiply by 0s), it is done in ER/HIO
 // if negative, no action
@@ -25,7 +23,7 @@ beta = .9;
 // support
 // trigger list contains starting iteration, step, and ending iteration (if missing, run to the end)
 //support_triggers = ((5, 5, 300), (1, 2));
-support_triggers = ((5, 5, 300));
+support_triggers = ((4, 5, 300));
 support_type = "GAUSS";
 support_threshold = 0.1;
 support_threshold_adjust = false;
@@ -49,7 +47,7 @@ partial_coherence_clip = false;
 
 regularized_amp = "GAUSS"
 
-avg_iterations = 10;
+//avg_iterations = 5;
 
 // wavelength (Roos has it 1.39
 lamda = .13933;
@@ -60,10 +58,11 @@ gamma = 14.0;
 // camera distance (m) (Ross has it  0.938)                    %
 arm=0.6350;
 // angular step size (Ross has it 0.000349065850399)
-dth=0.01;
+//dth=0.01;
+dth=0.000174532925199;
 
 // dx, dy, dz ???
-coordinates = [0.003125, 0.00438596491, 0.015151515];
+//coordinates = [0.003125, 0.00438596491, 0.015151515];
 
 // detector pixel sixe
 pixel = [55.0e-6, 55.0e-6];
@@ -78,4 +77,7 @@ save_two_files = False;
 recenter_rec = 1;
 det_px = 55.0e-6;
 dtilt=0.0;
+
+
+
 

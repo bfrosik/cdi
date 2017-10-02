@@ -32,18 +32,18 @@ Support::Support(const dim4 data_dim, std::vector<int> support_area, float th, b
         for (int i=0; i<nD; i++)
         {
             sigmas[i] = data_dim[i]/(2.0*af::Pi*sigma);
+            //sigmas[i] = sigma;
         } 
         printf("calculated sigma %f\n", sigmas[0]);
-        distribution = Utils::ReverseGaussDistribution(data_dim, sigmas, alpha);
-        //distribution = Utils::GaussDistribution(data_dim, sigmas, alpha);
-        printf("distribution norm, sum %f %f\n", sum<d_type>(pow(distribution, 2)), sum<d_type>(distribution));
+        //distribution = Utils::ReverseGaussDistribution(data_dim, sigmas, alpha);
+        distribution = Utils::GaussDistribution(data_dim, sigmas, alpha);
     }
 }
 
-void Support::Update(const af::array ds_image)
+void Support::Update(const af::array ds_image_abs)
 {
     printf("updating support\n");
-    af::array convag = GaussConvFft(abs(ds_image).copy());
+    af::array convag = GaussConvFft(ds_image_abs);
     d_type max_convag = af::max<d_type>(convag);
     convag = convag/max_convag;
     printf("convag sum max %f \n", sum<d_type>(convag));
@@ -92,8 +92,7 @@ af::array Support::GetSupportArray(bool twin)
     {
         dim4 dims = support_array.dims();
         af::array temp = constant(0, dims, u32);
-        //temp( af::seq(dims[0]/2), af::seq(dims[1]/2), span, span) = 1;
-        temp( span, af::seq((dims[1]+1)/2), af::seq((dims[2]+1)/2), span) = 1;
+        temp( af::seq(0, dims[0]/2-1), af::seq(0, dims[1]/2-1), span, span) = 1;
         return support_array * temp;
     }
     else
@@ -102,15 +101,18 @@ af::array Support::GetSupportArray(bool twin)
     }
 }
 
-
 af::array Support::GaussConvFft(af::array ds_image_abs)
 {
     d_type image_sum = sum<d_type>(ds_image_abs);
-    af::array rs_amplitudes = Utils::fft(ds_image_abs);
-    //af::array rs_amplitudes = Utils::ifft(ds_image_abs);
-    af::array amp_dist = rs_amplitudes * distribution;
-    af::array convag = real(Utils::ifft(amp_dist));
-    //af::array convag = real(Utils::fft(amp_dist));
+    af::array shifted = Utils::ifftshift(ds_image_abs);
+    af::array rs_amplitudes = Utils::fft(shifted);
+    af::array rs_amplitudes_cent = Utils::ifftshift(rs_amplitudes);
+    
+    af::array amp_dist = rs_amplitudes_cent * distribution;
+    shifted = Utils::ifftshift(amp_dist);
+    af::array convag_compl = Utils::ifft(shifted);
+    af::array convag = (Utils::ifftshift(convag_compl));
+    convag = real(convag);
     convag(convag < 0) = 0;
     d_type correction = image_sum/sum<d_type>(convag);
     convag *= correction;

@@ -25,7 +25,6 @@ af::array data;   // this is abs
 int num_points;
 d_type norm_data;
 int current_iteration;
-
 af::array ds_image;
 af::array aver;
 int aver_iter;
@@ -36,7 +35,9 @@ std::vector<d_type> coherence_vector;
 
 Reconstruction::Reconstruction(af::array image_data, af::array guess, const char* config_file)
 {
-    data = image_data;
+    af::dim4 dims = image_data.dims();
+    data = Utils::fftshift(image_data);
+    //data = image_data;
     ds_image = guess;
     params = new Params(config_file, data.dims());
     state = new State(params);
@@ -62,10 +63,10 @@ void Reconstruction::Init()
     // multiply the rs_amplitudes by max element of data array and the norm
     d_type max_data = af::max<d_type>(data);
     ds_image *= max_data * GetNorm(ds_image);
-
     
-    //ds_image  = complex(support->GetSupportArray().copy().as((af_dtype) dtype_traits<d_type>::ctype), 0.0).as(c64);
-    //ds_image  = support->GetSupportArray().copy().as(f64);
+    af::array ones = constant(1, dim4(64,64,64), u32);
+    af::array temp = Utils::PadAround(ones, data.dims(), 0);
+    ds_image  = complex(temp.as((af_dtype) dtype_traits<d_type>::ctype), 0.0).as(c64);
     printf("initial image norm %f\n", GetNorm(ds_image));
 
 }
@@ -77,7 +78,7 @@ void Reconstruction::Iterate()
     {
         if (state->IsUpdateSupport())
         {
-            support->Update(ds_image);
+            support->Update(abs(ds_image).copy());
         }
 
         current_iteration = state->GetCurrentIteration();
@@ -86,12 +87,14 @@ void Reconstruction::Iterate()
 
         Average();
     }
-//    if (aver_iter > 0)
-//    {
-//        printf("final averaging\n");
-//        af::array ratio = Utils::GetRatio(aver, abs(ds_image));
-//        ds_image *= ratio/aver_iter;                    
-//    }
+    printf("final image\n");
+
+    if (aver_iter > 0)
+    {
+        printf("final averaging\n");
+        af::array ratio = Utils::GetRatio(aver, abs(ds_image));
+        ds_image *= ratio/aver_iter;                    
+    }
     if (aver_v.size() > 0)
     {
         printf("final averaging\n");
@@ -112,17 +115,18 @@ af::array Reconstruction::ModulusProjection()
 {
     printf("------------------current iteration %i -----------------\n", current_iteration);
     af::array rs_amplitudes;
-    
+    dim4 dims = data.dims();
     if (params->IsMatlabOrder())
     {
-        rs_amplitudes = Utils::fft(ds_image);
+        af::array shifted = shift(ds_image, dims[0]/2, dims[1]/2, dims[2]/2);
+        rs_amplitudes = Utils::ifftshift(Utils::fft(Utils::ifftshift(ds_image)));
     }
     else
     {
         rs_amplitudes = Utils::ifft(ds_image)*num_points;
     }
 
-    dim4 dims = rs_amplitudes.dims();
+    
     printf("data norm, ampl norm before ratio %fl %fl\n", GetNorm(data), GetNorm(rs_amplitudes));
     //state->RecordError( GetNorm(abs(rs_amplitudes)(rs_amplitudes > 0)-data(rs_amplitudes > 0))/norm_data );
     
@@ -130,25 +134,16 @@ af::array Reconstruction::ModulusProjection()
     {
         printf("applying ratio\n");
         //rs_amplitudes = data * exp(af::complex(0, af::arg(rs_amplitudes)));
-//        af::array abs_ampl = abs(rs_amplitudes).copy();
-//        abs_ampl(abs_ampl == 0) =1;
-//        af::array ratio = data/abs_ampl;
-//        printf("ratio norm %f\n", GetNorm(ratio));
-        af::array ratio = Utils::GetRatio(data, abs(rs_amplitudes));
+        af::array ratio = Utils::GetRatio(data, abs(rs_amplitudes));        
         rs_amplitudes *= ratio;
     }  
     else
     {
         if (current_iteration >= partialCoherence->GetTriggers()[0])
         {
-            printf("coherence using lucy\n");
-            //af::array conv_amplitudes = abs(partialCoherence->ApplyPartialCoherence(abs(rs_amplitudes), current_iteration));
-            
+            printf("coherence using lucy\n");            
             af::array abs_amplitudes = abs(rs_amplitudes).copy();
             af::array converged = partialCoherence->ApplyPartialCoherence(abs_amplitudes, current_iteration);
-//            af::array conv_amplitudes = abs(converged);
-//            conv_amplitudes(abs_amplitudes == 0) = 1;
-//            af::array ratio = data/conv_amplitudes;
             af::array ratio = Utils::GetRatio(data, abs(converged));
             printf("ratio norm %f\n", GetNorm(ratio));
 
@@ -158,11 +153,6 @@ af::array Reconstruction::ModulusProjection()
         {
             printf("applying ratio\n");
             //rs_amplitudes = data * exp(af::complex(0, af::arg(rs_amplitudes)));
-            
-//            af::array abs_amplitudes = abs(rs_amplitudes).copy();
-//            abs_amplitudes(abs_amplitudes == 0) = 1;
-//            af::array ratio = data/abs_amplitudes;
-//            printf("ratio norm %f\n", GetNorm(ratio));
             af::array ratio = Utils::GetRatio(data, abs(rs_amplitudes));
             rs_amplitudes *= ratio;
         }
@@ -173,7 +163,9 @@ af::array Reconstruction::ModulusProjection()
     
     if (params->IsMatlabOrder())
     {
-        return Utils::ifft(rs_amplitudes);
+        af::array temp = Utils::ifftshift((Utils::ifft(Utils::ifftshift(rs_amplitudes))));
+        //return Utils::ifft(rs_amplitudes);
+        return temp;
     }
     else
     {
@@ -206,18 +198,6 @@ void Reconstruction::ModulusConstrainErNorm(af::array ds_image_raw)
     ds_image *= ratio;
 }
 
-//void Reconstruction::ModulusConstrainHio(af::array ds_image_raw)
-//{
-//    printf("hio\n");
-//    printf("image norm before support %fl\n",GetNorm(ds_image_raw));
-//    //ds_image(support->GetSupportArray(state->IsApplyTwin()) == 0) = (ds_image - ds_image_raw * params->GetBeta())(support->GetSupportArray(state->IsApplyTwin()) == 0);
-//    af::array support_array = support->GetSupportArray(state->IsApplyTwin());
-//    af::array adjusted_calc_image = ds_image_raw * params->GetBeta();
-//    af::array combined_image = ds_image - adjusted_calc_image;
-//    ds_image(support_array == 0) = combined_image(support_array == 0);
-//    printf("image norm after support %fl\n",GetNorm(ds_image));
-//}
-
 void Reconstruction::ModulusConstrainHio(af::array ds_image_raw)
 {
     
@@ -235,8 +215,6 @@ void Reconstruction::ModulusConstrainHio(af::array ds_image_raw)
 void Reconstruction::ModulusConstrainHioNorm(af::array ds_image_raw)
 {
     printf("hio_norm\n");
-    // find phase
-    //af_print(ds_image(seq(0,5), seq(0,5), seq(0,5)));
     d_type norm_ds_image = GetNorm(ds_image);
     printf("norm_ds_image %fl\n", norm_ds_image);
 
@@ -262,7 +240,7 @@ void Reconstruction::Average()
     if (state->IsAveragingIteration())
     {
         printf("average\n");
-        //int aver_num = params->GetAvgIterations();
+        int aver_num = params->GetAvgIterations();
         af::array abs_image = abs(ds_image).copy();
         d_type *image_v = abs_image.host<d_type>();
         std::vector<d_type> v(image_v, image_v + ds_image.elements());
@@ -363,5 +341,4 @@ std::vector<d_type> Reconstruction::GetCoherenceVectorI()
 {
     return coherence_vector;
 }
-
 

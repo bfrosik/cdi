@@ -21,6 +21,7 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> g
     af::array real_d(af_dims, &data_buffer_r[0]);
     //saving abs(data)
     af::array data = abs(real_d);
+    
 
     af::array real_g(af_dims, &guess_buffer_r[0]);
     af::array imag_g(af_dims, &guess_buffer_i[0]);
@@ -72,7 +73,7 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim,
 
 std::vector<d_type> Manager::GetImageR()
 {
-    af::array image = af::transpose(rec->GetImage());
+    af::array image = rec->GetImage();
     
     d_type *image_r = real(image).host<d_type>();
     std::vector<d_type> v(image_r, image_r + image.elements());
@@ -83,7 +84,7 @@ std::vector<d_type> Manager::GetImageR()
 
 std::vector<d_type> Manager::GetImageI()
 {
-    af::array image = af::transpose(rec->GetImage());
+    af::array image = rec->GetImage();
 
     d_type *image_i = imag(image).host<d_type>();
     std::vector<d_type> v(image_i, image_i + image.elements());
