@@ -57,9 +57,9 @@ visualization.
 
 import numpy as np
 import src_py.utilities.utils as ut
-#import src_py.utilities.utils_post as ut_post
-import src_py.utilities.disp as ut_post
-#import src_py.utilities.CXDVizNX as disp
+import src_py.utilities.utils_post as ut_post
+#import src_py.utilities.disp as ut_post
+import src_py.utilities.CXDVizNX as CX
 import pylibconfig2 as cfg
 import os
 import scipy.fftpack as sf
@@ -239,15 +239,13 @@ def do_reconstruction(proc, data, conf):
     print 'data norm in reconstruction',  sum(sum(sum(abs(data)**2)))
     fast_module = bridge.PyBridge()
 
-    #data_l = np.ravel(data, order='C').tolist()
     data_l = data.flatten().tolist()
-    fast_module.start_calc(data_l, dims, conf)
+    fast_module.start_calc(data_l, dims1, conf)
     er = fast_module.get_errors()
     image_r = np.asarray(fast_module.get_image_r())
     image_i = np.asarray(fast_module.get_image_i())
     support = np.asarray(fast_module.get_support())
     coherence = np.asarray(fast_module.get_coherence())
-    #coherence = 0
 
     dims = dims1
 
@@ -255,21 +253,21 @@ def do_reconstruction(proc, data, conf):
     image_i = np.reshape(image_i, dims)
     support = np.reshape(support, dims)
 
-    #image = image_r + image_i*1j
-    print 'imager in python 0'
-    print image_r[0:6,0:6,0:6]
-    print 'imager in python middle'
-    ir = image_r*1000
-    print ir[63:67,63:67,63:67]
-    
-
     image_r = np.swapaxes(image_r, 2,0)
     image_i = np.swapaxes(image_i, 2,0)
     support = np.swapaxes(support, 2,0)
 
-    #print coherence.shape
     return image_r, image_i, er, support, coherence
-    
+
+
+def write_simple(arr, filename):
+    from tvtk.api import tvtk, write_data
+
+    id=tvtk.ImageData()
+    id.point_data.scalars=abs(arr.ravel(order='F'))
+    id.dimensions=arr.shape
+    write_data(id, filename)
+
 def reconstruction(proc, filename, conf):
     """
     This function is called by the user. It checks whether the data is valid and configuration file exists.
@@ -307,23 +305,11 @@ def reconstruction(proc, filename, conf):
         return None, None
 
     data = prepare_data2(config_map, data)
-
+    dims = data.shape
     print 'data size', data.shape
 
     image_r, image_i, errors, support, coherence = do_reconstruction(proc, data, conf)
 
-    dims = image_r.shape
-    print ('dims', dims)
-
-    image_abs = np.absolute(image_r + image_i*1j)
-
-    max_amp = np.amax(image_abs)
-    print ('max', max_amp)
-    #image_abs = image_abs/max_amp
-    phases = np.arctan2(image_i, image_r)
-    #ut.write_image_data(image_abs, phases)
-    #ut.display1(image_abs, phases)
-    #ut.display(image_abs, phases)
     image = image_r + 1j*image_i
     # save image and support in .mat files
     image_dict = {}
@@ -332,58 +318,39 @@ def reconstruction(proc, filename, conf):
     sio.savemat('/local/bfrosik/test/pnm.mat', image_dict)
     support_dict['support'] = support
     sio.savemat('/local/bfrosik/test/support.mat', support_dict)
-    
-    from tvtk.api import tvtk, write_data
-    id=tvtk.ImageData()
-    id.point_data.scalars=abs(image.ravel(order='F'))
-    id.dimensions=image.shape
-    write_data(id, "simple.vtk")
 
-    id1=tvtk.ImageData()
-    id1.point_data.scalars=support.ravel(order='F')
-    id1.dimensions=support.shape
-    write_data(id1, "support.vtk")
+    write_simple(image, "simple_amp_ph.vtk")
+    write_simple(support, "simple_support.vtk")
 
-    coh_size = int(round(coherence.shape[0]**(1./3.)))
-    coh_dims = (coh_size, coh_size, coh_size,)
-    print 'coherence dims', coh_dims
-    
-    #coherence = np.reshape(coherence, (33,33,33,)).astype(int)
-    coherence = np.reshape(coherence, coh_dims)
-    x_pad_pre = (dims[0] - coh_size)/2
-    x_pad_post = dims[0] - x_pad_pre - coh_size
-    y_pad_pre = (dims[1] - coh_size)/2
-    y_pad_post = dims[1] - x_pad_pre - coh_size
-    z_pad_pre = (dims[2] - coh_size)/2
-    z_pad_post = dims[2] - x_pad_pre - coh_size
-    coh = np.lib.pad(coherence, ((x_pad_pre, x_pad_post),(y_pad_pre, y_pad_post), (z_pad_pre, z_pad_post)), 'constant', constant_values=((0.0,0.0),(0.0,0.0),(0.0,0.0)))
-    coh = ut.flip(coh,0)
-    coh = ut.flip(coh,1)
-    coh = ut.flip(coh,2)
-    fft_coh = sf.ifftn(np.fft.fftshift(coh))
-    import numpy
-    np.fft.fftshift(fft_coh)
-    
+    ut_post.write_to_vtk(conf, image, 'ut_post_test')
+    CX.save_CX(conf, image, 'cx_test')
+    #CX.save_trans_CX(conf, image, support, 'cx_xfer_test')
+    # ut_post.save_results_vtk(conf, image, support)
+    #
 
-    #dims = support.shape
-    id2=tvtk.ImageData()
-    #id2.point_data.scalars=abs(fft_coh.ravel(order='F'))
-    id2.point_data.scalars=coherence.ravel(order='F')
-    # assuming coherence is a cube
-    id2.dimensions=coh_dims
-    write_data(id2, "coherence.vtk")
+    if coherence is not None and len(coherence.shape) > 1:
+        coh_size = int(round(coherence.shape[0]**(1./3.)))
+        coh_dims = (coh_size, coh_size, coh_size,)
+        coherence = np.reshape(coherence, coh_dims)
+        coherence = np.swapaxes(coherence, 2, 0)
+        write_simple(coherence, "simple_coh.vtk")
+        # x_pad_pre = (dims[0] - coh_size)/2
+        # x_pad_post = dims[0] - x_pad_pre - coh_size
+        # y_pad_pre = (dims[1] - coh_size)/2
+        # y_pad_post = dims[1] - x_pad_pre - coh_size
+        # z_pad_pre = (dims[2] - coh_size)/2
+        # z_pad_post = dims[2] - x_pad_pre - coh_size
+        # coh = np.lib.pad(coherence, ((x_pad_pre, x_pad_post),(y_pad_pre, y_pad_post), (z_pad_pre, z_pad_post)), 'constant', constant_values=((0.0,0.0),(0.0,0.0),(0.0,0.0)))
+        # coh = ut.flip(coh,0)
+        # coh = ut.flip(coh,1)
+        # coh = ut.flip(coh,2)
+        # fft_coh = sf.ifftn(np.fft.fftshift(coh))
+        # np.fft.fftshift(fft_coh)
+        tf.imsave("coherence.tif", np.ceil(1000*abs(coherence)).astype(np.int32))
 
-    tf.imsave("coherence.tif", np.ceil(1000*abs(coherence)).astype(np.int32)) 
-    #for i in range(coh_size):
-    #    fname = 'coh/coherence'+str(i)+'.tif'
-    #    tf.imsave(fname, coherence[i,:,:])
-    
-    #np.transpose(coherence.astype(int), (0, 2,1))
-    #tf.imsave('coherence.tif', coherence)
-    #np.save("/local/bfrosik/cdi/npar", image)
 
-    #ut_post.save_results_vtk(conf, image, support)
     print 'image, support shape', image.shape, support.shape
-    #return image, None
+
+
     
 
