@@ -57,8 +57,6 @@ visualization.
 
 import numpy as np
 import src_py.utilities.utils as ut
-import src_py.utilities.utils_post as ut_post
-#import src_py.utilities.disp as ut_post
 import src_py.utilities.CXDVizNX as CX
 import pylibconfig2 as cfg
 import os
@@ -165,7 +163,6 @@ def prepare_data(config_map, data):
 
     # shift data
     data=sf.fftshift(data)
-
     return data
     
 def prepare_data1(config_map, data):
@@ -176,6 +173,12 @@ def prepare_data1(config_map, data):
     cdata=rdata[76-32:76+32,:,:]
     dims=cdata.shape
     print "dims/2", np.array(dims)/2.
+    # do binning
+    try:
+        binsizes = config_map.binning
+        cdata = ut.binning(cdata, binsizes)
+    except AttributeError:
+        pass
     data=np.sqrt(cdata)
 
 #Sqrt and center the brightest pixel in the other two dims
@@ -234,8 +237,8 @@ def do_reconstruction(proc, data, conf):
 
     data = np.swapaxes(data,1,2)
 
-    dims1 = data.shape
-    dims = (dims1[1], dims1[2], dims1[0])
+    dims = data.shape
+    dims1 = (dims[2], dims[1], dims[0])
     print 'data norm in reconstruction',  sum(sum(sum(abs(data)**2)))
     fast_module = bridge.PyBridge()
 
@@ -246,8 +249,6 @@ def do_reconstruction(proc, data, conf):
     image_i = np.asarray(fast_module.get_image_i())
     support = np.asarray(fast_module.get_support())
     coherence = np.asarray(fast_module.get_coherence())
-
-    dims = dims1
 
     image_r = np.reshape(image_r, dims)
     image_i = np.reshape(image_i, dims)
@@ -305,6 +306,8 @@ def reconstruction(proc, filename, conf):
         return None, None
 
     data = prepare_data2(config_map, data)
+    tf.imsave("data.tif", np.ceil(100 * data).astype(np.int32))
+    write_simple(data, "simple_data.vtk")
     dims = data.shape
     print 'data size', data.shape
 
@@ -319,21 +322,23 @@ def reconstruction(proc, filename, conf):
     support_dict['support'] = support
     sio.savemat('/local/bfrosik/test/support.mat', support_dict)
 
-    write_simple(image, "simple_amp_ph.vtk")
-    write_simple(support, "simple_support.vtk")
+    try:
+        prefix = config_map.res
+    except AttributeError:
+        prefix = ''
+    write_simple(image, prefix + "simple_amp_ph.vtk")
+    write_simple(support, prefix + "simple_support.vtk")
 
-    ut_post.write_to_vtk(conf, image, 'ut_post_test')
-    CX.save_CX(conf, image, 'cx_test')
-    #CX.save_trans_CX(conf, image, support, 'cx_xfer_test')
-    # ut_post.save_results_vtk(conf, image, support)
-    #
+    CX.save_CX(conf, image, prefix + 'img_cx_test')
+    CX.save_CX(conf, support, prefix + 'support_cx_test')
+    CX.save_trans_CX(conf, image, support, prefix + 'cx_xfer_test')
 
     if coherence is not None and len(coherence.shape) > 1:
         coh_size = int(round(coherence.shape[0]**(1./3.)))
         coh_dims = (coh_size, coh_size, coh_size,)
         coherence = np.reshape(coherence, coh_dims)
         coherence = np.swapaxes(coherence, 2, 0)
-        write_simple(coherence, "simple_coh.vtk")
+        write_simple(coherence, prefix + "simple_coh.vtk")
         # x_pad_pre = (dims[0] - coh_size)/2
         # x_pad_post = dims[0] - x_pad_pre - coh_size
         # y_pad_pre = (dims[1] - coh_size)/2

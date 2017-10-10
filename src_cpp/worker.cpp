@@ -64,8 +64,9 @@ void Reconstruction::Init()
     d_type max_data = af::max<d_type>(data);
     ds_image *= max_data * GetNorm(ds_image);
     
-    af::array ones = constant(1, dim4(64,64,64), u32);
-    af::array temp = Utils::PadAround(ones, data.dims(), 0);
+    //af::array ones = constant(1, dim4(32,64,32), u32);
+    //af::array temp = Utils::PadAround(ones, data.dims(), 0);
+    af::array temp = support->GetSupportArray();
     ds_image  = complex(temp.as((af_dtype) dtype_traits<d_type>::ctype), 0.0).as(c64);
     printf("initial image norm %f\n", GetNorm(ds_image));
 
