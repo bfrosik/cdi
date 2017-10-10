@@ -1,6 +1,6 @@
 // parameters for data preparation
 aliens = ((170,220,112,195,245,123), (50,96,10,60,110,20))
-binning = [2,2,2];
+binning = [1,2,2];
 center_shift = [0,0,0];
 zero_pad = [0,0,0]
 
@@ -28,7 +28,7 @@ support_type = "GAUSS";
 support_threshold = 0.1;
 support_threshold_adjust = false;
 support_sigma = 1;
-support_area = [64,64,64];
+support_area = [.5,.5,.5];
 //support_area = [15, 15, 15];
 
 roi = [32,32,32];
@@ -61,9 +61,6 @@ arm=0.6350;
 //dth=0.01;
 dth=0.000174532925199;
 
-// dx, dy, dz ???
-//coordinates = [0.003125, 0.00438596491, 0.015151515];
-
 // detector pixel sixe
 pixel = [55.0e-6, 55.0e-6];
 
@@ -71,7 +68,10 @@ pixel = [55.0e-6, 55.0e-6];
 save_two_files = False;
 
 // size to crop the image array
-//crop = [60,144,120]
+crop = [60,144,120]
+
+// the dir+prefix of results vtk files
+res = "vtk/test_"
 
 // not used in Ross code
 recenter_rec = 1;
