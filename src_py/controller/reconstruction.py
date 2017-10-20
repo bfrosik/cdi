@@ -199,7 +199,7 @@ def prepare_data2(config_map, data):
     data=np.roll(data, 1, 0)
     data=np.roll(data, 1, 1)
     data=np.roll(data, 1, 2)
-    data=np.fft.fftshift(data)
+#    data=np.fft.fftshift(data)
     print 'data at 0 and max', data[0,0,0], data.max()
     return data
 
@@ -305,7 +305,7 @@ def reconstruction(proc, filename, conf):
         print ("can't read configuration file")
         return None, None
 
-    data = prepare_data2(config_map, data)
+    data = prepare_data(config_map, data)
     tf.imsave("data.tif", np.ceil(100 * data).astype(np.int32))
     write_simple(data, "simple_data.vtk")
     dims = data.shape
@@ -329,9 +329,7 @@ def reconstruction(proc, filename, conf):
     write_simple(image, prefix + "simple_amp_ph.vtk")
     write_simple(support, prefix + "simple_support.vtk")
 
-    CX.save_CX(conf, image, prefix + 'img_cx_test')
-    CX.save_CX(conf, support, prefix + 'support_cx_test')
-    CX.save_trans_CX(conf, image, support, prefix + 'cx_xfer_test')
+    CX.save_CX(conf, image, support, prefix + 'cx_xfer_test')
 
     if coherence is not None and len(coherence.shape) > 1:
         coh_size = int(round(coherence.shape[0]**(1./3.)))

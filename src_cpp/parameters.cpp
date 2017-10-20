@@ -55,6 +55,8 @@ int number_iterations;
 int twin;
 
 int regularized_amp = REGULARIZED_AMPLITUDE_NONE;
+int gc = -1;
+
 
 
 Params::Params(const char* config_file, const dim4 data_dim)
@@ -100,6 +102,14 @@ Params::Params(const char* config_file, const dim4 data_dim)
     catch ( const SettingNotFoundException &nfex)
     {
         printf("No 'algorithm_sequence' parameter in configuration file.");
+    }
+
+    try {
+        gc = cfg.lookup("gc");
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf("No 'gcd' parameter in configuration file.");
     }
 
     std::vector<int> support_area;
@@ -471,6 +481,11 @@ PartialCoherence * Params::GetPartialCoherence()
 std::vector<alg_switch> Params::GetAlgSwitches()
 {
     return alg_switches;
+}
+
+int Params::GetGC()
+{
+    return gc;
 }
 
 

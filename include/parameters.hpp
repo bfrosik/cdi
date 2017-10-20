@@ -93,6 +93,9 @@ public:
     // Returns a constant indication a scheme for modifying data when calculation ratio in modulus projection
     int GetRegularizedAmp();
 
+    // Returns number of iterations between calling garbage collection.
+    int GetGC();
+
 };
 
 

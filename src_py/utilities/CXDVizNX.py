@@ -1,4 +1,3 @@
-
 import pylibconfig2 as cfg
 import os
 import traits.api as tr
@@ -13,6 +12,7 @@ class DispalyParams:
     This class encapsulates parameters defining image display. The parameters are read from config file on
     construction
     """
+
     def __init__(self, config):
         """
         The constructor gets config file and fills out the class members.
@@ -29,17 +29,17 @@ class DispalyParams:
         if os.path.isfile(config):
             with open(config, 'r') as f:
                 config_map = cfg.Config(f.read())
-        deg2rad=np.pi/180.0
+        deg2rad = np.pi / 180.0
         try:
             self.lamda = config_map.lamda
         except AttributeError:
             print ('lamda not defined')
         try:
-            self.delta = config_map.delta*deg2rad
+            self.delta = config_map.delta * deg2rad
         except AttributeError:
             print ('delta not defined')
         try:
-            self.gamma = config_map.gamma*deg2rad
+            self.gamma = config_map.gamma * deg2rad
         except AttributeError:
             print ('gamma not defined')
         try:
@@ -52,8 +52,8 @@ class DispalyParams:
             print ('dth not defined')
         try:
             pixel = config_map.pixel
-            self.dpx = pixel[0]/self.arm
-            self.dpy = pixel[1]/self.arm
+            self.dpx = pixel[0] / self.arm
+            self.dpy = pixel[1] / self.arm
         except AttributeError:
             print ('pixel not defined')
         try:
@@ -85,115 +85,88 @@ class DispalyParams:
 
 
 class CXDViz(tr.HasTraits):
-    Coords=tr.Array()
-    Array=tr.Array()
-    
-    CropX=tr.Int()
-    CropY=tr.Int()
-    CropZ=tr.Int()
-    
-    def __init__(self, sp, geometry=None):
-        print 'spacing', sp
-        self.imd=tvtk.ImageData(spacing=sp)
-        self.sg=tvtk.StructuredGrid()
+    Coords = tr.Array()
+    Array = tr.Array()
+
+    CropX = tr.Int()
+    CropY = tr.Int()
+    CropZ = tr.Int()
+
+    def __init__(self):
+        self.imd = tvtk.ImageData()
+        self.sg = tvtk.StructuredGrid()
         pass
 
-    def SetGeomCoordParams(self, lam, tth, gam, dpx, dpy, dth, dx, dy, dz, space):
+    def SetGeomCoordParams(self, params, shape):
         print 'in SetGeomCoordParams'
-#    def SetGeomCoordParams(self, pp, space):
-#        deg2rad=np.pi/180.0
-#        dx=1.0/pp.bx
-#        dy=1.0/pp.by
-#        dz=1.0/pp.bz
+        lam = params.lamda
+        tth = params.delta
+        gam = params.gamma
+        dpx = params.dpx
+        dpy = params.dpy
+        dth = params.dth
+        # dx = 1.0 / shape[1]
+        # dy = 1.0 / shape[0]
+        # dz = 1.0 / shape[2]
+        dx = 1.0 / shape[0]
+        dy = 1.0 / shape[1]
+        dz = 1.0 / shape[2]
+        dQdpx = np.zeros(3)
+        dQdpy = np.zeros(3)
+        dQdth = np.zeros(3)
+        Astar = np.zeros(3)
+        Bstar = np.zeros(3)
+        Cstar = np.zeros(3)
 
-#        return self.SetGeomCoordparams( pp.lam, pp.delta, pp.gam,\
-#                      pp.pixelx/pp.arm, pp.pixely/pp.arm, pp.dth, \
-#                      dx, dy, dz, space)
-
-
-#    def SetGeomCoordparams(self, lam, tth, gam, dpx, dpy, dth, dx, dy, dz, space):
-        dQdpx=np.zeros(3)
-        dQdpy=np.zeros(3)
-        dQdth=np.zeros(3)
-        Astar=np.zeros(3)
-        Bstar=np.zeros(3)
-        Cstar=np.zeros(3)
-        
-        dQdpx[0] = -m.cos(tth)*m.cos(gam)
+        dQdpx[0] = -m.cos(tth) * m.cos(gam)
         dQdpx[1] = 0.0
-        dQdpx[2] = +m.sin(tth)*m.cos(gam)
-        
-        dQdpy[0] = m.sin(tth)*m.sin(gam)
+        dQdpx[2] = +m.sin(tth) * m.cos(gam)
+
+        dQdpy[0] = m.sin(tth) * m.sin(gam)
         dQdpy[1] = -m.cos(gam)
-        dQdpy[2] = m.cos(tth)*m.sin(gam)
+        dQdpy[2] = m.cos(tth) * m.sin(gam)
 
-        dQdth[0] = -m.cos(tth)*m.cos(gam)+1.0
+        dQdth[0] = -m.cos(tth) * m.cos(gam) + 1.0
         dQdth[1] = 0.0
-        dQdth[2] = m.sin(tth)*m.cos(gam)
+        dQdth[2] = m.sin(tth) * m.cos(gam)
 
-        Astar[0] = 2*m.pi/lam*dpx*dQdpx[0]
-        Astar[1] = 2*m.pi/lam*dpx*dQdpx[1]
-        Astar[2] = 2*m.pi/lam*dpx*dQdpx[2]
-        
-        Bstar[0] = (2*m.pi/lam)*dpy*dQdpy[0]
-        Bstar[1] = (2*m.pi/lam)*dpy*dQdpy[1]
-        Bstar[2] = (2*m.pi/lam)*dpy*dQdpy[2]
+        Astar[0] = 2 * m.pi / lam * dpx * dQdpx[0]
+        Astar[1] = 2 * m.pi / lam * dpx * dQdpx[1]
+        Astar[2] = 2 * m.pi / lam * dpx * dQdpx[2]
 
-        Cstar[0] = (2*m.pi/lam)*dth*dQdth[0]
-        Cstar[1] = (2*m.pi/lam)*dth*dQdth[1]
-        Cstar[2] = (2*m.pi/lam)*dth*dQdth[2]
-        
-        denom=np.dot( Astar, np.cross(Bstar,Cstar) )
-        A=2*m.pi*np.cross(Bstar,Cstar)/denom
-        B=2*m.pi*np.cross(Cstar,Astar)/denom
-        C=2*m.pi*np.cross(Astar,Bstar)/denom
-        
-#        print "A dot astar", np.dot(A,Astar)
-#        print "A dot Bstar %f"%np.dot(A,Bstar)
-#        print "B dot Bstar",np.dot(B,Bstar)
-#        print "C dot Cstar",np.dot(C,Cstar)
+        Bstar[0] = (2 * m.pi / lam) * dpy * dQdpy[0]
+        Bstar[1] = (2 * m.pi / lam) * dpy * dQdpy[1]
+        Bstar[2] = (2 * m.pi / lam) * dpy * dQdpy[2]
 
-        self.T=np.zeros(9)
-        self.T.shape=(3,3)
-        if space=='recip':
-            self.T[:,0]=Astar
-            self.T[:,1]=Bstar
-            self.T[:,2]=Cstar
-            self.dx=1.0
-            self.dy=1.0
-            self.dz=1.0
-        elif space=='direct':
-#            self.T[:,0]=A
-#            self.T[:,1]=B
-#            self.T[:,2]=C
-            self.T=np.array( (A,B,C) )
-            self.dx=dx
-            self.dy=dy
-            self.dz=dz
+        Cstar[0] = (2 * m.pi / lam) * dth * dQdth[0]
+        Cstar[1] = (2 * m.pi / lam) * dth * dQdth[1]
+        Cstar[2] = (2 * m.pi / lam) * dth * dQdth[2]
+
+        denom = np.dot(Astar, np.cross(Bstar, Cstar))
+        A = 2 * m.pi * np.cross(Bstar, Cstar) / denom
+        B = 2 * m.pi * np.cross(Cstar, Astar) / denom
+        C = 2 * m.pi * np.cross(Astar, Bstar) / denom
+
+        self.T = np.zeros(9)
+        self.T.shape = (3, 3)
+        space = 'direct'
+        if space == 'recip':
+            self.T[:, 0] = Astar
+            self.T[:, 1] = Bstar
+            self.T[:, 2] = Cstar
+            self.dx = 1.0
+            self.dy = 1.0
+            self.dz = 1.0
+        elif space == 'direct':
+            self.T = np.array((A, B, C))
+            self.dx = dx
+            self.dy = dy
+            self.dz = dz
         else:
             pass
-            
-#        print "T"
-#        print T
-#        print T[0,0], T[0,1], T[0,2]
-        
+
     def UpdateCoords(self):
         print 'in UpdateCoords'
-        dims=list(self.Array[self.cropobj].shape)
-
-        r=np.mgrid[ (dims[0]-1)*self.dx:-self.dx:-self.dx, \
-                 0:dims[1]*self.dy:self.dy, 0:dims[2]*self.dz:self.dz]
-
-        r.shape=3,dims[0]*dims[1]*dims[2]
-        r=r.transpose()
-
-        print r.shape
-        print self.T.shape
-
-        self.Coords = np.dot(r, self.T)
-
-    def UpdateCoordsTrans(self, sample_pixel):
-        print 'in UpdateCoordsTrans'
         dims = list(self.Array[self.cropobj].shape)
 
         r = np.mgrid[(dims[0] - 1) * self.dx:-self.dx:-self.dx, \
@@ -202,61 +175,58 @@ class CXDViz(tr.HasTraits):
         r.shape = 3, dims[0] * dims[1] * dims[2]
         r = r.transpose()
 
-        XX = r[:, 0] * sample_pixel * dims[1]
-        XX = XX - max(XX) / 2
-        YY = r[:, 1] * sample_pixel * dims[0]
-        YY = YY - max(YY) / 2
-        ZZ = r[:, 2] * sample_pixel * dims[2]
-        ZZ = ZZ - max(ZZ) / 2
-        self.Coords = (XX,YY,ZZ)
+        print r.shape
+        print self.T.shape
+
+        self.Coords = np.dot(r, self.T)
 
     def SetArray(self, array, logentry=None):
         print 'in SetArray'
-        self.Array=array
-        if len(self.Array.shape)<3:
-            newdims=list(self.Array.shape)
-            for i in range(3-len(newdims)):
+        self.Array = array
+        if len(self.Array.shape) < 3:
+            newdims = list(self.Array.shape)
+            for i in range(3 - len(newdims)):
                 newdims.append(1)
-            self.Array.shape=tuple(newdims)
-            
+            self.Array.shape = tuple(newdims)
+
     def SetCrop(self, CropX, CropY, CropZ):
         print 'in SetCrop'
         dims = list(self.Array.shape)
-        if len(dims)==2:
+        if len(dims) == 2:
             dims.append(1)
-        
-        if dims[0] > CropX and CropX > 0:
-            self.CropX=CropX
-        else:
-            self.CropX=dims[0]
-        
-        if dims[1] > CropY and CropY > 0:
-            self.CropY=CropY
-        else:
-            self.CropY=dims[1]
-        
-        if dims[2] > CropZ and CropZ > 0:
-            self.CropZ=CropZ
-        else:
-            self.CropZ=dims[2]
 
-        start1=dims[0]/2-self.CropX/2
-        end1=dims[0]/2+self.CropX/2
-        if start1==end1:
-            end1=end1+1
-        start2=dims[1]/2-self.CropY/2
-        end2=dims[1]/2+self.CropY/2
-        if start2==end2:
-            end2=end2+1
-        start3=dims[2]/2-self.CropZ/2
-        end3=dims[2]/2+self.CropZ/2
-        if start3==end3:
-            end3=end3+1
-        
-        self.cropobj=( slice(start1,end1,None), slice(start2,end2,None), 
-                                                    slice(start3,end3,None) )
-        #self.DispArray=self.Array[start1:end1, start2:end2, start3:end3]
-    
+        if dims[0] > CropX and CropX > 0:
+            self.CropX = CropX
+        else:
+            self.CropX = dims[0]
+
+        if dims[1] > CropY and CropY > 0:
+            self.CropY = CropY
+        else:
+            self.CropY = dims[1]
+
+        if dims[2] > CropZ and CropZ > 0:
+            self.CropZ = CropZ
+        else:
+            self.CropZ = dims[2]
+
+        start1 = dims[0] / 2 - self.CropX / 2
+        end1 = dims[0] / 2 + self.CropX / 2
+        if start1 == end1:
+            end1 = end1 + 1
+        start2 = dims[1] / 2 - self.CropY / 2
+        end2 = dims[1] / 2 + self.CropY / 2
+        if start2 == end2:
+            end2 = end2 + 1
+        start3 = dims[2] / 2 - self.CropZ / 2
+        end3 = dims[2] / 2 + self.CropZ / 2
+        if start3 == end3:
+            end3 = end3 + 1
+
+        self.cropobj = (slice(start1, end1, None), slice(start2, end2, None),
+                        slice(start3, end3, None))
+        # self.DispArray=self.Array[start1:end1, start2:end2, start3:end3]
+
     def GetStructuredGrid(self, **args):
         print 'in GetStructuredGrid'
         try:
@@ -264,80 +234,60 @@ class CXDViz(tr.HasTraits):
             self.UpdateCoordsTrans(sample_pixel)
         except:
             self.UpdateCoords()
-        dims=list(self.Array[self.cropobj].shape)
-        self.sg.points=self.Coords
+        dims = list(self.Array[self.cropobj].shape)
+        self.sg.points = self.Coords
         if args.has_key("mode"):
-            if args["mode"]=="Phase":
-                arr1=self.Array[self.cropobj].ravel()
-                arr=(np.arctan2(arr1.imag, arr1.real))
+            if args["mode"] == "Phase":
+                arr1 = self.Array[self.cropobj].ravel()
+                arr = (np.arctan2(arr1.imag, arr1.real))
             else:
-                arr=np.abs(self.Array[self.cropobj].ravel())
+                arr = np.abs(self.Array[self.cropobj].ravel())
         else:
-            arr=self.Array[self.cropobj].ravel()
-        if (arr.dtype==np.complex128 or arr.dtype==np.complex64):
-            self.sg.point_data.scalars=np.abs(arr)
-            self.sg.point_data.scalars.name="Amp"
-            ph=tvtk.DoubleArray()
+            arr = self.Array[self.cropobj].ravel()
+        if (arr.dtype == np.complex128 or arr.dtype == np.complex64):
+            self.sg.point_data.scalars = np.abs(arr)
+            self.sg.point_data.scalars.name = "Amp"
+            ph = tvtk.DoubleArray()
             ph.from_array(np.arctan2(arr.imag, arr.real))
-            ph.name="Phase"
+            ph.name = "Phase"
             self.sg.point_data.add_array(ph)
-        else: 
-            self.sg.point_data.scalars=arr
-        self.sg.dimensions=(dims[2], dims[1], dims[0])
-        self.sg.extent=0, dims[2]-1, 0, dims[1]-1, 0, dims[0]-1
-        #self.sg.update_extent=0, dims[2]-1, 0, dims[1]-1, 0, dims[0]-1
-        #self.sg.update_extent()
+        else:
+            self.sg.point_data.scalars = arr
+        self.sg.dimensions = (dims[2], dims[1], dims[0])
+        self.sg.extent = 0, dims[2] - 1, 0, dims[1] - 1, 0, dims[0] - 1
         return self.sg
-   
+
     def GetImageData(self, **args):
         self.SetCrop(self.CropX, self.CropY, self.CropZ)
         dims = list(self.Array[self.cropobj].shape)
-        if len(dims)==2:
+        if len(dims) == 2:
             dims.append(1)
         self.imd.dimensions = tuple(dims)
-        self.imd.extent =  0, dims[2]-1, 0, dims[1]-1, 0, dims[0]-1
-        self.imd.point_data.scalars=self.Array[self.cropobj].ravel()
+        self.imd.extent = 0, dims[2] - 1, 0, dims[1] - 1, 0, dims[0] - 1
+        self.imd.point_data.scalars = self.Array[self.cropobj].ravel()
         return self.imd
-    
+
     def WriteStructuredGrid(self, filename, **args):
         print 'in WriteStructuredGrid'
-        sgwriter=tvtk.StructuredGridWriter()
-        sgwriter.file_type='binary'
-        # if filename.endswith(".vtk"):
-        #     filenamebase=filename.split('.')[0:-1]
-        #     ext=".vtk"
-        # else:
-        #     filenamebase=filename
-        #     ext=""
-        if args.has_key("mode"):
-            if args["mode"]=="split":
-              sgwriter.file_name=str('.').join(filename+"_Amp.vtk")
-              sgwriter.set_input(self.GetStructuredGrid(mode="Amp"))
-              sgwriter.write()
-              sgwriter.file_name=str('.').join(filename)+"_Ph.vtk"
-              sgwriter.set_input(self.GetStructuredGrid(mode="Phase"))
-              sgwriter.write()
+        sgwriter = tvtk.StructuredGridWriter()
+        sgwriter.file_type = 'binary'
+        if filename.endswith(".vtk"):
+            sgwriter.file_name = filename
         else:
-            #sgwriter.file_name=str('.').join(filenamebase)+ext
-            #sgwriter.file_name = 'cx_test.vtk'
-            if filename.endswith(".vtk"):
-                sgwriter.file_name = filename
-            else:
-                sgwriter.file_name = filename +'.vtk'
-            sgwriter.file_type='binary'
-            try:
-                sample_pixel = args["sample_pixel"]
-                sgwriter.set_input_data(self.GetStructuredGrid(sample_pixel=sample_pixel))
-            except:
-                sgwriter.set_input_data(self.GetStructuredGrid())
-            print sgwriter.file_name
-            sgwriter.write()
-        
+            sgwriter.file_name = filename + '.vtk'
+        try:
+            sample_pixel = args["sample_pixel"]
+            sgwriter.set_input_data(self.GetStructuredGrid(sample_pixel=sample_pixel))
+        except:
+            sgwriter.set_input_data(self.GetStructuredGrid())
+        print sgwriter.file_name
+        sgwriter.write()
+
     def WriteImageData(self, filename):
-        spwriter=tvtk.StructuredPointsWriter()
-        #spwriter.configure_traits()
-        spwriter.file_name=filename
-        spwriter.file_type='binary'
+        spwriter = tvtk.StructuredPointsWriter()
+        # spwriter.configure_traits()
+        spwriter.file_name = filename
+        spwriter.file_type = 'binary'
         spwriter.set_input(self.GetImageData())
         spwriter.write()
 
@@ -371,21 +321,18 @@ def center_array(arr):
 
 
 def center_of_mass(arr):
-    arr.astype(float)
-    tot = sum(sum(sum(arr)))
-
+    tot = np.sum(arr)
     dims = arr.shape
-    x = np.arange(-(dims[1] - 1) / 2.0, (dims[1]) / 2.0)
-    y = np.arange(-(dims[0] - 1) / 2.0, (dims[0]) / 2.0)
-    z = np.arange(-(dims[2] - 1) / 2.0, (dims[2]) / 2.0)
-    gx, gy, gz = np.meshgrid(x, y, z)
-
-    sx = sum(sum(sum(arr * gx))) / tot
-    sy = sum(sum(sum(arr * gy))) / tot
-    sz = sum(sum(sum(arr * gz))) / tot
-
-    t = (sx, sy, sz)
-    return np.asarray(t) - 1
+    xyz = []
+    griddims = []
+    for d in dims:
+        griddims.append(slice(0, d))
+    grid = np.ogrid[griddims]
+    for g in grid:
+        xyz.append(np.sum(arr * g) / tot)
+    com = np.asarray(xyz)
+    com = np.ma.round(com).astype(np.int)
+    return list(com)
 
 
 def remove_ramp(arr):
@@ -426,64 +373,41 @@ def align_disp(image, support):
     print 'phi0', phi0
     image = image * np.exp(-1j * phi0)
 
-    # if recenter_rec:
-    image = remove_ramp(image)
     return image, support
 
 
-def save_CX(conf, arr, filename):
-    arr = np.swapaxes(arr, 1,0)
-    shape = arr.shape
-    params = DispalyParams(conf)
-    sample_pixel = params.get_sample_pixel(shape)
-    #deg2rad=np.pi/180.0
-    lam = params.lamda
-    arm = params.arm
-    tth = params.delta
-    gam = params.gamma
-    dpx = params.dpx
-    dpy = params.dpy
-    dth = params.dth
-    dx = 1.0/shape[1]
-    dy = 1.0/shape[0]
-    dz = 1.0/shape[2]
-    viz=CXDViz((1.0,1.0,1.0))
-    viz.SetArray(arr)
-    viz.SetCrop(params.crop[0], params.crop[1], params.crop[2])
-    space='direct'
-    viz.SetGeomCoordParams( lam, tth, gam, dpx, dpy, dth, dx, dy, dz,space)
-    viz.WriteStructuredGrid(filename)
+def center(image, support):
+    dims = image.shape
+    com = center_of_mass(np.absolute(image) * support)
+    # place center of mass image*support in the center
+    image = shift(image, dims[0] / 2 - com[0], dims[1] / 2 - com[1], dims[2] / 2 - com[2])
+    support = shift(support, dims[0] / 2 - com[0], dims[1] / 2 - com[1], dims[2] / 2 - com[2])
 
-def save_trans_CX(conf, image, support, filename):
-    image = np.swapaxes(image, 1,0)
-    support = np.swapaxes(support, 1,0)
-    image, support = align_disp(image, support)
-    mx = max(np.absolute(image).ravel().tolist())
-    image = image/mx
-    shape = image.shape
+    # # set com phase to zero, use as a reference
+    # phi0 = m.atan2(image.imag[dims[0]/2, dims[1]/2, dims[2]/2], image.real[dims[0]/2, dims[1]/2, dims[2]/2])
+    # print 'phi0', phi0
+    # image = image * np.exp(-1j * phi0)
+    return image, support
+
+
+def save_CX(conf, image, support, filename):
+    image = np.swapaxes(image, 1, 0)
+    support = np.swapaxes(support, 1, 0)
+    image, support = center(image, support)
+    #    image = remove_ramp(image)
+    # mx = max(np.absolute(image).ravel().tolist())
+    # image = image/mx
     params = DispalyParams(conf)
-    sample_pixel = params.get_sample_pixel(shape)
-    #deg2rad=np.pi/180.0
-    lam = params.lamda
-    arm = params.arm
-    tth = params.delta
-    gam = params.gamma
-    dpx = params.dpx
-    dpy = params.dpy
-    dth = params.dth
-    dx = 1.0/shape[1]
-    dy = 1.0/shape[0]
-    dz = 1.0/shape[2]
-    viz=CXDViz((sample_pixel,sample_pixel,sample_pixel))
+    viz = CXDViz()
     viz.SetArray(image)
-    viz.SetCrop(params.crop[0], params.crop[1], params.crop[2])
-    space='direct'
-    viz.SetGeomCoordParams( lam, tth, gam, dpx, dpy, dth, dx, dy, dz,space)
-    # save image
-    #the sample_pixel does not change display
-    viz.WriteStructuredGrid(filename+'_img',sample_pixel=sample_pixel)
-    # save support
+    viz.SetGeomCoordParams(params, image.shape)
+    if params.crop is None:
+        crop = image.shape
+    else:
+        crop = params.crop
+    viz.SetCrop(crop[0], crop[1], crop[2])  # save image
+    viz.UpdateCoords()
+    viz.WriteStructuredGrid(filename + '_trans_img')
     viz.SetArray(support)
-    #the sample_pixel does not change display
-    viz.WriteStructuredGrid(filename+'_support',sample_pixel=sample_pixel)
+    viz.WriteStructuredGrid(filename + '_trans_support')
 

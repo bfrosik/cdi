@@ -35,9 +35,7 @@ std::vector<d_type> coherence_vector;
 
 Reconstruction::Reconstruction(af::array image_data, af::array guess, const char* config_file)
 {
-    af::dim4 dims = image_data.dims();
-    data = Utils::fftshift(image_data);
-    //data = image_data;
+    data = image_data;
     ds_image = guess;
     params = new Params(config_file, data.dims());
     state = new State(params);
@@ -83,6 +81,8 @@ void Reconstruction::Iterate()
         }
 
         current_iteration = state->GetCurrentIteration();
+        if (params->GetGC() && (current_iteration+1) % params->GetGC() == 0)
+            af::deviceGC();
         Algorithm * alg  = state->GetCurrentAlg();
         alg->RunAlgorithm(this);
 
@@ -161,6 +161,9 @@ af::array Reconstruction::ModulusProjection()
         partialCoherence->SetPrevious(abs(rs_amplitudes));
     }
     printf("ampl norm after ratio %fl\n", GetNorm(rs_amplitudes));
+    
+    if (params->GetGC() && current_iteration % params->GetGC() == 0)
+        af::deviceGC();
     
     if (params->IsMatlabOrder())
     {

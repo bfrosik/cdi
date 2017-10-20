@@ -1,13 +1,16 @@
+// program flow
+matlab_order = false;
+gc = 5;
+
 // parameters for data preparation
 aliens = ((170,220,112,195,245,123), (50,96,10,60,110,20))
-binning = [1,2,2];
+binning = [2,2,2];
 center_shift = [0,0,0];
-zero_pad = [0,0,0]
+zero_pad = [0,4,0]
 
 //algorithm_sequence = ((3, ("ER",2), ("HIO", 2), ("ER", 2)), (2, ("ER",3), ("HIO",3)))
 //algorithm_sequence = ((1, ("ER",6)))
-algorithm_sequence = ((1, ("ER",19), ("HIO", 10), ("ER", 10)))
-matlab_order = true;
+algorithm_sequence = ((10, ("ER",19), ("HIO", 10)), (1,("ER",10)))
 
 // twin defines at which iteration to cut half of the array(i.e. multiply by 0s), it is done in ER/HIO
 // if negative, no action
@@ -68,7 +71,7 @@ pixel = [55.0e-6, 55.0e-6];
 save_two_files = False;
 
 // size to crop the image array
-crop = [60,144,120]
+crop = [120,120,120]
 
 // the dir+prefix of results vtk files
 res = "vtk/test_"
