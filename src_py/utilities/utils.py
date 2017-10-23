@@ -226,8 +226,8 @@ def flip(m, axis):
     Copied from numpy 1.12.0.
 
     """
-    #if not hasattr(m, 'ndim'):
-    #    m = asarray(m)
+    if not hasattr(m, 'ndim'):
+       m = np.asarray(m)
     indexer = [slice(None)] * m.ndim
     try:
         indexer[axis] = slice(None, None, -1)

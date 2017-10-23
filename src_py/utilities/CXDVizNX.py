@@ -66,39 +66,20 @@ class DispalyParams:
             self.crop = None
             print ('crop not defined')
 
-    def get_sample_pixel(self, shape):
-        sx = self.lamda / self.dpx / shape[0]
-        sy = self.lamda / self.dpy / shape[1]
-        sz = abs(self.lamda / (self.dth * np.pi / 180) / shape[2])
-        sz = abs(self.lamda / self.dth / shape[2])
-        print 'sx, sy, sz', sx, sy, sz
-        sample_pixel = min((sx, sy, sz))
-        # in matlab use_auto is always set
-        FOVth = 0.66;  # maximum reduction allowed in the field of view to prevent cutting the object
-        FOVold = np.asarray([self.lamda / self.dpx, self.lamda / self.dpy, self.lamda / self.dth])
-        FOVnew = np.asarray([shape[0] * sample_pixel, shape[1] * sample_pixel, shape[2] * sample_pixel])
-        FOVratio = min(FOVnew / FOVold)
-        if FOVratio < FOVth:
-            sample_pixel = FOVth / FOVratio * sample_pixel
-        print 'sample_pixel', sample_pixel
-        return sample_pixel
-
-
 class CXDViz(tr.HasTraits):
-    Coords = tr.Array()
-    Array = tr.Array()
+    coords = tr.Array()
+    arr = tr.Array()
 
-    CropX = tr.Int()
-    CropY = tr.Int()
-    CropZ = tr.Int()
+    cropx = tr.Int()
+    cropy = tr.Int()
+    cropz = tr.Int()
 
     def __init__(self):
         self.imd = tvtk.ImageData()
         self.sg = tvtk.StructuredGrid()
         pass
 
-    def SetGeomCoordParams(self, params, shape):
-        print 'in SetGeomCoordParams'
+    def set_geometry(self, params, shape):
         lam = params.lamda
         tth = params.delta
         gam = params.gamma
@@ -162,9 +143,8 @@ class CXDViz(tr.HasTraits):
         else:
             pass
 
-    def UpdateCoords(self):
-        print 'in UpdateCoords'
-        dims = list(self.Array[self.cropobj].shape)
+    def update_coords(self):
+        dims = list(self.arr[self.cropobj].shape)
 
         r = np.mgrid[(dims[0] - 1) * self.dx:-self.dx:-self.dx, \
             0:dims[1] * self.dy:self.dy, 0:dims[2] * self.dz:self.dz]
@@ -175,72 +155,64 @@ class CXDViz(tr.HasTraits):
         print r.shape
         print self.T.shape
 
-        self.Coords = np.dot(r, self.T)
+        self.coords = np.dot(r, self.T)
 
-    def SetArray(self, array, logentry=None):
-        print 'in SetArray'
-        self.Array = array
-        if len(self.Array.shape) < 3:
-            newdims = list(self.Array.shape)
+    def set_array(self, array, logentry=None):
+        self.arr = array
+        if len(self.arr.shape) < 3:
+            newdims = list(self.arr.shape)
             for i in range(3 - len(newdims)):
                 newdims.append(1)
-            self.Array.shape = tuple(newdims)
+            self.arr.shape = tuple(newdims)
 
-    def SetCrop(self, CropX, CropY, CropZ):
-        print 'in SetCrop'
-        dims = list(self.Array.shape)
+    def set_crop(self, cropx, cropy, cropz):
+        dims = list(self.arr.shape)
         if len(dims) == 2:
             dims.append(1)
 
-        if dims[0] > CropX and CropX > 0:
-            self.CropX = CropX
+        if dims[0] > cropx and cropx > 0:
+            self.cropx = cropx
         else:
-            self.CropX = dims[0]
+            self.cropx = dims[0]
 
-        if dims[1] > CropY and CropY > 0:
-            self.CropY = CropY
+        if dims[1] > cropy and cropy > 0:
+            self.cropy = cropy
         else:
-            self.CropY = dims[1]
+            self.cropy = dims[1]
 
-        if dims[2] > CropZ and CropZ > 0:
-            self.CropZ = CropZ
+        if dims[2] > cropz and cropz > 0:
+            self.cropz = cropz
         else:
-            self.CropZ = dims[2]
+            self.cropz = dims[2]
 
-        start1 = dims[0] / 2 - self.CropX / 2
-        end1 = dims[0] / 2 + self.CropX / 2
+        start1 = dims[0] / 2 - self.cropx / 2
+        end1 = dims[0] / 2 + self.cropx / 2
         if start1 == end1:
             end1 = end1 + 1
-        start2 = dims[1] / 2 - self.CropY / 2
-        end2 = dims[1] / 2 + self.CropY / 2
+        start2 = dims[1] / 2 - self.cropy / 2
+        end2 = dims[1] / 2 + self.cropy / 2
         if start2 == end2:
             end2 = end2 + 1
-        start3 = dims[2] / 2 - self.CropZ / 2
-        end3 = dims[2] / 2 + self.CropZ / 2
+        start3 = dims[2] / 2 - self.cropz / 2
+        end3 = dims[2] / 2 + self.cropz / 2
         if start3 == end3:
             end3 = end3 + 1
 
         self.cropobj = (slice(start1, end1, None), slice(start2, end2, None),
                         slice(start3, end3, None))
-        # self.DispArray=self.Array[start1:end1, start2:end2, start3:end3]
 
-    def GetStructuredGrid(self, **args):
-        print 'in GetStructuredGrid'
-        try:
-            sample_pixel = args["sample_pixel"]
-            self.UpdateCoordsTrans(sample_pixel)
-        except:
-            self.UpdateCoords()
-        dims = list(self.Array[self.cropobj].shape)
-        self.sg.points = self.Coords
+    def get_structured_grid(self, **args):
+        self.update_coords()
+        dims = list(self.arr[self.cropobj].shape)
+        self.sg.points = self.coords
         if args.has_key("mode"):
             if args["mode"] == "Phase":
-                arr1 = self.Array[self.cropobj].ravel()
+                arr1 = self.arr[self.cropobj].ravel()
                 arr = (np.arctan2(arr1.imag, arr1.real))
             else:
-                arr = np.abs(self.Array[self.cropobj].ravel())
+                arr = np.abs(self.arr[self.cropobj].ravel())
         else:
-            arr = self.Array[self.cropobj].ravel()
+            arr = self.arr[self.cropobj].ravel()
         if (arr.dtype == np.complex128 or arr.dtype == np.complex64):
             self.sg.point_data.scalars = np.abs(arr)
             self.sg.point_data.scalars.name = "Amp"
@@ -254,17 +226,17 @@ class CXDViz(tr.HasTraits):
         self.sg.extent = 0, dims[2] - 1, 0, dims[1] - 1, 0, dims[0] - 1
         return self.sg
 
-    def GetImageData(self, **args):
-        self.SetCrop(self.CropX, self.CropY, self.CropZ)
-        dims = list(self.Array[self.cropobj].shape)
+    def get_image_data(self, **args):
+        self.set_crop(self.cropx, self.cropy, self.cropz)
+        dims = list(self.arr[self.cropobj].shape)
         if len(dims) == 2:
             dims.append(1)
         self.imd.dimensions = tuple(dims)
         self.imd.extent = 0, dims[2] - 1, 0, dims[1] - 1, 0, dims[0] - 1
-        self.imd.point_data.scalars = self.Array[self.cropobj].ravel()
+        self.imd.point_data.scalars = self.arr[self.cropobj].ravel()
         return self.imd
 
-    def WriteStructuredGrid(self, filename, **args):
+    def write_structured_grid(self, filename, **args):
         print 'in WriteStructuredGrid'
         sgwriter = tvtk.StructuredGridWriter()
         sgwriter.file_type = 'binary'
@@ -272,22 +244,10 @@ class CXDViz(tr.HasTraits):
             sgwriter.file_name = filename
         else:
             sgwriter.file_name = filename + '.vtk'
-        try:
-            sample_pixel = args["sample_pixel"]
-            sgwriter.set_input_data(self.GetStructuredGrid(sample_pixel=sample_pixel))
-        except:
-            sgwriter.set_input_data(self.GetStructuredGrid())
+
+        sgwriter.set_input_data(self.get_structured_grid())
         print sgwriter.file_name
         sgwriter.write()
-
-    def WriteImageData(self, filename):
-        spwriter = tvtk.StructuredPointsWriter()
-        # spwriter.configure_traits()
-        spwriter.file_name = filename
-        spwriter.file_type = 'binary'
-        spwriter.set_input(self.GetImageData())
-        spwriter.write()
-
 
 def shift(arr, s0, s1, s2):
     shifted = np.roll(arr, s0, 0)
@@ -306,15 +266,6 @@ def sub_pixel_shift(arr, shift_ind):
     grid_shift = - gx * shift_ind[0] / dims[0] - gy * shift_ind[1] / dims[1] - gy * shift_ind[2] / dims[2]
     g = buf * np.exp(1j * 2 * np.pi * grid_shift)
     return np.fft.ifftn(g)
-
-
-def center_array(arr):
-    dims = arr.shape
-    max_coordinates = list(np.unravel_index(np.argmax(np.absolute(arr)), dims))
-    print 'max_coordinates', max_coordinates
-    centered = shift(arr, dims[1] / 2 - max_coordinates[1], dims[0] / 2 - max_coordinates[0],
-                     dims[2] / 2 - max_coordinates[2])
-    return centered, max_coordinates
 
 
 def center_of_mass(arr):
@@ -344,35 +295,6 @@ def remove_ramp(arr):
     return ramp_removed
 
 
-def align_disp(image, support):
-    dims = np.asarray(image.shape)
-    max_coordinates = np.asarray(list(np.unravel_index(np.argmax(np.absolute(image)), dims)))
-    print 'max_coordinates', max_coordinates
-    shifts = (dims + 1) / 2 - (max_coordinates + 1)
-    shifts = list(shifts)
-    print 'shifts', shifts
-
-    image = shift(image, shifts[0], shifts[1], shifts[2])
-    support = shift(support, shifts[0], shifts[1], shifts[2])
-
-    com = center_of_mass(np.absolute(image) * support)
-    print 'com', com
-    com = -1 * np.ma.round(com).astype(np.int)
-    print 'after round', com
-    shift_ind = list(com)
-    shift_ind[0], shift_ind[1] = shift_ind[1], shift_ind[0]
-
-    image = shift(image, shift_ind[0], shift_ind[1], shift_ind[2])
-    support = shift(support, shift_ind[0], shift_ind[1], shift_ind[2])
-
-    # set COM phase to zero, use as a reference
-    phi0 = m.atan2(image.imag[dims[0] / 2, dims[1] / 2, dims[2] / 2], image.real[dims[0] / 2, dims[1] / 2, dims[2] / 2])
-    print 'phi0', phi0
-    image = image * np.exp(-1j * phi0)
-
-    return image, support
-
-
 def center(image, support):
     dims = image.shape
     com = center_of_mass(np.absolute(image) * support)
@@ -388,23 +310,18 @@ def center(image, support):
 
 
 def save_CX(conf, image, support, filename):
-    image = np.swapaxes(image, 1, 0)
-    support = np.swapaxes(support, 1, 0)
     image, support = center(image, support)
     #    image = remove_ramp(image)
-    mx = max(np.absolute(image).ravel().tolist())
-    image = image/mx
     params = DispalyParams(conf)
     viz = CXDViz()
-    viz.SetArray(image)
-    viz.SetGeomCoordParams(params, image.shape)
+    viz.set_array(image)
+    viz.set_geometry(params, image.shape)
     if params.crop is None:
         crop = image.shape
     else:
         crop = params.crop
-    viz.SetCrop(crop[0], crop[1], crop[2])  # save image
-    viz.UpdateCoords()
-    viz.WriteStructuredGrid(filename + '_trans_img')
-    viz.SetArray(support)
-    viz.WriteStructuredGrid(filename + '_trans_support')
+    viz.set_crop(crop[0], crop[1], crop[2])  # save image
+    viz.write_structured_grid(filename + '_img')
+    viz.set_array(support)
+    viz.write_structured_grid(filename + '_support')
 

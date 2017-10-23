@@ -1,11 +1,15 @@
-// program flow
-gc = 5;
-
-// parameters for data preparation
+// PARAMETER FOR DATA PREPARATION
 aliens = ((170,220,112,195,245,123), (50,96,10,60,110,20))
-binning = [2,2,2];
-center_shift = [0,0,0];
-zero_pad = [0,0,0]
+binning = [2,2,2]
+center_shift = [0,0,0]
+zero_pad = [0,4,0]
+save_data = true
+
+
+// RECONSTRUCTION PARAMETERS USED BY FAST MODULE
+// ArrayFire memory management is not reliable, the way around is to call garbage collection per
+// defined number of iterations. Decrease this value if out of memory error occurs
+gc = 5;
 
 //algorithm_sequence = ((3, ("ER",2), ("HIO", 2), ("ER", 2)), (2, ("ER",3), ("HIO",3)))
 //algorithm_sequence = ((1, ("ER",6)))
@@ -46,10 +50,12 @@ partial_coherence_roi = [32,32,32];
 partial_coherence_kernel = [32,32,32];
 partial_coherence_clip = false;
 
-regularized_amp = "GAUSS"
+regularized_amp = "GAUSS";
 
 //avg_iterations = 5;
 
+
+// PARAMETERS FOR VISUALISATION
 // wavelength
 lamda = .13933;
 // delta (degrees)
@@ -69,6 +75,9 @@ save_two_files = False;
 
 // size to crop the image array
 crop = [120,120,120]
+
+// defines whether save image and support in .mat files
+save_results = true
 
 // the dir+prefix of results vtk files
 res = "vtk/test_"

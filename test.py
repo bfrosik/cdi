@@ -16,7 +16,7 @@ def main(arg):
     fname = args.fname
     conf = args.conf
 
-    image, er = rec.reconstruction(proc, fname, conf)
+    rec.reconstruction(proc, fname, conf)
 
 
 if __name__ == "__main__":

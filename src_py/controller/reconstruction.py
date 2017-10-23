@@ -165,45 +165,7 @@ def prepare_data(config_map, data):
     data=sf.fftshift(data)
     return data
     
-def prepare_data1(config_map, data):
-    rdata=tf.imread("/home/phoebus/BFROSIK/CDI/S149/Staff14-3_S0149.tif")
-    rdata=np.where( rdata < 2, 0, rdata)
-
-#Crop in first dim around brightest pixel. This speeds things up a lot. 
-    cdata=rdata[76-32:76+32,:,:]
-    dims=cdata.shape
-    print "dims/2", np.array(dims)/2.
-    # do binning
-    try:
-        binsizes = config_map.binning
-        cdata = ut.binning(cdata, binsizes)
-    except AttributeError:
-        pass
-    data=np.sqrt(cdata)
-
-#Sqrt and center the brightest pixel in the other two dims
-    print np.unravel_index(np.argmax(cdata), cdata.shape)
-#data=np.roll(data, -1, 0)
-    data=np.roll(data, 10, 1)
-    data=np.roll(data, -5, 2)
-    print 'data max before shift',data[0,0,0], data.max()
-    data=np.fft.fftshift(data)
-    print 'data max after shift',data[0,0,0], data.max()
-    return data
-
-def prepare_data2(config_map, data):
-    print np.unravel_index(np.argmax(data), data.shape)
-#data=np.roll(data, -1, 0)
-    #data=np.roll(data, 10, 1)
-    #data=np.roll(data, -5, 2)
-    data=np.roll(data, 1, 0)
-    data=np.roll(data, 1, 1)
-    data=np.roll(data, 1, 2)
-#    data=np.fft.fftshift(data)
-    print 'data at 0 and max', data[0,0,0], data.max()
-    return data
-
-def do_reconstruction(proc, data, conf):
+def fast_module_reconstruction(proc, data, conf):
     """
     This function calls a bridge method corresponding to the requested processor type. The bridge method is an access to the CFM
     (Calc Fast Module). When reconstruction is completed the function retrieves results from the CFM.
@@ -247,18 +209,31 @@ def do_reconstruction(proc, data, conf):
     er = fast_module.get_errors()
     image_r = np.asarray(fast_module.get_image_r())
     image_i = np.asarray(fast_module.get_image_i())
+    image = image_r + 1j*image_i
+    # normalize image
+    mx = max(np.absolute(image).ravel().tolist())
+    image = image/mx
     support = np.asarray(fast_module.get_support())
     coherence = np.asarray(fast_module.get_coherence())
 
-    image_r = np.reshape(image_r, dims)
-    image_i = np.reshape(image_i, dims)
+    image = np.reshape(image, dims)
     support = np.reshape(support, dims)
 
-    image_r = np.swapaxes(image_r, 2,0)
-    image_i = np.swapaxes(image_i, 2,0)
+    image = np.swapaxes(image, 2,0)
     support = np.swapaxes(support, 2,0)
+    image = np.swapaxes(image, 1, 0)
+    support = np.swapaxes(support, 1, 0)
 
-    return image_r, image_i, er, support, coherence
+    if coherence.shape[0] > 1:
+        coh_size = int(round(coherence.shape[0] ** (1. / 3.)))
+        coh_dims = (coh_size, coh_size, coh_size,)
+        coherence = np.reshape(coherence, coh_dims)
+        coherence = np.swapaxes(coherence, 2, 0)
+        coherence = np.swapaxes(coherence, 1, 0)
+    else:
+        coherence = None
+
+    return image, support, coherence, er
 
 
 def write_simple(arr, filename):
@@ -298,7 +273,7 @@ def reconstruction(proc, filename, conf):
     data = ut.get_array_from_tif(filename)
     if len(data.shape) > 3:
         print ("this program supports 3d images only")
-        return None, None
+        return
 
     config_map = read_config(conf)
     if config_map is None:
@@ -306,21 +281,31 @@ def reconstruction(proc, filename, conf):
         return None, None
 
     data = prepare_data(config_map, data)
-    tf.imsave("data.tif", np.ceil(100 * data).astype(np.int32))
-    write_simple(data, "simple_data.vtk")
-    dims = data.shape
-    print 'data size', data.shape
+    # save prepared data in .mat file if configured
+    try:
+        save_data = config_map.save_data
+        if save_data:
+            data_dict = {}
+            data_dict['data'] = data
+            sio.savemat('data.mat', data_dict)
+    except AttributeError:
+        pass
 
-    image_r, image_i, errors, support, coherence = do_reconstruction(proc, data, conf)
+    image, support, coherence, errors = fast_module_reconstruction(proc, data, conf)
 
-    image = image_r + 1j*image_i
-    # save image and support in .mat files
-    image_dict = {}
-    support_dict = {}
-    image_dict['pnm'] = image
-    sio.savemat('/local/bfrosik/test/pnm.mat', image_dict)
-    support_dict['support'] = support
-    sio.savemat('/local/bfrosik/test/support.mat', support_dict)
+    # save image and support in .mat files if configured
+    try:
+        save_results = config_map.save_data
+        if save_results:
+            image_dict = {}
+            support_dict = {}
+            image_dict['image'] = image
+            sio.savemat('image.mat', image_dict)
+            support_dict['support'] = support
+            sio.savemat('support.mat', support_dict)
+    except AttributeError:
+        pass
+
 
     try:
         prefix = config_map.res
@@ -329,27 +314,10 @@ def reconstruction(proc, filename, conf):
     write_simple(image, prefix + "simple_amp_ph.vtk")
     write_simple(support, prefix + "simple_support.vtk")
 
-    CX.save_CX(conf, image, support, prefix + 'cx_xfer_test')
+    CX.save_CX(conf, image, support, prefix + 'cx')
 
-    if coherence is not None and len(coherence.shape) > 1:
-        coh_size = int(round(coherence.shape[0]**(1./3.)))
-        coh_dims = (coh_size, coh_size, coh_size,)
-        coherence = np.reshape(coherence, coh_dims)
-        coherence = np.swapaxes(coherence, 2, 0)
+    if coherence is not None:
         write_simple(coherence, prefix + "simple_coh.vtk")
-        # x_pad_pre = (dims[0] - coh_size)/2
-        # x_pad_post = dims[0] - x_pad_pre - coh_size
-        # y_pad_pre = (dims[1] - coh_size)/2
-        # y_pad_post = dims[1] - x_pad_pre - coh_size
-        # z_pad_pre = (dims[2] - coh_size)/2
-        # z_pad_post = dims[2] - x_pad_pre - coh_size
-        # coh = np.lib.pad(coherence, ((x_pad_pre, x_pad_post),(y_pad_pre, y_pad_post), (z_pad_pre, z_pad_post)), 'constant', constant_values=((0.0,0.0),(0.0,0.0),(0.0,0.0)))
-        # coh = ut.flip(coh,0)
-        # coh = ut.flip(coh,1)
-        # coh = ut.flip(coh,2)
-        # fft_coh = sf.ifftn(np.fft.fftshift(coh))
-        # np.fft.fftshift(fft_coh)
-        tf.imsave("coherence.tif", np.ceil(1000*abs(coherence)).astype(np.int32))
 
 
     print 'image, support shape', image.shape, support.shape
