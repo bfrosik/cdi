@@ -57,14 +57,15 @@ visualization.
 
 import numpy as np
 import src_py.utilities.utils as ut
-import src_py.utilities.CXDVizNX as CX
+import src_py.utilities.CXDVizNX as cx
 import pylibconfig2 as cfg
 import os
 import scipy.fftpack as sf
 import scipy.io as sio
-#import src_py.cyth.bridge_cpu as bridge_cpu
+import src_py.cyth.bridge_cpu as bridge_cpu
 import src_py.cyth.bridge_opencl as bridge_opencl
-import tifffile as tf
+#import src_py.cyth.bridge_cuda as bridge_cuda
+#import tifffile as tf
 
 
 __author__ = "Barbara Frosik"
@@ -196,6 +197,8 @@ def fast_module_reconstruction(proc, data, conf):
         bridge = bridge_cpu
     elif proc == 'opencl': 
         bridge = bridge_opencl
+    # elif proc == 'cuda':
+    #     bridge = bridge_cuda
 
     data = np.swapaxes(data,1,2)
 
@@ -308,16 +311,20 @@ def reconstruction(proc, filename, conf):
 
 
     try:
-        prefix = config_map.res
+        res_dir = config_map.res_dir
+        if not res_dir.endswith('/'):
+            res_dir = res_dir + '/'
+        if not os.path.exists(res_dir):
+            os.makedirs(res_dir)
     except AttributeError:
-        prefix = ''
-    write_simple(image, prefix + "simple_amp_ph.vtk")
-    write_simple(support, prefix + "simple_support.vtk")
+        res_dir = ''
+    write_simple(image, res_dir + "simple_amp_ph.vtk")
+    write_simple(support, res_dir + "simple_support.vtk")
 
-    CX.save_CX(conf, image, support, prefix + 'cx')
+    cx.save_CX(conf, image, support, res_dir + 'cx')
 
     if coherence is not None:
-        write_simple(coherence, prefix + "simple_coh.vtk")
+        write_simple(coherence, res_dir + "simple_coh.vtk")
 
     # plot error
 
