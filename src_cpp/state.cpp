@@ -49,7 +49,6 @@ bool update_kernel = false;
 // current index in support_partial_coherence vector
 int partial_coherence_triggers_index = 0;
 
-// index relative to averaging iterations
 bool averaging = false;
 
 bool apply_twin = false;
@@ -91,14 +90,6 @@ void State::MapAlgorithmObject(int alg_id)
     else if(alg_id == ALGORITHM_ER)
     {
         algorithm_map[alg_id] = new Er;
-    }
-    else if (alg_id == ALGORITHM_HIO_NORM)
-    {
-        algorithm_map[alg_id] = new HioNorm;
-    }
-    else if(alg_id == ALGORITHM_ER_NORM)
-    {
-        algorithm_map[alg_id] = new ErNorm;
     }
 }
 

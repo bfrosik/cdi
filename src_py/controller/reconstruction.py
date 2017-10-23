@@ -319,6 +319,8 @@ def reconstruction(proc, filename, conf):
     if coherence is not None:
         write_simple(coherence, prefix + "simple_coh.vtk")
 
+    # plot error
+
 
     print 'image, support shape', image.shape, support.shape
 

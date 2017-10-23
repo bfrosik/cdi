@@ -13,7 +13,7 @@ gc = 5;
 
 //algorithm_sequence = ((3, ("ER",2), ("HIO", 2), ("ER", 2)), (2, ("ER",3), ("HIO",3)))
 //algorithm_sequence = ((1, ("ER",6)))
-algorithm_sequence = ((2, ("ER",19), ("HIO", 10)), (1,("ER",10)))
+algorithm_sequence = ((5, ("ER",19), ("HIO", 10)), (1,("ER",10)))
 
 // twin defines at which iteration to cut half of the array(i.e. multiply by 0s), it is done in ER/HIO
 // if negative, no action
@@ -52,7 +52,7 @@ partial_coherence_clip = false;
 
 regularized_amp = "GAUSS";
 
-//avg_iterations = 5;
+avg_iterations = 15;
 
 
 // PARAMETERS FOR VISUALISATION

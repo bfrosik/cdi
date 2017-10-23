@@ -361,8 +361,6 @@ void Params::BuildAlgorithmMap()
     // hardcoded
     algorithm_id_map.insert(std::pair<char*,int>("ER", ALGORITHM_ER));
     algorithm_id_map.insert(std::pair<char*,int>("HIO", ALGORITHM_HIO));
-    algorithm_id_map.insert(std::pair<char*,int>("ER_NORM", ALGORITHM_ER_NORM));
-    algorithm_id_map.insert(std::pair<char*,int>("HIO_NORM", ALGORITHM_HIO_NORM));
     algorithm_id_map.insert(std::pair<char*,int>("LUCY", ALGORITHM_LUCY));
     algorithm_id_map.insert(std::pair<char*,int>("LUCY_PREV", ALGORITHM_LUCY_PREV));
     algorithm_id_map.insert(std::pair<char*,int>("GAUSS", ALGORITHM_GAUSS));

@@ -37,18 +37,3 @@ void Er::ModulusConstrain(af::array arr)
     rec->ModulusConstrainEr(arr);
 }
 
-//-------------------------------------------------------------------
-// Hio sub-class
-
-void HioNorm::ModulusConstrain(af::array arr)
-{
-    rec->ModulusConstrainHioNorm(arr);
-}
-
-//-------------------------------------------------------------------
-// Er sub-class
-
-void ErNorm::ModulusConstrain(af::array arr)
-{
-    rec->ModulusConstrainErNorm(arr);
-}

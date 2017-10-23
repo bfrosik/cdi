@@ -32,16 +32,5 @@ public:
     void ModulusConstrain(af::array);
 };
 
-class HioNorm : public Algorithm
-{
-public:
-    void ModulusConstrain(af::array);
-};
-
-class ErNorm : public Algorithm
-{
-public:
-    void ModulusConstrain(af::array);
-};
 
 #endif /*algorithm_hpp */

@@ -52,11 +52,6 @@ private:
     // Averages amplitudes
     void Average();
 
-    // This method applies amplitude threshold constraint to correct the amplitudes of rs_amplitudes
-    // i.e. if data amplitude is over the threshold, the rs_amplitudes value is modified.
-    // Other values are either zeroed out or intact depending on configuration.
-    void AmplitudeThreshold();
-    
     // vectorize support array at the end of iterations
     void VectorizeSupport();
 
@@ -93,14 +88,8 @@ public:
     // Runs one iteration of ER algorithm.
     void ModulusConstrainEr(af::array);
 
-    // Runs one iteration of ER with normalizing algorithm. 
-    void ModulusConstrainErNorm(af::array);
-
     // Runs one iteration of HIO algorithm. 
     void ModulusConstrainHio(af::array);
-
-    // Runs one iteration of HIO with normalizing algorithm. 
-    void ModulusConstrainHioNorm(af::array);
 
     af::array GetImage();
     std::vector<d_type>  GetErrors();
