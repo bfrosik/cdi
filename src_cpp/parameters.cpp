@@ -433,11 +433,6 @@ bool Params::IsAmpThresholdFillZeros()
     return amp_threshold_fill_zeros;
 }
 
-bool Params::IsMatlabOrder()
-{
-    return matlab_order;
-}
-
 d_type Params::GetPhaseMin()
 {
     return phase_min;

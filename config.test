@@ -1,16 +1,15 @@
 // program flow
-matlab_order = false;
 gc = 5;
 
 // parameters for data preparation
 aliens = ((170,220,112,195,245,123), (50,96,10,60,110,20))
 binning = [2,2,2];
 center_shift = [0,0,0];
-zero_pad = [0,4,0]
+zero_pad = [0,0,0]
 
 //algorithm_sequence = ((3, ("ER",2), ("HIO", 2), ("ER", 2)), (2, ("ER",3), ("HIO",3)))
 //algorithm_sequence = ((1, ("ER",6)))
-algorithm_sequence = ((10, ("ER",19), ("HIO", 10)), (1,("ER",10)))
+algorithm_sequence = ((2, ("ER",19), ("HIO", 10)), (1,("ER",10)))
 
 // twin defines at which iteration to cut half of the array(i.e. multiply by 0s), it is done in ER/HIO
 // if negative, no action
@@ -32,7 +31,6 @@ support_threshold = 0.1;
 support_threshold_adjust = false;
 support_sigma = 1;
 support_area = [.5,.5,.5];
-//support_area = [15, 15, 15];
 
 roi = [32,32,32];
 
@@ -52,16 +50,15 @@ regularized_amp = "GAUSS"
 
 //avg_iterations = 5;
 
-// wavelength (Roos has it 1.39
+// wavelength
 lamda = .13933;
-// delta (degrees) (I think Ross has it as tth, 0.352032910127)
+// delta (degrees)
 delta = 30.1;
-// gamma (degrees) (Ross has it 0.502131225799)
+// gamma (degrees)
 gamma = 14.0;
-// camera distance (m) (Ross has it  0.938)                    %
+// camera distance (m)
 arm=0.6350;
-// angular step size (Ross has it 0.000349065850399)
-//dth=0.01;
+// angular step size
 dth=0.000174532925199;
 
 // detector pixel sixe
@@ -76,10 +73,7 @@ crop = [120,120,120]
 // the dir+prefix of results vtk files
 res = "vtk/test_"
 
-// not used in Ross code
-recenter_rec = 1;
-det_px = 55.0e-6;
-dtilt=0.0;
+
 
 
 

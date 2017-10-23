@@ -105,9 +105,6 @@ class CXDViz(tr.HasTraits):
         dpx = params.dpx
         dpy = params.dpy
         dth = params.dth
-        # dx = 1.0 / shape[1]
-        # dy = 1.0 / shape[0]
-        # dz = 1.0 / shape[2]
         dx = 1.0 / shape[0]
         dy = 1.0 / shape[1]
         dz = 1.0 / shape[2]
@@ -383,10 +380,10 @@ def center(image, support):
     image = shift(image, dims[0] / 2 - com[0], dims[1] / 2 - com[1], dims[2] / 2 - com[2])
     support = shift(support, dims[0] / 2 - com[0], dims[1] / 2 - com[1], dims[2] / 2 - com[2])
 
-    # # set com phase to zero, use as a reference
-    # phi0 = m.atan2(image.imag[dims[0]/2, dims[1]/2, dims[2]/2], image.real[dims[0]/2, dims[1]/2, dims[2]/2])
-    # print 'phi0', phi0
-    # image = image * np.exp(-1j * phi0)
+    # set com phase to zero, use as a reference
+    phi0 = m.atan2(image.imag[dims[0]/2, dims[1]/2, dims[2]/2], image.real[dims[0]/2, dims[1]/2, dims[2]/2])
+    print 'phi0', phi0
+    image = image * np.exp(-1j * phi0)
     return image, support
 
 
@@ -395,8 +392,8 @@ def save_CX(conf, image, support, filename):
     support = np.swapaxes(support, 1, 0)
     image, support = center(image, support)
     #    image = remove_ramp(image)
-    # mx = max(np.absolute(image).ravel().tolist())
-    # image = image/mx
+    mx = max(np.absolute(image).ravel().tolist())
+    image = image/mx
     params = DispalyParams(conf)
     viz = CXDViz()
     viz.SetArray(image)

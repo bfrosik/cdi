@@ -62,10 +62,8 @@ void Reconstruction::Init()
     d_type max_data = af::max<d_type>(data);
     ds_image *= max_data * GetNorm(ds_image);
     
-    //af::array ones = constant(1, dim4(32,64,32), u32);
-    //af::array temp = Utils::PadAround(ones, data.dims(), 0);
-    af::array temp = support->GetSupportArray();
-    ds_image  = complex(temp.as((af_dtype) dtype_traits<d_type>::ctype), 0.0).as(c64);
+//    af::array temp = support->GetSupportArray();
+//    ds_image  = complex(temp.as((af_dtype) dtype_traits<d_type>::ctype), 0.0).as(c64);
     printf("initial image norm %f\n", GetNorm(ds_image));
 
 }
@@ -117,15 +115,7 @@ af::array Reconstruction::ModulusProjection()
     printf("------------------current iteration %i -----------------\n", current_iteration);
     af::array rs_amplitudes;
     dim4 dims = data.dims();
-    if (params->IsMatlabOrder())
-    {
-        af::array shifted = shift(ds_image, dims[0]/2, dims[1]/2, dims[2]/2);
-        rs_amplitudes = Utils::ifftshift(Utils::fft(Utils::ifftshift(ds_image)));
-    }
-    else
-    {
-        rs_amplitudes = Utils::ifft(ds_image)*num_points;
-    }
+    rs_amplitudes = Utils::ifft(ds_image)*num_points;
 
     
     printf("data norm, ampl norm before ratio %fl %fl\n", GetNorm(data), GetNorm(rs_amplitudes));
@@ -165,16 +155,7 @@ af::array Reconstruction::ModulusProjection()
     if (params->GetGC() && current_iteration % params->GetGC() == 0)
         af::deviceGC();
     
-    if (params->IsMatlabOrder())
-    {
-        af::array temp = Utils::ifftshift((Utils::ifft(Utils::ifftshift(rs_amplitudes))));
-        //return Utils::ifft(rs_amplitudes);
-        return temp;
-    }
-    else
-    {
-        return Utils::fft(rs_amplitudes)/num_points;
-     }
+    return Utils::fft(rs_amplitudes)/num_points;
 
 }
 

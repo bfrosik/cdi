@@ -34,7 +34,6 @@ void PartialCoherence::Init(af::array data)
 
     af::array data_centered = af::shift(data, dims[0]/2, dims[1]/2, dims[2]/2, dims[3]/2);
     roi_data_abs =  Utils::CropCenter(data_centered, roi_dims).copy();
-//    roi_data_abs =  Utils::CropCenter(data, roi_dims).copy();
     if (normalize)
     {
         sum_roi_data = sum<d_type>(pow(roi_data_abs, 2));
@@ -46,7 +45,6 @@ void PartialCoherence::SetPrevious(af::array abs_amplitudes)
 {
     af::array abs_amplitudes_centered = shift(abs_amplitudes, dims[0]/2, dims[1]/2, dims[2]/2, dims[3]/2);
     roi_amplitudes_prev =  Utils::CropCenter(abs_amplitudes_centered, roi_dims).copy();
-//    roi_amplitudes_prev =  Utils::CropCenter(abs_amplitudes, roi_dims).copy();
 }
 
 std::vector<int> PartialCoherence::GetTriggers()
@@ -74,24 +72,12 @@ af::array PartialCoherence::ApplyPartialCoherence(af::array abs_amplitudes, int 
     // check if trigger is set for this iteration, and if so update coherence
     if ((trigger_index < triggers.size()) && (current_iteration == triggers[trigger_index]))
     {        
-//        if (trigger_index > 0)
-        {
-            af::array abs_amplitudes_centered = shift(abs_amplitudes, dims[0]/2, dims[1]/2, dims[2]/2, dims[3]/2);
-            af::array roi_abs_amplitudes = Utils::CropCenter(abs_amplitudes_centered, roi_dims).copy();
-//            af::array roi_abs_amplitudes = Utils::CropCenter(abs_amplitudes, roi_dims).copy();
-    
-            af::array roi_combined_amp = 2*roi_abs_amplitudes - roi_amplitudes_prev;
-            OnTrigger(roi_combined_amp);   // use_2k_1 from matlab program
-            printf("Updating coherence, current iter %i\n", current_iteration);
-        }
-//        else
-//        {
-//            //set gaussian coherence
-//            printf("setting coherence to gauss\n");
-//            d_type sigmas [] = {0.5, 0.5, 0.5};
-//            kernel_array = Utils::GaussDistribution(dim4(11,11,11), sigmas, 1);
-//        }
-//        
+        af::array abs_amplitudes_centered = shift(abs_amplitudes, dims[0]/2, dims[1]/2, dims[2]/2, dims[3]/2);
+        af::array roi_abs_amplitudes = Utils::CropCenter(abs_amplitudes_centered, roi_dims).copy();
+
+        af::array roi_combined_amp = 2*roi_abs_amplitudes - roi_amplitudes_prev;
+        OnTrigger(roi_combined_amp);   // use_2k_1 from matlab program
+        printf("Updating coherence, current iter %i\n", current_iteration);
         trigger_index++;
     }
 

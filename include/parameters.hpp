@@ -66,10 +66,6 @@ public:
     // Returns false, if the values should not be modified.
     bool IsAmpThresholdFillZeros();
     
-    // Returns true if the modulus projector follows Matlab algorithm, i.e. first apply fft to go into reciprocal space, 
-    // then ifft to direct space. Retirn false if reverse order.
-    bool IsMatlabOrder();
-    
     // Returns minimum phase value for the HIO processing.
     d_type GetPhaseMin();
     
