@@ -61,7 +61,6 @@ import src_py.utilities.CXDVizNX as cx
 import pylibconfig2 as cfg
 import os
 import scipy.fftpack as sf
-import scipy.io as sio
 import src_py.cyth.bridge_cpu as bridge_cpu
 import src_py.cyth.bridge_opencl as bridge_opencl
 #import src_py.cyth.bridge_cuda as bridge_cuda
@@ -288,9 +287,7 @@ def reconstruction(proc, filename, conf):
     try:
         save_data = config_map.save_data
         if save_data:
-            data_dict = {}
-            data_dict['data'] = data
-            sio.savemat('data.mat', data_dict)
+            np.save('data.npy', data)
     except AttributeError:
         pass
 
@@ -300,15 +297,10 @@ def reconstruction(proc, filename, conf):
     try:
         save_results = config_map.save_data
         if save_results:
-            image_dict = {}
-            support_dict = {}
-            image_dict['image'] = image
-            sio.savemat('image.mat', image_dict)
-            support_dict['support'] = support
-            sio.savemat('support.mat', support_dict)
+            np.save('image.npy', image)
+            np.save('support.npy', support)
     except AttributeError:
         pass
-
 
     try:
         res_dir = config_map.res_dir
