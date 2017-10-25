@@ -1,10 +1,8 @@
-//
-//  state.hpp
-//  ArrayFire-OpenCL
-//
-//  Created by Barbara Frosik on 8/15/16.
-//  Copyright © 2016 ArrayFire. All rights reserved.
-//
+/***
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+***/
+// Created by Barbara Frosik
 
 #ifndef state_hpp
 #define state_hpp
