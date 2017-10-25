@@ -2,6 +2,7 @@
 Copyright (c) UChicago Argonne, LLC. All rights reserved.
 See LICENSE file.
 ***/
+// Created by Barbara Frosik
 
 #include "arrayfire.h"
 #include <string.h>
