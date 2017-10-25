@@ -1,10 +1,7 @@
-//
-//  support.cpp
-//  ArrayFire-OpenCL
-//
-//  Created by Barbara Frosik on 8/15/16.
-//  Copyright © 2016 ArrayFire. All rights reserved.
-//
+/***
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+***/
 
 #include "stdio.h"
 #include "support.hpp"
