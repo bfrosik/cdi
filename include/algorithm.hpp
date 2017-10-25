@@ -1,3 +1,7 @@
+/***
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+***/
 
 #ifndef algorithm_hpp
 #define algorithm_hpp
