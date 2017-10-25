@@ -20,9 +20,9 @@ Pre-requisites
 - ArrayFire library version 3.5.0 or higher
 - Libconfig library version 1.5 or higher
 - Python packages:
- - Libconfig
- - traits
- - tvtk
+ -- Libconfig
+ -- traits
+ -- tvtk
 
 Author(s)
 -------
@@ -35,5 +35,5 @@ See LICENSE file.
 
 Libraries
 -------
-ArrayFire open source
-Libconfig open source
+- ArrayFire open source
+- Libconfig open source
