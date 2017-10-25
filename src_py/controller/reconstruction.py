@@ -7,6 +7,8 @@
 # See LICENSE file.                                                       #
 # #########################################################################
 
+# Created by Barbara Frosik
+
 """
 Please make sure the installation :ref:`pre-requisite-reference-label` are met.
 This module controls the reconstruction process. The user has to provide parameters such as type of processor, data, and configuration.
