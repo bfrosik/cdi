@@ -1,10 +1,7 @@
-//
-//  Constants.h
-//  ArrayFire-OpenCL
-//
-//  Created by Barbara Frosik on 8/8/16.
-//  Copyright © 2016 ArrayFire. All rights reserved.
-//
+/***
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+***/
 
 #ifndef common_h
 #define common_h
