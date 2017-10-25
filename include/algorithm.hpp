@@ -2,6 +2,7 @@
 Copyright (c) UChicago Argonne, LLC. All rights reserved.
 See LICENSE file.
 ***/
+// Created by Barbara Frosik
 
 #ifndef algorithm_hpp
 #define algorithm_hpp
