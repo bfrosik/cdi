@@ -1,3 +1,9 @@
+/***
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+***/
+// Created by Barbara Frosik
+
 #ifndef util_hpp
 #define util_hpp
 
