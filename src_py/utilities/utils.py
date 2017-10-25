@@ -15,6 +15,17 @@ This module is a suite of utility mehods.
 import tifffile as tf
 import numpy as np
 
+__author__ = "Barbara Frosik"
+__copyright__ = "Copyright (c) 2016, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+__all__ = ['get_array_from_tif',
+           'get_opencl_dim',
+           'binning',
+           'get_centered',
+           'zero_pad',
+           'crop_center',
+           'flip']
+
 
 def get_array_from_tif(filename):
     """
