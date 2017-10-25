@@ -2,6 +2,7 @@
 Copyright (c) UChicago Argonne, LLC. All rights reserved.
 See LICENSE file.
 ***/
+// Created by Barbara Frosik
 
 #ifndef common_h
 #define common_h
@@ -26,8 +27,7 @@ typedef struct Alg_switch alg_switch;
 
 const int ALGORITHM_ER = 1;
 const int ALGORITHM_HIO = 2;
-const int ALGORITHM_ER_NORM = 3;
-const int ALGORITHM_HIO_NORM = 4;
+
 const int ALGORITHM_LUCY = 13;
 const int ALGORITHM_LUCY_PREV = 14;
 const int ALGORITHM_GAUSS = 15;
