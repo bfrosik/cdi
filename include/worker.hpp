@@ -1,10 +1,8 @@
-//
-//  worker.hpp
-//  ArrayFire-OpenCL
-//
-//  Created by Barbara Frosik on 8/12/16.
-//  Copyright © 2016 ArrayFire. All rights reserved.
-//
+/***
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+***/
+// Created by Barbara Frosik
 
 #ifndef worker_hpp
 #define worker_hpp
