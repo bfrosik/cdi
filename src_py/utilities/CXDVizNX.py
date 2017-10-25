@@ -12,6 +12,10 @@ import numpy as np
 import math as m
 import utils as ut
 
+__author__ = "Barbara Frosik"
+__copyright__ = "Copyright (c) 2016, UChicago Argonne, LLC."
+__docformat__ = 'restructuredtext en'
+
 
 class DispalyParams:
     """
