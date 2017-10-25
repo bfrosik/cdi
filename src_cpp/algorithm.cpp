@@ -1,3 +1,8 @@
+/***
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+***/
+
 #include "iostream"
 #include "algorithm.hpp"
 #include "worker.hpp"
