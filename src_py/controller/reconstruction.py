@@ -7,7 +7,6 @@
 # See LICENSE file.                                                       #
 # #########################################################################
 
-# Created by Barbara Frosik
 
 """
 Please make sure the installation :ref:`pre-requisite-reference-label` are met.
@@ -35,7 +34,8 @@ __copyright__ = "Copyright (c) 2016, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['read_config',
            'prepare_data',
-           'do_reconstruction',
+           'fast_module_reconstruction',
+           'write_simple',
            'reconstruction']
 
 def read_config(config):
