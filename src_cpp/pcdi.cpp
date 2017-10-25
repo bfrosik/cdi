@@ -1,3 +1,8 @@
+/***
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+***/
+
 #include "cstdio"
 #include "common.h"
 #include "pcdi.hpp"
