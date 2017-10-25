@@ -1,10 +1,7 @@
-//
-//  worker.cpp
-//  ArrayFire-OpenCL
-//
-//  Created by Barbara Frosik on 8/12/16.
-//  Copyright © 2016 ArrayFire. All rights reserved.
-//
+/***
+Copyright (c) UChicago Argonne, LLC. All rights reserved.
+See LICENSE file.
+***/
 
 #include "fstream"
 #include "worker.hpp"
