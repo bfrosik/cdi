@@ -70,7 +70,7 @@ public:
 
     static af::array GetRatio(af::array, af::array );
     static bool IsNullArray(af::array);
-    static const char * GetFullFilename(const char * dir, const char * filename);
+    static std::string GetFullFilename(const char * dir, const char * filename);
 };
 
 #endif /* util_hpp */

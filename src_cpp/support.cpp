@@ -17,7 +17,6 @@ Support::Support(const dim4 data_dim, Params *params, af::array support)
     algorithm = params->GetSupportAlg();
     if (Utils::IsNullArray(support))
     {
-        printf("support with null array\n");
         af::array ones = constant(1, Utils::Int2Dim4(params->GetSupportArea()), u32);
         support_array = Utils::PadAround(ones, data_dim, 0);
     }

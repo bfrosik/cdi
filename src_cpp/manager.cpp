@@ -58,16 +58,16 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim,
     if(action == ACTION_CONTINUE)
     {
         const char * continue_dir = params->GetContinueDir();
-        const char *  image_file = Utils::GetFullFilename(continue_dir, "image.af");
-        const char * support_file = Utils::GetFullFilename(continue_dir, "support.af");
-        const char * coherence_file = Utils::GetFullFilename(continue_dir, "coherence.af");
+        std::string image_file = Utils::GetFullFilename(continue_dir, "image.af");
+        std::string support_file = Utils::GetFullFilename(continue_dir, "support.af");
+        std::string coherence_file = Utils::GetFullFilename(continue_dir, "coherence.af");
         try {
-            guess = af::readArray(image_file, "image");
+            guess = af::readArray(image_file.c_str(), "image");
             cont = true;
         } 
         catch ( const std::exception &ex)
         {
-            printf("Error reading image array from %s file, generating new guess\n", image_file);
+            printf("Error reading image array from %s file, generating new guess\n", image_file.c_str());
             action = ACTION_NEW_GUESS;
         }  
         
@@ -76,7 +76,7 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim,
             af::array null_array = array();            
             af::array support_array;
             try {
-                support_array = af::readArray(support_file, "support");
+                support_array = af::readArray(support_file.c_str(), "support");
             } 
             catch ( const std::exception &ex)
             {
@@ -85,7 +85,7 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim,
             
             af::array coherence_array;
             try {
-                coherence_array = af::readArray(coherence_file, "coherence");
+                coherence_array = af::readArray(coherence_file.c_str(), "coherence");
             } 
             catch ( const std::exception &ex)
             {
@@ -94,7 +94,6 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim,
 
             Reconstruction reconstruction(data, guess, params, support_array, coherence_array);
             rec = &reconstruction;
-            printf("created rec\n");
         }
     }
     if (action == ACTION_NEW_GUESS)
@@ -126,22 +125,22 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim,
     {
         printf("save results\n");
         const char * save_dir = params->GetSaveDir();
-        const char * image_file = Utils::GetFullFilename(save_dir, "image.af");
-        const char * support_file = Utils::GetFullFilename(save_dir, "support.af");
-        const char * coherence_file = Utils::GetFullFilename(save_dir, "coherence.af");
+        std::string image_file = Utils::GetFullFilename(save_dir, "image.af");
+        std::string support_file = Utils::GetFullFilename(save_dir, "support.af");
+        std::string coherence_file = Utils::GetFullFilename(save_dir, "coherence.af");
         
         try {
-            af::saveArray("image", rec->GetImage(), image_file);
-            af::saveArray("support", rec->GetSupportArray(), support_file);
+            af::saveArray("image", rec->GetImage(), image_file.c_str());
+            af::saveArray("support", rec->GetSupportArray(), support_file.c_str());
             af::array coh = rec->GetCoherenceArray();
             if (!Utils::IsNullArray(coh))
             {
-                af::saveArray("coherence", coh, coherence_file);
+                af::saveArray("coherence", coh, coherence_file.c_str());
             }
         } 
         catch ( const std::exception &ex)
         {
-            printf("Error writing image array to %s file\n", image_file);
+            printf("Error writing image array to %s file\n", image_file.c_str());
         }                
     }	
     printf("iterate function took %g seconds\n", timer::stop());

@@ -225,7 +225,6 @@ af::array Utils::ReverseGaussDistribution(af::dim4 data_dim, d_type * sgma, int 
 
 af::array Utils::GaussDistribution(af::dim4 data_dim, d_type * sgma, int alpha)
 {
-    printf("in gauss distr\n");
     // calculate multipliers
     int dimension = nD;  //this should be changed to determine size from sgma
 //    af::array gridx = (range(data_dim, 1)-(data_dim[1]-1)/2.0);  // the range method produces wrong data
@@ -354,11 +353,11 @@ bool Utils::IsNullArray(af::array  arr)
     return (arr.elements() == 0);
 }
 
-const char * Utils::GetFullFilename(const char * dir, const char * filename)
+std::string Utils::GetFullFilename(const char * dir, const char * filename)
 {
     std::string full_filename;
     full_filename.append(dir);
     full_filename.append("/");
     full_filename.append(filename);
-    return full_filename.c_str();
+    return full_filename;
 }
