@@ -11,6 +11,7 @@ See LICENSE file.
 #include "arrayfire.h"
 #include "string"
 #include "sstream"
+#include "parameters.hpp"
 
 using namespace af;
 
@@ -21,16 +22,15 @@ d_type sum_roi_data;
 af::dim4 roi_dims;
 af::dim4 dims;
 
-PartialCoherence::PartialCoherence(std::vector<int> roi_area, int * kernel_area,  std::vector<int> partial_coherence_trigger, int alg, bool pcdi_normalize, int pcdi_iter, bool pcdi_clip)
+PartialCoherence::PartialCoherence(Params *params, af::array coherence_array)
 {
-    roi= roi_area;
-    triggers = partial_coherence_trigger;
+    roi= params->GetPcdiRoi();
+    triggers = params->GetPcdiTriggers();
     trigger_index = 0;
-    algorithm = alg;
-    kernel = kernel_area;
-    normalize = pcdi_normalize;
-    iteration_num = pcdi_iter;
-    clip = pcdi_clip;
+    algorithm = params->GetPcdiAlgorithm();
+    normalize = params->GetPcdiNormalize();
+    iteration_num = params->GetPcdiIterations();
+    kernel_array = coherence_array;
 }
 
 void PartialCoherence::Init(af::array data)
@@ -43,8 +43,12 @@ void PartialCoherence::Init(af::array data)
     if (normalize)
     {
         sum_roi_data = sum<d_type>(pow(roi_data_abs, 2));
-    } 
-    kernel_array = constant(0.5, roi_dims);
+    }
+    if (Utils::IsNullArray(kernel_array))
+    {
+        kernel_array = constant(0.5, roi_dims);
+    }
+    dim4 kdim = kernel_array.dims();
 }
 
 void PartialCoherence::SetPrevious(af::array abs_amplitudes)
@@ -66,11 +70,6 @@ int PartialCoherence::GetTriggerAlgorithm()
 std::vector<int> PartialCoherence::GetRoi()
 {
     return roi;
-}
-
-int * PartialCoherence::GetKernel()
-{
-    return kernel;
 }
 
 af::array PartialCoherence::ApplyPartialCoherence(af::array abs_amplitudes, int current_iteration)
@@ -109,7 +108,6 @@ void PartialCoherence::OnTrigger(af::array arr)
         d_type sum_ampl = sum<d_type>(amplitudes_2);
         d_type ratio = sum_roi_data/sum_ampl;
         amplitudes = sqrt(amplitudes_2 * ratio);
-        //amplitudes = sqrt((pow(arr, 2)/sum<d_type>(pow(arr, 2))) * sum_roi_data);
     }
     
     af::array coherence;
@@ -157,7 +155,6 @@ af::array PartialCoherence::fftConvolve(af::array arr, af::array kernel)
 void PartialCoherence::DeconvLucy(af::array amplitudes, af::array data, int iterations)
 {
     // implementation based on Python code: https://github.com/scikit-image/scikit-image/blob/master/skimage/restoration/deconvolution.py
-    //af::array coherence = constant(0.5, amplitudes.dims());
     //set it to the last coherence instead
     af::array coherence = kernel_array;
     af::array data_mirror = af::flip(af::flip(af::flip(af::flip(data, 0),1),2),3).copy();
@@ -165,20 +162,12 @@ void PartialCoherence::DeconvLucy(af::array amplitudes, af::array data, int iter
     for (int i = 0; i < iterations; i++)
     {
         af::array convolve = af::fftConvolve(coherence, data);
-        //af::array convolve = af::convolve3(im_deconv, psf);
-        convolve(convolve == 0) = 1.0;   // added to the algorithm from scikit to prevet division by 0
+        convolve(convolve == 0) = 1.0;   // added to the algorithm from scikit to prevent division by 0
 
         af::array relative_blurr = amplitudes/convolve;
         coherence *= af::fftConvolve(relative_blurr, data_mirror);
     }
     coherence = real(coherence);
-    // clip
-    if (clip)
-    {
-        coherence(coherence > 1) = 1;
-        coherence(coherence < -1) = -1;
-    }
-    //coherence = abs(coherence)/sum<d_type>(abs(coherence)); 
     d_type coh_sum = sum<d_type>(abs(coherence));
     coherence = abs(coherence)/coh_sum;    
     printf("coherence norm ,  %f\n", sum<d_type>(pow(abs(coherence), 2)));

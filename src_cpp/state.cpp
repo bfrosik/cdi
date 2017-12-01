@@ -106,7 +106,7 @@ int State::Next()
     }
  
     // check if update support this iteration
-    if ((params->GetSupport()->GetTriggers().size() > 0) && (params->GetSupport()->GetTriggers()[support_triggers_index] == current_iter))
+    if ((params->GetSupportTriggers().size() > 0) && (params->GetSupportTriggers()[support_triggers_index] == current_iter))
     {
         update_support = true;
         support_triggers_index++;

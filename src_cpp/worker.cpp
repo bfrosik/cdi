@@ -30,25 +30,29 @@ std::vector<float> support_vector;
 std::vector<d_type> coherence_vector;
 
 
-Reconstruction::Reconstruction(af::array image_data, af::array guess, const char* config_file)
+Reconstruction::Reconstruction(af::array image_data, af::array guess, Params* params, af::array support_array, af::array coherence_array)
 {
     data = image_data;
     ds_image = guess;
-    params = new Params(config_file, data.dims());
+    params = params;
     state = new State(params);
+    support = new Support(data.dims(), params, support_array);
+    
+    if (params->GetPcdiAlgorithm() > 0)
+    {
+        partialCoherence = new PartialCoherence(params, coherence_array);
+    }
 }
 
 void Reconstruction::Init()
 {
     // initialize other components
     state->Init();
-    support = params->GetSupport();
-    partialCoherence = params->GetPartialCoherence();
-    aver_iter = params->GetAvgIterations();
-    if (partialCoherence != NULL)
+    if (params->GetPcdiAlgorithm() > 0)
     {
         partialCoherence->Init(data);
     }
+    aver_iter = params->GetAvgIterations();
     norm_data = GetNorm(data);
     num_points = data.elements();
     // multiply the rs_amplitudes by max element of data array and the norm
@@ -56,12 +60,11 @@ void Reconstruction::Init()
     ds_image *= max_data * GetNorm(ds_image);
 
 // the next two lines are for testing it sets initial guess to initial support    
-//    af::array temp = support->GetSupportArray();
-//    ds_image  = complex(temp.as((af_dtype) dtype_traits<d_type>::ctype), 0.0).as(c64);
+    af::array temp = support->GetSupportArray();
+    ds_image  = complex(temp.as((af_dtype) dtype_traits<d_type>::ctype), 0.0).as(c64);
     
     ds_image *= support->GetSupportArray();
     printf("initial image norm %f\n", GetNorm(ds_image));
-
 }
 
 
@@ -112,7 +115,6 @@ af::array Reconstruction::ModulusProjection()
     
     if ((partialCoherence == NULL) || (partialCoherence->GetTriggers().size() == 0))
     {
-        printf("applying ratio\n");
         //rs_amplitudes = data * exp(af::complex(0, af::arg(rs_amplitudes)));
         af::array ratio = Utils::GetRatio(data, abs(rs_amplitudes));        
         rs_amplitudes *= ratio;
@@ -131,12 +133,10 @@ af::array Reconstruction::ModulusProjection()
         }
         else
         {
-            printf("applying ratio\n");
             //rs_amplitudes = data * exp(af::complex(0, af::arg(rs_amplitudes)));
             af::array ratio = Utils::GetRatio(data, abs(rs_amplitudes));
             rs_amplitudes *= ratio;
         }
-        printf("setting previous\n");
         partialCoherence->SetPrevious(abs(rs_amplitudes));
     }
     printf("ampl norm after ratio %fl\n", GetNorm(rs_amplitudes));
@@ -155,7 +155,6 @@ void Reconstruction::ModulusConstrainEr(af::array ds_image_raw)
     //ds_image = ds_image_raw * support->GetSupportArray(state->IsApplyTwin());
     af::array support_array = support->GetSupportArray(state->IsApplyTwin());
     ds_image = ds_image_raw * support_array;
-
     printf("image norm after support %fl\n", GetNorm(ds_image));
 }
 
@@ -235,6 +234,16 @@ int Reconstruction::GetCurrentIteration()
 af::array Reconstruction::GetImage()
 {
     return ds_image;
+}
+
+af::array Reconstruction::GetSupportArray()
+{
+    return support->GetSupportArray();
+}
+
+af::array Reconstruction::GetCoherenceArray()
+{
+    return partialCoherence->GetKernelArray();
 }
 
 std::vector<d_type> Reconstruction::GetErrors()

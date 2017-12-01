@@ -348,3 +348,17 @@ af::array Utils::GetRatio(af::array divident, af::array divisor)
     divisor_copy(divisor == 0) = 1;
     return divident/divisor_copy;
 }
+
+bool Utils::IsNullArray(af::array  arr)
+{
+    return (arr.elements() == 0);
+}
+
+const char * Utils::GetFullFilename(const char * dir, const char * filename)
+{
+    std::string full_filename;
+    full_filename.append(dir);
+    full_filename.append("/");
+    full_filename.append(filename);
+    return full_filename.c_str();
+}

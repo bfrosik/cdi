@@ -11,16 +11,14 @@ See LICENSE file.
 #include "vector"
 #include "map"
 #include "common.h"
-
+#include "arrayfire.h"
 
 class Params;
 class State;
 class Support;
 class PartialCoherence;
-#include "arrayfire.h"
 
 using namespace af;
-
 // This class represents a single image phase reconstruction processing.
 // It constructs the following objects:
 // 1. Params, which is initialized from configuration file, and keeps the attributes that do not change during processing.
@@ -33,13 +31,13 @@ class Reconstruction
 private:
 
     // Params object constructed by the Reconstruction class
-    Params *params;
+    Params *params = NULL;
     // State object constructed by the Reconstruction class
-    State *state;
+    State *state = NULL;
     // A reference to Support object
-    Support *support;
+    Support *support = NULL;
     // A reference to PartialCoherence
-    PartialCoherence *partialCoherence;
+    PartialCoherence *partialCoherence = NULL;
 
     // This method returns sum of squares of all elements in the array
     double GetNorm(af::array arr);
@@ -61,9 +59,9 @@ private:
 public:
     // The class constructor takes data array, an image guess array in reciprocal space, and configuration file. The image guess
     // is typically generated as an complex random array. This image can be also the best outcome of previous calculations. The
-    // data is saved and is used for processing. Configuration file is used to construct the Param object.
-    Reconstruction(af::array data, af::array guess, const char* config);
-    
+    // data is saved and is used for processing. 
+    Reconstruction(af::array data, af::array guess, Params* params, af::array support_array, af::array coherence_array);
+        
     // This initializes the object. It must be called after object is created.
     // 1. it calculates and sets norm of the data
     // 2. it calculates and sets size of data array
@@ -90,6 +88,8 @@ public:
     void ModulusConstrainHio(af::array);
 
     af::array GetImage();
+    af::array GetSupportArray();
+    af::array GetCoherenceArray();
     std::vector<d_type>  GetErrors();
     std::vector<float> GetSupportVector();
     std::vector<d_type> GetCoherenceVector();

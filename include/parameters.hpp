@@ -27,10 +27,6 @@ struct Trigger_setting
 };
 typedef struct Trigger_setting trigger_setting;
 
-class Reconstruction;
-class Support;
-class PartialCoherence;
-
 // This class holds parameters defining the reconstruction process. The parameters are set based on configuration file.
 // Methods of this class are getters.
 class Params
@@ -38,24 +34,29 @@ class Params
 private:
     std::vector<int> ParseTriggers(std::string trigger_name);
     void BuildAlgorithmMap();
+    void BuildActionMap();
 
 public:
     // Constructor. Takes in configuration file, parses the configuration and sets the parameters accordingly.
-    Params(const char* config_file, const dim4 data_dim);
-    
+    Params(const char* config_file, dim4 data_dim);
+       
     // returns data type (float/double). Used by python code
     std::string GetDataType();
 
     // Returns number of all iterations. It is calculated from the "algorithm_sequence" parameter.
     int GetNumberIterations();
 
-    // Returns info for support update. trigger list contains starting iteration, step, and ending iteration
-    // (if missing, run to the end) 
-    Support * GetSupport();
+    std::vector<int> GetSupportArea();
+    float GetSupportThreshold();
+    int GetSupportSigma();
+    std::vector<int> GetSupportTriggers();
+    int GetSupportAlg();
 
-    // Returns info for partial coherence. trigger list contains starting iteration, step, and ending iteration
-    // (if missing, run to the end)
-    PartialCoherence * GetPartialCoherence();
+    int GetPcdiAlgorithm();
+    std::vector<int> GetPcdiRoi();
+    std::vector<int> GetPcdiTriggers();
+    bool GetPcdiNormalize();
+    int GetPcdiIterations();
 
     // Returns amplitude threshold. Used by ER and HIO algorithms.
     d_type GetAmpThreshold();
@@ -86,6 +87,18 @@ public:
 
     // Returns a constant indication a scheme for modifying data when calculation ratio in modulus projection
     int GetRegularizedAmp();
+    
+    // Returns directory to save results
+    const char * GetSaveDir();
+
+    // Returns directory to retrieve previous results to continue
+    const char * GetContinueDir();
+
+    // Returns action the program will perform. Choices are "prep_only", "new_guess", "continue"
+    int GetAction();
+
+    // Returns boolean flag indication whether to save the raw results
+    bool IsSaveResults();
 
     // Returns number of iterations between calling garbage collection.
     int GetGC();

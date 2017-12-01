@@ -17,7 +17,7 @@ class Manager
 {
 private:
     // A worker instance managed by the Manager
-    Reconstruction *rec;
+    Reconstruction *rec = NULL;
 
 public:
     // This method starts calculations. The Manager uses workers to perform the calculations. The parameters define

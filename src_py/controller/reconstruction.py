@@ -166,7 +166,6 @@ def fast_module_reconstruction(proc, data, conf):
 
     dims = data.shape
     dims1 = (dims[2], dims[1], dims[0])
-    print 'data norm in reconstruction',  sum(sum(sum(abs(data)**2)))
     fast_module = bridge.PyBridge()
 
     data_l = data.flatten().tolist()
@@ -236,9 +235,6 @@ def reconstruction(proc, filename, conf):
     """
 
     data = ut.get_array_from_tif(filename)
-    if len(data.shape) > 3:
-        print ("this program supports 3d images only")
-        return
 
     config_map = read_config(conf)
     if config_map is None:
@@ -246,40 +242,53 @@ def reconstruction(proc, filename, conf):
         return None, None
 
     data = prepare_data(config_map, data)
-    # save prepared data in .mat file if configured
+
     try:
-        save_data = config_map.save_data
-        if save_data:
-            np.save('data.npy', data)
+        action = config_map.action
     except AttributeError:
-        pass
+        action = 2
+
+    try:
+        save_results = config_map.save_results
+        try:
+            save_dir = config_map.save_dir
+            if not save_dir.endswith('/'):
+                save_dir = save_dir + '/'
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+        except AttributeError:
+            print ("save_dir not configured")
+    except AttributeError:
+        save_results = False
+
+    if action == 1 or save_results:
+        np.save(save_dir+'/data.npy', data)
 
     image, support, coherence, errors = fast_module_reconstruction(proc, data, conf)
 
-    # save image and support in .mat files if configured
-    try:
-        save_results = config_map.save_data
-        if save_results:
-            np.save('image.npy', image)
-            np.save('support.npy', support)
-    except AttributeError:
-        pass
+    # try:
+    #     save_results = config_map.save_data
+    #     if save_results:
+    #         np.save('image.npy', image)
+    #         np.save('support.npy', support)
+    # except AttributeError:
+    #     pass
 
-    try:
-        res_dir = config_map.res_dir
-        if not res_dir.endswith('/'):
-            res_dir = res_dir + '/'
-        if not os.path.exists(res_dir):
-            os.makedirs(res_dir)
-    except AttributeError:
-        res_dir = ''
-    write_simple(image, res_dir + "simple_amp_ph.vtk")
-    write_simple(support, res_dir + "simple_support.vtk")
+    # try:
+    #     res_dir = config_map.res_dir
+    #     if not res_dir.endswith('/'):
+    #         res_dir = res_dir + '/'
+    #     if not os.path.exists(res_dir):
+    #         os.makedirs(res_dir)
+    # except AttributeError:
+    #     res_dir = ''
+    write_simple(image, save_dir + "simple_amp_ph.vtk")
+    write_simple(support, save_dir + "simple_support.vtk")
 
-    cx.save_CX(conf, image, support, res_dir + 'cx')
+    cx.save_CX(conf, image, support, save_dir + 'cx')
 
     if coherence is not None:
-        write_simple(coherence, res_dir + "simple_coh.vtk")
+        write_simple(coherence, save_dir + "simple_coh.vtk")
 
     # plot error
 

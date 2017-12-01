@@ -11,25 +11,23 @@ See LICENSE file.
 #include "vector"
 #include "arrayfire.h"
 
+class Params;
+
 using namespace af;
 
 class Support
 {
 private:
-    af::array support_array;
     af::array distribution;   
-    std::vector<int> triggers;
-    int algorithm;
     float threshold;
-    bool threshold_adjust;
     int sigma;
-    int twin;
+    int algorithm;
+    af::array support_array;
     af::array GaussConvFft(af::array ds_image);
     
 public:
-    Support(const dim4 data_dim, std::vector<int> area, float threshold, bool threshold_adjust, int sigma, std::vector<int> support_triggers, int alg);
+    Support(const dim4 data_dim, Params *params, af::array support_array);
     void Update(const af::array ds_image);
-    std::vector<int> GetTriggers();
     int GetTriggerAlgorithm();
     int GetSigma();
     float GetThreshold();

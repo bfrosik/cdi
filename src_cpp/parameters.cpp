@@ -11,14 +11,15 @@ See LICENSE file.
 #include "map"
 #include "algorithm"
 #include "parameters.hpp"
-#include "support.hpp"
-#include "pcdi.hpp"
 #include "common.h"
 #include "util.hpp"
 
 using namespace af;
 using namespace libconfig;
 Config cfg;
+
+// maps action name to action number
+std::map<std::string, int> action_id_map;
 
 // maps algorithm name to algorithm number
 std::map<std::string, int> algorithm_id_map;
@@ -27,10 +28,6 @@ std::vector<alg_switch> alg_switches;
 
 std::string data_type;
 
-//use the matlab order (fft/ifft in modulus projector)
-bool matlab_order = true;
-
-// amplitude threshold
 d_type amp_threshold;
 bool amp_threshold_fill_zeros;
 
@@ -39,8 +36,19 @@ d_type phase_max = 10;
 float beta = .9;
 
 // support
-Support *support_attr;
-PartialCoherence *partial_coherence = NULL;
+std::vector<int> support_area;
+float support_threshold;
+int support_sigma;
+std::vector<int> support_triggers;
+int support_alg;
+
+//partial coherence
+//PartialCoherence *partial_coherence = NULL;
+int pcdi_alg = 0;
+std::vector<int>  pcdi_roi;
+std::vector<int> pcdi_triggers;
+bool pcdi_normalize;
+int pcdi_iter;
 
 bool d_type_precision;
 
@@ -53,13 +61,23 @@ int number_iterations;
 int twin;
 
 int regularized_amp = REGULARIZED_AMPLITUDE_NONE;
+
+const char * save_dir;
+
+const char * continue_dir;
+
+int action;
+
+bool save_results;
+
 int gc = -1;
 
 
 
-Params::Params(const char* config_file, const dim4 data_dim)
+Params::Params(const char* config_file, dim4 data_dim)
 {
     BuildAlgorithmMap();
+    BuildActionMap();
     
     // Read the file. If there is an error, report.
     try
@@ -75,6 +93,48 @@ Params::Params(const char* config_file, const dim4 data_dim)
         printf("parsing exception");
     }
     
+    try
+    {
+        save_dir = cfg.lookup("save_dir");
+        // else it is initialized
+    }
+    catch (const SettingNotFoundException &nfex)
+    {
+        save_dir = "my_dir";
+        printf("No 'save_dir' parameter in configuration file, saving in 'my_dir'.");
+    }
+
+    try {
+        action = action_id_map[cfg.lookup("action")];
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        action = action_id_map["new_guess"];
+        printf((std::string("No 'action' parameter in configuration file. running new guess")).c_str());
+    }
+
+    if (action == ACTION_CONTINUE)
+    {
+        try
+        {
+            continue_dir = cfg.lookup("continue_dir");
+            // else it is initialized
+        }
+        catch (const SettingNotFoundException &nfex)
+        {
+            continue_dir = "my_dir";
+            printf("No 'continue_dir' parameter in configuration file, saving in 'my_dir'.");
+        }
+    }
+    save_results = true;
+    try {
+        save_results = cfg.lookup("save_results");
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf((std::string("No 'save_results' parameter in configuration file.")).c_str());
+    }
+
     try {
         const Setting& root = cfg.getRoot();
         const Setting &tmp = root["algorithm_sequence"];
@@ -110,20 +170,17 @@ Params::Params(const char* config_file, const dim4 data_dim)
         printf("No 'gcd' parameter in configuration file.");
     }
 
-    std::vector<int> support_area;
     try {
         const Setting& root = cfg.getRoot();
         const Setting &tmp = root["support_area"];
         for (int i = 0; i < tmp.getLength(); ++i)
         {
             try {
-                //support_area[i] = Utils::GetDimension(tmp[i]);
                 support_area.push_back(tmp[i]);
             }
             catch ( const SettingTypeException &nfex)
             {
                 float ftmp = tmp[i];
-                //support_area[i] = Utils::GetDimension(int(ftmp * data_dim[i]));
                 support_area.push_back(int(ftmp * data_dim[i]));
             }
         }
@@ -132,7 +189,7 @@ Params::Params(const char* config_file, const dim4 data_dim)
     {
         printf("No 'support_area' parameter in configuration file.");
     }
-    float support_threshold = 0;
+    support_threshold = 0;
     try {
         support_threshold = cfg.lookup("support_threshold");
     }
@@ -140,15 +197,7 @@ Params::Params(const char* config_file, const dim4 data_dim)
     {
         printf("No 'support_threshold' parameter in configuration file.");
     }
-    bool support_threshold_adjust = true;
-    try {
-        support_threshold_adjust = cfg.lookup("support_threshold_adjust");
-    }
-    catch ( const SettingNotFoundException &nfex)
-    {
-        printf("No 'support_threshold_adjust' parameter in configuration file.");
-    }
-    int support_sigma = 0;
+    support_sigma = 0;
     try {
         support_sigma = cfg.lookup("support_sigma");
     }
@@ -156,8 +205,8 @@ Params::Params(const char* config_file, const dim4 data_dim)
     {
         printf("No 'support_sigma' parameter in configuration file.");
     }
-    std::vector<int> support_triggers = ParseTriggers("support");
-    int support_alg = -1;
+    support_triggers = ParseTriggers("support");
+    support_alg = -1;
     try {
         support_alg = algorithm_id_map[cfg.lookup("support_type")];
     }
@@ -165,93 +214,54 @@ Params::Params(const char* config_file, const dim4 data_dim)
     {
         printf((std::string("'No support_type' parameter in configuration file.")).c_str());
     }
-    support_attr = new Support(data_dim, support_area, support_threshold, support_threshold_adjust, support_sigma, support_triggers, support_alg);
-    printf("created support\n");
 
-    int pcdi_alg = 0;
+    pcdi_alg = 0;
     try {
         pcdi_alg = algorithm_id_map[cfg.lookup("partial_coherence_type")];
     }
     catch ( const SettingNotFoundException &nfex)
     {
-        printf((std::string("'No partial_coherence_type' parameter in configuration file.")).c_str());
+        printf((std::string("No 'partial_coherence_type' parameter in configuration file.")).c_str());
     }
 
     if (pcdi_alg > 0)
     {
-        std::vector<int>  roi;
         try {
             const Setting& root = cfg.getRoot();
             const Setting &tmp = root["partial_coherence_roi"];
             for (int i = 0; i < tmp.getLength(); ++i)
             {
                 try {
-                    roi.push_back(Utils::GetDimension(tmp[i]));
+                    pcdi_roi.push_back(Utils::GetDimension(tmp[i]));
                 }
                 catch ( const SettingTypeException &nfex)
                 {
                     float ftmp = tmp[i];
-                    roi.push_back(Utils::GetDimension(int(ftmp * data_dim[i])));
+                    pcdi_roi.push_back(Utils::GetDimension(int(ftmp * data_dim[i])));
                 }
             }
         }
         catch ( const SettingNotFoundException &nfex)
         {
-            printf("No 'partial_coherence_kernel' parameter in configuration file. Setting the dimensions to roi");
-            int * kernel = new int[3];
-            kernel[0] = roi[0];
-            kernel[1] = roi[1];
-            kernel[2] = roi[2];
-        }
-        int * kernel = new int[3];
-        try {
-            const Setting& root = cfg.getRoot();
-            const Setting &tmp = root["partial_coherence_kernel"];
-            for (int i = 0; i < tmp.getLength(); ++i)
-            {
-                try {
-                    kernel[i] = Utils::GetDimension(tmp[i]);
-                }
-                catch ( const SettingTypeException &nfex)
-                {
-                    float ftmp = tmp[i];
-                    kernel[i] = Utils::GetDimension(int(ftmp * data_dim[i]));
-                }
-            }
-        }
-        catch ( const SettingNotFoundException &nfex)
-        {
-            printf("No 'partial_coherence_kernel' parameter in configuration file.");
+            printf("No 'partial_coherence_roi' parameter in configuration file.");
         }
 
-        std::vector<int> partial_coherence_trigger = ParseTriggers("partial_coherence");
-        bool pcdi_normalize = false;
+        pcdi_triggers = ParseTriggers("partial_coherence");
+        pcdi_normalize = false;
         try {
             pcdi_normalize = cfg.lookup("partial_coherence_normalize");
         }
         catch ( const SettingNotFoundException &nfex)
         {
-            printf((std::string("'No partial_coherence_normalize' parameter in configuration file.")).c_str());
+            printf((std::string("No 'partial_coherence_normalize' parameter in configuration file.")).c_str());
         }
-        bool pcdi_clip = false;
-        try {
-            pcdi_clip = cfg.lookup("partial_coherence_clip");
-        }
-        catch ( const SettingNotFoundException &nfex)
-        {
-            printf((std::string("'No partial_coherence_clip' parameter in configuration file.")).c_str());
-        }
-        int pcdi_iter = 1;
+        pcdi_iter = 1;
         try {
             pcdi_iter = cfg.lookup("partial_coherence_iteration_num");
         }
         catch ( const SettingNotFoundException &nfex)
         {
             printf((std::string("'No partial_coherence_iteration_num' parameter in configuration file.")).c_str());
-        }
-        if (partial_coherence_trigger.size() > 0)
-        {
-            partial_coherence = new PartialCoherence(roi, kernel, partial_coherence_trigger, pcdi_alg, pcdi_normalize, pcdi_iter, pcdi_clip);
         }
     }
 
@@ -336,22 +346,6 @@ Params::Params(const char* config_file, const dim4 data_dim)
         printf("No 'twin' parameter in configuration file.");
     }
 
-    try {
-        matlab_order = cfg.lookup("matlab_order");
-    }
-    catch ( const SettingNotFoundException &nfex)
-    {
-        printf("No 'matlab_order' parameter in configuration file., setting to true");
-    }
-//    try {
-//        data_type = cfg.lookup("data_type");
-//    }
-//    catch ( const SettingNotFoundException &nfex)
-//    {
-//        printf((std::string("'No data_type' parameter in configuration file. Setting to double.")).c_str());
-//        data_type = "double";
-//    }
-
 }
 
 void Params::BuildAlgorithmMap()
@@ -362,6 +356,14 @@ void Params::BuildAlgorithmMap()
     algorithm_id_map.insert(std::pair<char*,int>("LUCY", ALGORITHM_LUCY));
     algorithm_id_map.insert(std::pair<char*,int>("LUCY_PREV", ALGORITHM_LUCY_PREV));
     algorithm_id_map.insert(std::pair<char*,int>("GAUSS", ALGORITHM_GAUSS));
+}
+
+void Params::BuildActionMap()
+{
+    // hardcoded
+    action_id_map.insert(std::pair<char*,int>("prep_only", ACTION_PREP_ONLY));
+    action_id_map.insert(std::pair<char*,int>("new_guess", ACTION_NEW_GUESS));
+    action_id_map.insert(std::pair<char*,int>("continue", ACTION_CONTINUE));
 }
 
 std::vector<int> Params::ParseTriggers(std::string trigger_name)
@@ -409,11 +411,6 @@ std::vector<int> Params::ParseTriggers(std::string trigger_name)
     return trigger_iterations;
 }
 
-//std::string Params::GetDataType()
-//{
-//    return data_type;
-//}
-
 int Params::GetNumberIterations()
 {
     return number_iterations;
@@ -459,19 +456,83 @@ int Params::GetTwin()
     return twin;
 }
 
-Support * Params::GetSupport()
+std::vector<int> Params::GetSupportArea()
 {
-    return support_attr;
+    return support_area;
 }
 
-PartialCoherence * Params::GetPartialCoherence()
+float Params::GetSupportThreshold()
 {
-    return partial_coherence;
+    return support_threshold;
+}
+
+int Params::GetSupportSigma()
+{
+    return support_sigma;
+}
+
+std::vector<int> Params::GetSupportTriggers()
+{
+    return support_triggers;
+}
+
+int Params::GetSupportAlg()
+{
+    return support_alg;
+}
+
+//PartialCoherence * Params::GetPartialCoherence()
+//{
+//    return partial_coherence;
+//}
+int Params::GetPcdiAlgorithm()
+{
+    return pcdi_alg;
+}
+
+std::vector<int>  Params::GetPcdiRoi()
+{
+    return pcdi_roi;
+}
+
+std::vector<int> Params::GetPcdiTriggers()
+{
+    return pcdi_triggers;
+}
+
+bool Params::GetPcdiNormalize()
+{
+    return pcdi_normalize;
+}
+
+int Params::GetPcdiIterations()
+{
+    return pcdi_iter;
 }
 
 std::vector<alg_switch> Params::GetAlgSwitches()
 {
     return alg_switches;
+}
+
+const char * Params::GetSaveDir()
+{
+    return save_dir;
+}
+
+const char * Params::GetContinueDir()
+{
+    return continue_dir;
+}
+
+int Params::GetAction()
+{
+    return action;
+}
+
+bool Params::IsSaveResults()
+{
+    return save_results;
 }
 
 int Params::GetGC()

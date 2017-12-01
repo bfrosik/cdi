@@ -4,11 +4,14 @@ See LICENSE file.
 ***/
 // Created by Barbara Frosik
 
+#include "stdexcept"
 #include "typeinfo"
 #include "arrayfire.h"
 #include "worker.hpp"
 #include "manager.hpp"
 #include "util.hpp"
+#include "parameters.hpp"
+#include "common.h"
 
 
 using namespace af;
@@ -19,13 +22,15 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> g
     af::array real_d(af_dims, &data_buffer_r[0]);
     //saving abs(data)
     af::array data = abs(real_d);
+    Params * params = new Params(config.c_str(), data.dims());
     
 
     af::array real_g(af_dims, &guess_buffer_r[0]);
     af::array imag_g(af_dims, &guess_buffer_i[0]);
     af::array guess = complex(real_g, imag_g);
        
-    Reconstruction reconstruction(data, guess, config.c_str());
+    af::array null_array = array();
+    Reconstruction reconstruction(data, guess, params, null_array, null_array);
     reconstruction.Init();
     rec = &reconstruction;
     timer::start();
@@ -43,30 +48,103 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim,
 void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config, int nu_threads)
 {
     af::array real_d(Utils::Int2Dim4(dim), &data_buffer_r[0]);
-    //saving abs(data)
     af::array data = abs(real_d);
-
-
-    af::randomEngine r(AF_RANDOM_ENGINE_MERSENNE, (uint)time(0));
-    d_type test1 = 0;
-    double test2 = 0;
+    
+    Params * params = new Params(config.c_str(), data.dims());
+    
     af::array guess;
-    if (typeid(test1) == typeid(test2))
+    int action = params->GetAction();
+    bool cont = false;        
+    if(action == ACTION_CONTINUE)
     {
-        guess = randu(data.dims(), c64, r);
+        const char * continue_dir = params->GetContinueDir();
+        const char *  image_file = Utils::GetFullFilename(continue_dir, "image.af");
+        const char * support_file = Utils::GetFullFilename(continue_dir, "support.af");
+        const char * coherence_file = Utils::GetFullFilename(continue_dir, "coherence.af");
+        try {
+            guess = af::readArray(image_file, "image");
+            cont = true;
+        } 
+        catch ( const std::exception &ex)
+        {
+            printf("Error reading image array from %s file, generating new guess\n", image_file);
+            action = ACTION_NEW_GUESS;
+        }  
+        
+        if (cont)
+        {
+            af::array null_array = array();            
+            af::array support_array;
+            try {
+                support_array = af::readArray(support_file, "support");
+            } 
+            catch ( const std::exception &ex)
+            {
+                support_array = null_array;
+            }
+            
+            af::array coherence_array;
+            try {
+                coherence_array = af::readArray(coherence_file, "coherence");
+            } 
+            catch ( const std::exception &ex)
+            {
+                coherence_array = null_array;
+            }
+
+            Reconstruction reconstruction(data, guess, params, support_array, coherence_array);
+            rec = &reconstruction;
+            printf("created rec\n");
+        }
     }
-    else
+    if (action == ACTION_NEW_GUESS)
     {
-        guess = randu(data.dims(), c32, r);
+        af::randomEngine r(AF_RANDOM_ENGINE_MERSENNE, (uint)time(0));
+        d_type test1 = 0;
+        double test2 = 0;
+        if (typeid(test1) == typeid(test2))
+        {
+            guess = randu(data.dims(), c64, r);
+        }
+        else
+        {
+            guess = randu(data.dims(), c32, r);
+        }
+        af::array null_array = array();
+        Reconstruction reconstruction(data, guess, params, null_array, null_array);
+        rec = &reconstruction;
     }
-    Reconstruction reconstruction(data, guess, config.c_str());
-    reconstruction.Init();
-    rec = &reconstruction;
+
+    rec->Init();
+    printf("initialized\n");
 
     timer::start();
-    reconstruction.Iterate();
+    rec->Iterate();
     printf("iterate function took %g seconds\n", timer::stop());
-	
+    
+    if (params->IsSaveResults())
+    {
+        printf("save results\n");
+        const char * save_dir = params->GetSaveDir();
+        const char * image_file = Utils::GetFullFilename(save_dir, "image.af");
+        const char * support_file = Utils::GetFullFilename(save_dir, "support.af");
+        const char * coherence_file = Utils::GetFullFilename(save_dir, "coherence.af");
+        
+        try {
+            af::saveArray("image", rec->GetImage(), image_file);
+            af::saveArray("support", rec->GetSupportArray(), support_file);
+            af::array coh = rec->GetCoherenceArray();
+            if (!Utils::IsNullArray(coh))
+            {
+                af::saveArray("coherence", coh, coherence_file);
+            }
+        } 
+        catch ( const std::exception &ex)
+        {
+            printf("Error writing image array to %s file\n", image_file);
+        }                
+    }	
+    printf("iterate function took %g seconds\n", timer::stop());
 }
 
 std::vector<d_type> Manager::GetImageR()

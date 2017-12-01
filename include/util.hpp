@@ -69,6 +69,8 @@ public:
     static af::array PadAround(af::array arr, af::dim4 new_dims, int pad);
 
     static af::array GetRatio(af::array, af::array );
+    static bool IsNullArray(af::array);
+    static const char * GetFullFilename(const char * dir, const char * filename);
 };
 
 #endif /* util_hpp */
