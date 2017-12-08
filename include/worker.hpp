@@ -55,7 +55,9 @@ private:
     void VectorizeCoherence();
 
     d_type CalculateError();
-    
+ 
+    void Plot();
+
 public:
     // The class constructor takes data array, an image guess array in reciprocal space, and configuration file. The image guess
     // is typically generated as an complex random array. This image can be also the best outcome of previous calculations. The

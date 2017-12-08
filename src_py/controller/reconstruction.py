@@ -23,10 +23,11 @@ import src_py.utilities.CXDVizNX as cx
 import pylibconfig2 as cfg
 import os
 import scipy.fftpack as sf
+import matplotlib.pyplot as plt
+#import tifffile as tf
 import src_py.cyth.bridge_cpu as bridge_cpu
 import src_py.cyth.bridge_opencl as bridge_opencl
-#import src_py.cyth.bridge_cuda as bridge_cuda
-#import tifffile as tf
+# import src_py.cyth.bridge_cuda as bridge_cuda
 
 
 __author__ = "Barbara Frosik"
@@ -60,6 +61,7 @@ def read_config(config):
     else:
         return None
 
+
 def prepare_data(config_map, data):
     """
     This function prepares raw data for reconstruction. It uses configured parameters. The preparation consists of the following steps:
@@ -89,7 +91,6 @@ def prepare_data(config_map, data):
     
     # zero out the noise
     data = np.where(data < config_map.amp_threshold, 0, data)
-    print (data.shape)
 
     # zero out the aliens
     try:
@@ -117,17 +118,18 @@ def prepare_data(config_map, data):
 
     data = ut.get_centered(data, center_shift)
 
-    # zero pad array
+    # adjust the size, either zero pad or crop array
     try:
-        pad = tuple(config_map.zero_pad)
+        pad = tuple(config_map.adjust_dimensions)
+        data = ut.adjust_dimensions(data, pad)
     except AttributeError:
-        center_shift = (0,0,0)
-    data = ut.zero_pad(data, pad)
+        pass
 
     # shift data
     data=sf.fftshift(data)
     return data
-    
+
+
 def fast_module_reconstruction(proc, data, conf):
     """
     This function calls a bridge method corresponding to the requested processor type. The bridge method is an access to the CFM
@@ -208,6 +210,7 @@ def write_simple(arr, filename):
     id.dimensions=arr.shape
     write_data(id, filename)
 
+
 def reconstruction(proc, filename, conf):
     """
     This function is called by the user. It checks whether the data is valid and configuration file exists.
@@ -241,15 +244,21 @@ def reconstruction(proc, filename, conf):
         print ("can't read configuration file")
         return None, None
 
+    print ('data dimensions before prep', data.shape)
     data = prepare_data(config_map, data)
+    print ('data dimensions after prep', data.shape)
 
     try:
         action = config_map.action
     except AttributeError:
-        action = 2
+        action = 'new_guess'
 
     try:
         save_results = config_map.save_results
+    except AttributeError:
+        save_results = False
+
+    if action == 'prep_only' or save_results:
         try:
             save_dir = config_map.save_dir
             if not save_dir.endswith('/'):
@@ -258,43 +267,21 @@ def reconstruction(proc, filename, conf):
                 os.makedirs(save_dir)
         except AttributeError:
             print ("save_dir not configured")
-    except AttributeError:
-        save_results = False
 
-    if action == 1 or save_results:
         np.save(save_dir+'/data.npy', data)
 
-    image, support, coherence, errors = fast_module_reconstruction(proc, data, conf)
+    if action != 'prep_only':
+        image, support, coherence, errors = fast_module_reconstruction(proc, data, conf)
 
-    # try:
-    #     save_results = config_map.save_data
-    #     if save_results:
-    #         np.save('image.npy', image)
-    #         np.save('support.npy', support)
-    # except AttributeError:
-    #     pass
+        cx.save_CX(conf, image, support, save_dir)
 
-    # try:
-    #     res_dir = config_map.res_dir
-    #     if not res_dir.endswith('/'):
-    #         res_dir = res_dir + '/'
-    #     if not os.path.exists(res_dir):
-    #         os.makedirs(res_dir)
-    # except AttributeError:
-    #     res_dir = ''
-    write_simple(image, save_dir + "simple_amp_ph.vtk")
-    write_simple(support, save_dir + "simple_support.vtk")
+        if coherence is not None:
+            write_simple(coherence, save_dir + "simple_coh.vtk")
 
-    cx.save_CX(conf, image, support, save_dir + 'cx')
+        errors.pop(0)
+        plt.plot(errors)
+        plt.ylabel('errors')
+        plt.show()
 
-    if coherence is not None:
-        write_simple(coherence, save_dir + "simple_coh.vtk")
-
-    # plot error
-
-
-    print 'image, support shape', image.shape, support.shape
-
-
-    
+        print 'image, support shape', image.shape, support.shape
 

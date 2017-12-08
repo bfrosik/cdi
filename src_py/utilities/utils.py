@@ -22,7 +22,7 @@ __all__ = ['get_array_from_tif',
            'get_opencl_dim',
            'binning',
            'get_centered',
-           'zero_pad',
+           'adjust_dimensions',
            'crop_center',
            'flip']
 
@@ -159,39 +159,48 @@ def get_centered(array, center_shift):
 
     return centered    
 
-def zero_pad(array, pad):
+
+def adjust_dimensions(arr, pad):
     """
-    This function adds to each dimension of the array elements defined by pad. The elements are added to the 
-    beginning of array and end by the same number, so the original array is centered. The dimensions of the new array are
-    supported by the opencl library. 
-    
+    This function adds to or subtracts from each dimension of the array elements defined by pad. If the pad is positive,
+    the array is padded in this dimension. The elements are added to the beginning of array and end by the same number,
+    so the original array is centered. If the pad is negative, the array is cropped. The crop is symmetrical at the
+    beginning and end of the array in the related dimension.
+    The dimensions of the new array are supported by the opencl library.
+
 
     Parameters
     ----------
-    array : array
-        the array to pad
+    arr : array
+        the array to pad/crop
 
     pad : list
         list of three pad values, for each dimension
-        
+
     Returns
     -------
     array : array
-        the padded array
+        the padded/cropped array
     """
-    # calculate the opencl dimensions
-    dims = array.shape
-    x_dim = get_opencl_dim(dims[0] + 2*pad[0], 2)
-    x_pad = (x_dim - dims[0])/2
-    y_dim = get_opencl_dim(dims[1] + 2*pad[1], 2)
-    y_pad = (y_dim - dims[1])/2
-    z_dim = get_opencl_dim(dims[2] + 2*pad[2], 2)
-    z_pad = (z_dim - dims[2])/2
-    return np.lib.pad(array, ((x_pad, x_pad),(y_pad, y_pad), (z_pad, z_pad)), 'constant', constant_values=((0.0,0.0),(0.0,0.0),(0.0,0.0))).copy()
+    dims = arr.shape
+    new_dims = []
+    new_pad = []
+    new_crop = []
+    for i in range(len(dims)):
+        new_dims.append(get_opencl_dim(dims[i] + 2 * pad[i], 2))
+        new_pad.append(max(0, (new_dims[i] - dims[i]) / 2))
+        new_crop.append(max(0, (dims[i] - new_dims[i]) / 2))
+
+    arr = np.lib.pad(arr, ((new_pad[0], new_pad[0]), (new_pad[1], new_pad[1]), (new_pad[2], new_pad[2])), 'constant',
+                      constant_values=((0.0, 0.0), (0.0, 0.0), (0.0, 0.0))).copy()
+
+    return arr[new_crop[0]:new_crop[0]+new_dims[0], new_crop[1]:new_crop[1]+new_dims[1], new_crop[2]:new_crop[2]+new_dims[2]]
+
 
 def crop_center(arr, new_size):
     size = arr.shape
     return arr[ (size[0]-new_size[0])/2 : (size[0]-new_size[0])/2 + new_size[0], (size[1]-new_size[1])/2 : (size[1]-new_size[1])/2 + new_size[1], (size[2]-new_size[2])/2 : (size[2]-new_size[2])/2 + new_size[2]]
+
 
 def flip(m, axis):
     """
@@ -207,8 +216,4 @@ def flip(m, axis):
         raise ValueError("axis=%i is invalid for the %i-dimensional input array"
                          % (axis, m.ndim))
     return m[tuple(indexer)]
-
-
-
-
 

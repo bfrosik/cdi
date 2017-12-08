@@ -86,11 +86,11 @@ Params::Params(const char* config_file, dim4 data_dim)
     }
     catch(const FileIOException &fioex)
     {
-        printf("file I/O exception");
+        printf("config file I/O exception\n");
     }
     catch(const ParseException &pex)
     {
-        printf("parsing exception");
+        printf("config file parse exception\n");
     }
     
     try
@@ -101,7 +101,7 @@ Params::Params(const char* config_file, dim4 data_dim)
     catch (const SettingNotFoundException &nfex)
     {
         save_dir = "my_dir";
-        printf("No 'save_dir' parameter in configuration file, saving in 'my_dir'.");
+        printf("No 'save_dir' parameter in configuration file, saving in 'my_dir'.\n");
     }
 
     try {
@@ -110,7 +110,7 @@ Params::Params(const char* config_file, dim4 data_dim)
     catch ( const SettingNotFoundException &nfex)
     {
         action = action_id_map["new_guess"];
-        printf((std::string("No 'action' parameter in configuration file. running new guess")).c_str());
+        printf((std::string("No 'action' parameter in configuration file. running new guess\n")).c_str());
     }
 
     if (action == ACTION_CONTINUE)
@@ -123,7 +123,7 @@ Params::Params(const char* config_file, dim4 data_dim)
         catch (const SettingNotFoundException &nfex)
         {
             continue_dir = "my_dir";
-            printf("No 'continue_dir' parameter in configuration file, saving in 'my_dir'.");
+            printf("No 'continue_dir' parameter in configuration file, saving in 'my_dir'.\n");
         }
     }
     save_results = true;
@@ -132,7 +132,7 @@ Params::Params(const char* config_file, dim4 data_dim)
     }
     catch ( const SettingNotFoundException &nfex)
     {
-        printf((std::string("No 'save_results' parameter in configuration file.")).c_str());
+        printf((std::string("No 'save_results' parameter in configuration file.\n")).c_str());
     }
 
     try {
@@ -159,7 +159,7 @@ Params::Params(const char* config_file, dim4 data_dim)
     }
     catch ( const SettingNotFoundException &nfex)
     {
-        printf("No 'algorithm_sequence' parameter in configuration file.");
+        printf("No 'algorithm_sequence' parameter in configuration file.\n");
     }
 
     try {
@@ -167,7 +167,7 @@ Params::Params(const char* config_file, dim4 data_dim)
     }
     catch ( const SettingNotFoundException &nfex)
     {
-        printf("No 'gcd' parameter in configuration file.");
+        printf("No 'gcd' parameter in configuration file.\n");
     }
 
     try {
@@ -187,7 +187,7 @@ Params::Params(const char* config_file, dim4 data_dim)
     }
     catch ( const SettingNotFoundException &nfex)
     {
-        printf("No 'support_area' parameter in configuration file.");
+        printf("No 'support_area' parameter in configuration file.\n");
     }
     support_threshold = 0;
     try {
@@ -195,7 +195,7 @@ Params::Params(const char* config_file, dim4 data_dim)
     }
     catch ( const SettingNotFoundException &nfex)
     {
-        printf("No 'support_threshold' parameter in configuration file.");
+        printf("No 'support_threshold' parameter in configuration file.\n");
     }
     support_sigma = 0;
     try {
@@ -203,7 +203,7 @@ Params::Params(const char* config_file, dim4 data_dim)
     }
     catch ( const SettingNotFoundException &nfex)
     {
-        printf("No 'support_sigma' parameter in configuration file.");
+        printf("No 'support_sigma' parameter in configuration file.\n");
     }
     support_triggers = ParseTriggers("support");
     support_alg = -1;
@@ -212,7 +212,7 @@ Params::Params(const char* config_file, dim4 data_dim)
     }
     catch ( const SettingNotFoundException &nfex)
     {
-        printf((std::string("'No support_type' parameter in configuration file.")).c_str());
+        printf((std::string("No 'support_type' parameter in configuration file.\n")).c_str());
     }
 
     pcdi_alg = 0;
@@ -221,7 +221,7 @@ Params::Params(const char* config_file, dim4 data_dim)
     }
     catch ( const SettingNotFoundException &nfex)
     {
-        printf((std::string("No 'partial_coherence_type' parameter in configuration file.")).c_str());
+        printf((std::string("No 'partial_coherence_type' parameter in configuration file.\n")).c_str());
     }
 
     if (pcdi_alg > 0)
@@ -243,7 +243,7 @@ Params::Params(const char* config_file, dim4 data_dim)
         }
         catch ( const SettingNotFoundException &nfex)
         {
-            printf("No 'partial_coherence_roi' parameter in configuration file.");
+            printf("No 'partial_coherence_roi' parameter in configuration file.\n");
         }
 
         pcdi_triggers = ParseTriggers("partial_coherence");
@@ -253,7 +253,7 @@ Params::Params(const char* config_file, dim4 data_dim)
         }
         catch ( const SettingNotFoundException &nfex)
         {
-            printf((std::string("No 'partial_coherence_normalize' parameter in configuration file.")).c_str());
+            printf((std::string("No 'partial_coherence_normalize' parameter in configuration file.\n")).c_str());
         }
         pcdi_iter = 1;
         try {
@@ -261,7 +261,8 @@ Params::Params(const char* config_file, dim4 data_dim)
         }
         catch ( const SettingNotFoundException &nfex)
         {
-            printf((std::string("'No partial_coherence_iteration_num' parameter in configuration file.")).c_str());
+            printf((std::string("No 'partial_coherence_iteration_num' parameter in configuration file. Setting to 20.\n")).c_str());
+            pcdi_iter = 20;
         }
     }
 
@@ -271,41 +272,41 @@ Params::Params(const char* config_file, dim4 data_dim)
     }
     catch(const SettingNotFoundException &nfex)
     {
-        printf("No 'avg_iterations' parameter in configuration file.");
+        printf("No 'avg_iterations' parameter in configuration file.\n");
     }
 
-    try
-    {
-        amp_threshold = cfg.lookup("amp_threshold");
-    }
-    catch(const SettingNotFoundException &nfex)
-    {
-        printf("No 'amp_threshold' parameter in configuration file.");
-    }
+//    try
+//    {
+//        amp_threshold = cfg.lookup("amp_threshold");
+//    }
+//    catch(const SettingNotFoundException &nfex)
+//    {
+//        printf("No 'amp_threshold' parameter in configuration file.\n");
+//    }
 
-    try {
-        amp_threshold_fill_zeros = cfg.lookup("amp_threshold_fill_zeros");
-    }
-    catch (const SettingNotFoundException &nfex)
-    {
-        printf("No 'amp_threshold_fill_zeros' parameter in configuration file.");
-    }
-    
-    try {
-        phase_min = cfg.lookup("phase_min");
-    }
-    catch (const SettingNotFoundException &nfex)
-    {
-        printf("No 'phase_min' parameter in configuration file.");
-    }
-
-    try {
-        phase_max = cfg.lookup("phase_max");
-    }
-    catch (const SettingNotFoundException &nfex)
-    {
-        printf("No 'phase_max' parameter in configuration file.");
-    }
+//    try {
+//        amp_threshold_fill_zeros = cfg.lookup("amp_threshold_fill_zeros");
+//    }
+//    catch (const SettingNotFoundException &nfex)
+//    {
+//        printf("No 'amp_threshold_fill_zeros' parameter in configuration file.\n");
+//    }
+//    
+//    try {
+//        phase_min = cfg.lookup("phase_min");
+//    }
+//    catch (const SettingNotFoundException &nfex)
+//    {
+//        printf("No 'phase_min' parameter in configuration file.\n");
+//    }
+//
+//    try {
+//        phase_max = cfg.lookup("phase_max");
+//    }
+//    catch (const SettingNotFoundException &nfex)
+//    {
+//        printf("No 'phase_max' parameter in configuration file.\n");
+//    }
 
     try
     {
@@ -313,7 +314,8 @@ Params::Params(const char* config_file, dim4 data_dim)
     }
     catch (const SettingNotFoundException &nfex)
     {
-        printf("No 'beta' parameter in configuration file.");
+        printf("No 'beta' parameter in configuration file. Setting to .9\n");
+        beta = .9;
     }
 
     try
@@ -335,7 +337,7 @@ Params::Params(const char* config_file, dim4 data_dim)
     }
     catch (const SettingNotFoundException &nfex)
     {
-        printf("No 'regularized_amp' parameter in configuration file.");
+        printf("No 'regularized_amp' parameter in configuration file.\n");
     }
     twin = -1;
     try {
@@ -343,7 +345,7 @@ Params::Params(const char* config_file, dim4 data_dim)
     }
     catch ( const SettingNotFoundException &nfex)
     {
-        printf("No 'twin' parameter in configuration file.");
+        printf("No 'twin' parameter in configuration file.\n");
     }
 
 }

@@ -28,6 +28,7 @@ int aver_iter;
 std::vector<d_type> aver_v;
 std::vector<float> support_vector;
 std::vector<d_type> coherence_vector;
+af::Window * errors_plot;
 
 
 Reconstruction::Reconstruction(af::array image_data, af::array guess, Params* params, af::array support_array, af::array coherence_array)
@@ -42,6 +43,7 @@ Reconstruction::Reconstruction(af::array image_data, af::array guess, Params* pa
     {
         partialCoherence = new PartialCoherence(params, coherence_array);
     }
+    errors_plot = new Window(512, 512, "errors");
 }
 
 void Reconstruction::Init()
@@ -82,7 +84,10 @@ void Reconstruction::Iterate()
             af::deviceGC();
         Algorithm * alg  = state->GetCurrentAlg();
         alg->RunAlgorithm(this);
-
+        
+        if (!errors_plot->close())
+            Plot();
+        
         Average();
     }
     printf("final image\n");
@@ -224,6 +229,18 @@ void Reconstruction::VectorizeCoherence()
     std::vector<d_type> v(coherence_v, coherence_v + a.elements());
     coherence_vector = v;
     delete [] coherence_v;
+}
+
+void Reconstruction::Plot()
+{
+    if (current_iteration > 5 )
+    {
+        // the plot will not show the very first error
+        af::array x = seq(1.0, float(current_iteration-1), 1.0);
+        std::vector<d_type> errors = state->GetErrors();
+        af::array y(dim4(x.elements()), &errors[1]);
+        errors_plot->plot(x,y.as(f32));
+    }
 }
 
 int Reconstruction::GetCurrentIteration()

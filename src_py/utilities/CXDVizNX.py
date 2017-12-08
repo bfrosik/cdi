@@ -76,6 +76,7 @@ class DispalyParams:
             self.crop = None
             print ('crop not defined')
 
+
 class CXDViz(tr.HasTraits):
     coords = tr.Array()
     arr = tr.Array()
@@ -84,10 +85,12 @@ class CXDViz(tr.HasTraits):
     cropy = tr.Int()
     cropz = tr.Int()
 
+
     def __init__(self):
         self.imd = tvtk.ImageData()
         self.sg = tvtk.StructuredGrid()
         pass
+
 
     def set_geometry(self, params, shape):
         lam = params.lamda
@@ -153,6 +156,7 @@ class CXDViz(tr.HasTraits):
         else:
             pass
 
+
     def update_coords(self):
         dims = list(self.arr[self.cropobj].shape)
 
@@ -167,6 +171,7 @@ class CXDViz(tr.HasTraits):
 
         self.coords = np.dot(r, self.T)
 
+
     def set_array(self, array, logentry=None):
         self.arr = array
         if len(self.arr.shape) < 3:
@@ -174,6 +179,7 @@ class CXDViz(tr.HasTraits):
             for i in range(3 - len(newdims)):
                 newdims.append(1)
             self.arr.shape = tuple(newdims)
+
 
     def set_crop(self, cropx, cropy, cropz):
         dims = list(self.arr.shape)
@@ -211,6 +217,7 @@ class CXDViz(tr.HasTraits):
         self.cropobj = (slice(start1, end1, None), slice(start2, end2, None),
                         slice(start3, end3, None))
 
+
     def get_structured_grid(self, **args):
         self.update_coords()
         dims = list(self.arr[self.cropobj].shape)
@@ -236,6 +243,7 @@ class CXDViz(tr.HasTraits):
         self.sg.extent = 0, dims[2] - 1, 0, dims[1] - 1, 0, dims[0] - 1
         return self.sg
 
+
     def get_image_data(self, **args):
         self.set_crop(self.cropx, self.cropy, self.cropz)
         dims = list(self.arr[self.cropobj].shape)
@@ -245,6 +253,7 @@ class CXDViz(tr.HasTraits):
         self.imd.extent = 0, dims[2] - 1, 0, dims[1] - 1, 0, dims[0] - 1
         self.imd.point_data.scalars = self.arr[self.cropobj].ravel()
         return self.imd
+
 
     def write_structured_grid(self, filename, **args):
         print 'in WriteStructuredGrid'
@@ -258,6 +267,7 @@ class CXDViz(tr.HasTraits):
         sgwriter.set_input_data(self.get_structured_grid())
         print sgwriter.file_name
         sgwriter.write()
+
 
 def shift(arr, s0, s1, s2):
     shifted = np.roll(arr, s0, 0)
@@ -319,6 +329,18 @@ def center(image, support):
     return image, support
 
 
+def get_crop(params, shape):
+    crop = []
+    for i in range(len(shape)):
+        if params.crop is None:
+            crop.append(shape[i])
+        else:
+            crop.append(params.crop[i])
+            if isinstance(crop[i], float):
+                crop[i] = int(crop[i]*shape[i])
+    return crop
+
+
 def save_CX(conf, image, support, filename):
     image, support = center(image, support)
     #    image = remove_ramp(image)
@@ -326,12 +348,9 @@ def save_CX(conf, image, support, filename):
     viz = CXDViz()
     viz.set_array(image)
     viz.set_geometry(params, image.shape)
-    if params.crop is None:
-        crop = image.shape
-    else:
-        crop = params.crop
+    crop = get_crop(params, image.shape)
     viz.set_crop(crop[0], crop[1], crop[2])  # save image
-    viz.write_structured_grid(filename + '_img')
+    viz.write_structured_grid(filename + 'image')
     viz.set_array(support)
-    viz.write_structured_grid(filename + '_support')
+    viz.write_structured_grid(filename + 'support')
 
