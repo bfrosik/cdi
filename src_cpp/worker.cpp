@@ -85,8 +85,10 @@ void Reconstruction::Iterate()
         Algorithm * alg  = state->GetCurrentAlg();
         alg->RunAlgorithm(this);
         
-        if (!errors_plot->close())
+        if (params->IsPlotErrors() && !errors_plot->close())
+        {
             Plot();
+        }
         
         Average();
     }

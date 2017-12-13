@@ -48,10 +48,14 @@ adjust_dimensions = [0, 3, -5]
 
 
 // RECONSTRUCTION PARAMETERS USED BY FAST MODULE
+device = 0                   // ID of the target device
+
 gc = 5;
                              // ArrayFire memory management is not reliable, the way around is to call garbage
                              // collection per defined number of iterations. Decrease this value if out of memory
                              // error occurs
+
+plot_errors = true           // indicates whether to plot errors during calculations. Plotting will slow down.
 
 //algorithm_sequence = ((3, ("ER",2), ("HIO", 2), ("ER", 2)), (2, ("ER",3), ("HIO",3)))
 //algorithm_sequence = ((1, ("ER",6)))
@@ -71,7 +75,7 @@ twin = 2;
 //amp_threshold_fill_zeros = true;
 //phase_min = -2.0;
 //phase_max = 2.0;
-//beta = .9;
+beta = .9;
 
 // support
 //support_triggers = ((5, 5, 300), (1, 2));

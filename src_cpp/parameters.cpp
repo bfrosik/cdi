@@ -68,11 +68,13 @@ const char * continue_dir;
 
 int action;
 
-bool save_results;
+bool save_results = false;
+
+bool plot_errors = false;
 
 int gc = -1;
 
-
+int device = -1;
 
 Params::Params(const char* config_file, dim4 data_dim)
 {
@@ -126,13 +128,21 @@ Params::Params(const char* config_file, dim4 data_dim)
             printf("No 'continue_dir' parameter in configuration file, saving in 'my_dir'.\n");
         }
     }
-    save_results = true;
+
     try {
         save_results = cfg.lookup("save_results");
     }
     catch ( const SettingNotFoundException &nfex)
     {
-        printf((std::string("No 'save_results' parameter in configuration file.\n")).c_str());
+        printf((std::string("No 'save_results' parameter in configuration file. Setting to false.\n")).c_str());
+    }
+
+    try {
+        plot_errors = cfg.lookup("plot_errors");
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf((std::string("No 'plot_errors' parameter in configuration file. Setting to false.\n")).c_str());
     }
 
     try {
@@ -167,7 +177,15 @@ Params::Params(const char* config_file, dim4 data_dim)
     }
     catch ( const SettingNotFoundException &nfex)
     {
-        printf("No 'gcd' parameter in configuration file.\n");
+        printf("No 'gc' parameter in configuration file.\n");
+    }
+
+    try {
+        device = cfg.lookup("device");
+    }
+    catch ( const SettingNotFoundException &nfex)
+    {
+        printf("No 'device' parameter in configuration file.\n");
     }
 
     try {
@@ -537,9 +555,17 @@ bool Params::IsSaveResults()
     return save_results;
 }
 
+bool Params::IsPlotErrors()
+{
+    return plot_errors;
+}
+
 int Params::GetGC()
 {
     return gc;
 }
 
-
+int Params::GetDeviceId()
+{
+    return device;
+}

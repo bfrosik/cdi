@@ -100,8 +100,14 @@ public:
     // Returns boolean flag indication whether to save the raw results
     bool IsSaveResults();
 
+    // Returns boolean flag indication whether to plot errors in during calculations
+    bool IsPlotErrors();
+
     // Returns number of iterations between calling garbage collection.
     int GetGC();
+
+    // Returns ID of target device (cpu or gpu).
+    int GetDeviceId();
 
 };
 

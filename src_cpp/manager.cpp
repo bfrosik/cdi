@@ -19,11 +19,17 @@ using namespace af;
 void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> guess_buffer_r, std::vector<d_type> guess_buffer_i, std::vector<int> dim, const std::string & config)
 {
     dim4 af_dims = Utils::Int2Dim4(dim);
+    Params * params = new Params(config.c_str(), af_dims);
+    
+    int device = params->GetDeviceId();
+    if (device >= 0)
+    {
+        setDevice(device);
+    }
+    
     af::array real_d(af_dims, &data_buffer_r[0]);
     //saving abs(data)
     af::array data = abs(real_d);
-    Params * params = new Params(config.c_str(), data.dims());
-    
 
     af::array real_g(af_dims, &guess_buffer_r[0]);
     af::array imag_g(af_dims, &guess_buffer_i[0]);
@@ -47,11 +53,19 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim,
 
 void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config, int nu_threads)
 {
-    af::array real_d(Utils::Int2Dim4(dim), &data_buffer_r[0]);
+    dim4 af_dims = Utils::Int2Dim4(dim);
+    Params * params = new Params(config.c_str(), af_dims);
+    
+    int device = params->GetDeviceId();
+    if (device >= 0)
+    {
+        setDevice(device);
+    }
+    
+    af::array real_d(af_dims, &data_buffer_r[0]);
+    //saving abs(data)
     af::array data = abs(real_d);
-    
-    Params * params = new Params(config.c_str(), data.dims());
-    
+
     af::array guess;
     int action = params->GetAction();
     bool cont = false;        
