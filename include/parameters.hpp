@@ -32,13 +32,13 @@ typedef struct Trigger_setting trigger_setting;
 class Params
 {
 private:
-    std::vector<int> ParseTriggers(std::string trigger_name);
+    std::vector<int> ParseTriggers(std::string trigger_name, int);
     void BuildAlgorithmMap();
     void BuildActionMap();
 
 public:
     // Constructor. Takes in configuration file, parses the configuration and sets the parameters accordingly.
-    Params(const char* config_file, dim4 data_dim);
+    Params(const char* config_file, int stage, dim4 data_dim);
        
     // returns data type (float/double). Used by python code
     std::string GetDataType();
@@ -108,6 +108,8 @@ public:
 
     // Returns ID of target device (cpu or gpu).
     int GetDeviceId();
+
+    int GetActionStage();
 
 };
 

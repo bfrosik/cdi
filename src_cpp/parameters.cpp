@@ -67,6 +67,7 @@ const char * save_dir;
 const char * continue_dir;
 
 int action;
+int action_stage = 0;
 
 bool save_results = false;
 
@@ -76,7 +77,8 @@ int gc = -1;
 
 int device = -1;
 
-Params::Params(const char* config_file, dim4 data_dim)
+
+Params::Params(const char* config_file, int stage, dim4 data_dim)
 {
     BuildAlgorithmMap();
     BuildActionMap();
@@ -120,6 +122,7 @@ Params::Params(const char* config_file, dim4 data_dim)
         try
         {
             continue_dir = cfg.lookup("continue_dir");
+            action_stage = 1;
             // else it is initialized
         }
         catch (const SettingNotFoundException &nfex)
@@ -127,6 +130,10 @@ Params::Params(const char* config_file, dim4 data_dim)
             continue_dir = "my_dir";
             printf("No 'continue_dir' parameter in configuration file, saving in 'my_dir'.\n");
         }
+    }
+    else
+    { 
+        action_stage = stage;
     }
 
     try {
@@ -223,7 +230,7 @@ Params::Params(const char* config_file, dim4 data_dim)
     {
         printf("No 'support_sigma' parameter in configuration file.\n");
     }
-    support_triggers = ParseTriggers("support");
+    support_triggers = ParseTriggers("support", action_stage);
     support_alg = -1;
     try {
         support_alg = algorithm_id_map[cfg.lookup("support_type")];
@@ -264,7 +271,7 @@ Params::Params(const char* config_file, dim4 data_dim)
             printf("No 'partial_coherence_roi' parameter in configuration file.\n");
         }
 
-        pcdi_triggers = ParseTriggers("partial_coherence");
+        pcdi_triggers = ParseTriggers("partial_coherence", action_stage);
         pcdi_normalize = false;
         try {
             pcdi_normalize = cfg.lookup("partial_coherence_normalize");
@@ -358,12 +365,15 @@ Params::Params(const char* config_file, dim4 data_dim)
         printf("No 'regularized_amp' parameter in configuration file.\n");
     }
     twin = -1;
-    try {
-        twin = cfg.lookup("twin");
-    }
-    catch ( const SettingNotFoundException &nfex)
+    if (action_stage == 0)
     {
-        printf("No 'twin' parameter in configuration file.\n");
+        try {
+            twin = cfg.lookup("twin");
+        }
+        catch ( const SettingNotFoundException &nfex)
+        {
+            printf("No 'twin' parameter in configuration file.\n");
+        }
     }
 
 }
@@ -386,7 +396,7 @@ void Params::BuildActionMap()
     action_id_map.insert(std::pair<char*,int>("continue", ACTION_CONTINUE));
 }
 
-std::vector<int> Params::ParseTriggers(std::string trigger_name)
+std::vector<int> Params::ParseTriggers(std::string trigger_name, int action_stage)
 {
     std::vector<int> trigger_iterations;
     const Setting& root = cfg.getRoot();
@@ -396,7 +406,11 @@ std::vector<int> Params::ParseTriggers(std::string trigger_name)
         const Setting &tmp = root[(trigger_name + std::basic_string<char>("_triggers")).c_str()];
         for (int i =0; i < tmp.getLength(); i++)
         {
-            int start = tmp[i][0];
+            int start = tmp[i][1]; // set the first trigger to step
+            if (action_stage == 0)
+            {
+                int start = tmp[i][0];
+            }
             int step = tmp[i][1];
             if (tmp[i].getLength() > 2)
             {
@@ -569,3 +583,9 @@ int Params::GetDeviceId()
 {
     return device;
 }
+
+int Params::GetActionStage()
+{
+    return action_stage;
+}
+

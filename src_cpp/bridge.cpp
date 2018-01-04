@@ -10,26 +10,26 @@ See LICENSE file.
 
 Manager mgr;
 
-void Bridge::StartCalcWithGuess(std::vector<float> data_buffer_r, std::vector<float> guess_buffer_r, std::vector<float> guess_buffer_i, std::vector<int> dim, const std::string & config)
+void Bridge::StartCalcWithGuess(std::vector<float> data_buffer_r, std::vector<float> guess_buffer_r, std::vector<float> guess_buffer_i, std::vector<int> dim, const std::string & config, int stage)
 {
     std::vector<d_type> data_r(data_buffer_r.begin(), data_buffer_r.end());
     std::vector<d_type> guess_i(guess_buffer_i.begin(), guess_buffer_i.end());
     std::vector<d_type> guess_r(guess_buffer_r.begin(), guess_buffer_r.end());
-    mgr.StartCalc(data_r, guess_r, guess_i, dim, config);
+    mgr.StartCalc(data_r, guess_r, guess_i, dim, config, stage);
     //mgr.StartCalc(data_buffer_r, guess_buffer_r, guess_buffer_i, dim, config);
 }
 
-void Bridge::StartCalc(std::vector<float> data_buffer_r, std::vector<int> dim, std::string const & config)
+void Bridge::StartCalc(std::vector<float> data_buffer_r, std::vector<int> dim, std::string const & config, int stage)
 {
     std::vector<d_type> data_r(data_buffer_r.begin(), data_buffer_r.end());
-    mgr.StartCalc(data_r, dim, config);
+    mgr.StartCalc(data_r, dim, config, stage);
 //    mgr.StartCalc(data_buffer_r, dim, config);
 }
 
-void Bridge::StartCalcMultiple(std::vector<float> data_buffer_r, std::vector<int> dim, std::string const & config, int nu_threads)
+void Bridge::StartCalcMultiple(std::vector<float> data_buffer_r, std::vector<int> dim, std::string const & config, int nu_threads, int stage)
 {
     std::vector<d_type> data_r(data_buffer_r.begin(), data_buffer_r.end());
-    mgr.StartCalc(data_r, dim, config, nu_threads);
+    mgr.StartCalc(data_r, dim, config, nu_threads, stage);
 //    mgr.StartCalc(data_buffer_r, dim, config, nu_threads);
 }
 

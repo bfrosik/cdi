@@ -62,8 +62,8 @@ void Reconstruction::Init()
     ds_image *= max_data * GetNorm(ds_image);
 
 // the next two lines are for testing it sets initial guess to initial support    
-    //af::array temp = support->GetSupportArray();
-    //ds_image  = complex(temp.as((af_dtype) dtype_traits<d_type>::ctype), 0.0).as(c64);
+    // af::array temp = support->GetSupportArray();
+    // ds_image  = complex(temp.as((af_dtype) dtype_traits<d_type>::ctype), 0.0).as(c64);
     
     ds_image *= support->GetSupportArray();
     printf("initial image norm %f\n", GetNorm(ds_image));
@@ -128,7 +128,7 @@ af::array Reconstruction::ModulusProjection()
     }  
     else
     {
-        if (current_iteration >= partialCoherence->GetTriggers()[0])
+        if ((current_iteration >= partialCoherence->GetTriggers()[0]) || (params->GetActionStage()))
         {
             printf("coherence using lucy\n");            
             af::array abs_amplitudes = abs(rs_amplitudes).copy();

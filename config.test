@@ -11,7 +11,7 @@ action = "new_guess"
                              // raw reconstructed image, and support. With this action a continue_dir must be defined
                              // that contains the saved files. If only data is saved the program will start a new guess.
 
-continue_dir = "AB_dir"
+continue_dir = "results_dir"
                              // a directory containing prepared data and results of previous reconstruction.
                              // if action is "continue", the reconstruction will start with these results.
 
@@ -19,6 +19,37 @@ save_results = true
                              // if save_results is true, the prepared data, raw image and support will be saved in
                              // the save_dir
 
+
+// generations
+generations = 1              // number of generations
+
+low_resolution_generations = 0
+                             // number of generations low resolution is applied to, starting from first gen
+
+low_resolution_sigma_alg = "SIG_SPACE_LINEAR"
+                             // defines how to calculate sigmas based on generation. Supported:
+                             // SIG_SPACE_LINEAR - sigmas are starting from low_resolution_sigma_max,
+                             // linearly decreasing for each generation, reaching low_resolution_sigma
+                             // at the end
+                             // SIG_SCALE_POWER - use low_resolution_scale_power and ScaleFactor
+                             //                to calculate sigmas for generations
+                             // SIG_ASSIGNED - sigmas will be read from low_resolution_sigmas
+
+low_resolution_sigmas = [1.0]
+                             // list of sigmas that will be used by subsequent generations
+
+low_resolution_sigma_min = 0.1
+                             // initial sigma
+
+low_resolution_sigma_max = 2.0
+                             // max support sigma value
+
+low_resolution_scale_power = 1
+                             // how the sig scales with generation (1 - linear, 2 - quad etc)
+
+low_resolution_alg = "GAUSS"
+                             // algorithm to use to apply resolution. Supported algorithms:
+                             // GAUSS
 
 // PARAMETER FOR DATA PREPARATION
 amp_threshold = 2.0

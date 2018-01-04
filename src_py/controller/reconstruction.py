@@ -19,15 +19,10 @@ visualization.
 
 import numpy as np
 import src_py.utilities.utils as ut
-import src_py.utilities.CXDVizNX as cx
 import pylibconfig2 as cfg
 import os
-import scipy.fftpack as sf
-import matplotlib.pyplot as plt
-#import tifffile as tf
-import src_py.cyth.bridge_cpu as bridge_cpu
-import src_py.cyth.bridge_opencl as bridge_opencl
-# import src_py.cyth.bridge_cuda as bridge_cuda
+import src_py.controller.fast_module as calc
+from src_py.controller.generation import Generation
 
 
 __author__ = "Barbara Frosik"
@@ -35,25 +30,24 @@ __copyright__ = "Copyright (c) 2016, UChicago Argonne, LLC."
 __docformat__ = 'restructuredtext en'
 __all__ = ['read_config',
            'prepare_data',
-           'fast_module_reconstruction',
-           'write_simple',
            'reconstruction']
+
 
 def read_config(config):
     """
     This function gets configuration file. It checks if the file exists and parses it into a map.
-    
+
     Parameters
     ----------
     config : str
         configuration file name, including path
-        
+
     Returns
     -------
     config_map : dict
         a map containing parsed configuration, None if the given file does not exist
     """
-    
+
     if os.path.isfile(config):
         with open(config, 'r') as f:
             config_map = cfg.Config(f.read())
@@ -66,29 +60,28 @@ def prepare_data(config_map, data):
     """
     This function prepares raw data for reconstruction. It uses configured parameters. The preparation consists of the following steps:
     1. clearing the noise - the values below an amplitude threshold are set to zero
-    2. removing the "aliens" - aliens are areas that are effect of interference. The area is manually set in a configuration file 
+    2. removing the "aliens" - aliens are areas that are effect of interference. The area is manually set in a configuration file
     after inspecting the data.
     3. binning - adding amplitudes of several consecutive points. Binning can be done in any dimension.
     4. amplitudes are set to sqrt
     5. centering - finding the greatest amplitude and locating it at a center of new array. Typically several new rows/columns/slices
-    are added. These are filled with zeros. When changing the dimension the code finds the smallest possible dimension that is 
+    are added. These are filled with zeros. When changing the dimension the code finds the smallest possible dimension that is
     supported by opencl library (multiplier of 2, 3, and 5).
-    6. shift in place - shift the zero-frequency component to the center of the spectrum
-    
+
     Parameters
     ----------
     config_map : dict
         configuration map
-        
+
     data : array
         a 3D np array containing experiment data
-        
+
     Returns
     -------
     data : array
         a 3D np array containing data after the preprocessing
     """
-    
+
     # zero out the noise
     data = np.where(data < config_map.amp_threshold, 0, data)
 
@@ -96,7 +89,7 @@ def prepare_data(config_map, data):
     try:
         aliens = config_map.aliens
         for alien in aliens:
-            data[alien[0]:alien[3], alien[1]:alien[4], alien[2]:alien[5]]=0
+            data[alien[0]:alien[3], alien[1]:alien[4], alien[2]:alien[5]] = 0
     except AttributeError:
         pass
 
@@ -114,7 +107,7 @@ def prepare_data(config_map, data):
     try:
         center_shift = tuple(config_map.center_shift)
     except AttributeError:
-        center_shift = (0,0,0)
+        center_shift = (0, 0, 0)
 
     data = ut.get_centered(data, center_shift)
 
@@ -125,90 +118,7 @@ def prepare_data(config_map, data):
     except AttributeError:
         pass
 
-    # shift data
-    data=sf.fftshift(data)
     return data
-
-
-def fast_module_reconstruction(proc, data, conf):
-    """
-    This function calls a bridge method corresponding to the requested processor type. The bridge method is an access to the CFM
-    (Calc Fast Module). When reconstruction is completed the function retrieves results from the CFM.
-    
-    Parameters
-    ----------
-    proc : str
-        a string indicating the processor type
-        
-    data : array
-        a 3D np array containing pre-processed experiment data
-        
-    conf : dict
-        configuration map
-        
-    Returns
-    -------
-    image_r : array
-        a 3D np real part array containing reconstructed image
-        
-    image_i : array
-        a 3D np imaginary part array containing reconstructed image
-        
-    er : array
-        a vector containing mean error for each iteration
-    """
-    if proc == 'cpu':
-        bridge = bridge_cpu
-    elif proc == 'opencl': 
-        bridge = bridge_opencl
-    # elif proc == 'cuda':
-    #     bridge = bridge_cuda
-
-    data = np.swapaxes(data,1,2)
-
-    dims = data.shape
-    dims1 = (dims[2], dims[1], dims[0])
-    fast_module = bridge.PyBridge()
-
-    data_l = data.flatten().tolist()
-    fast_module.start_calc(data_l, dims1, conf)
-    er = fast_module.get_errors()
-    image_r = np.asarray(fast_module.get_image_r())
-    image_i = np.asarray(fast_module.get_image_i())
-    image = image_r + 1j*image_i
-    # normalize image
-    mx = max(np.absolute(image).ravel().tolist())
-    image = image/mx
-    support = np.asarray(fast_module.get_support())
-    coherence = np.asarray(fast_module.get_coherence())
-
-    image = np.reshape(image, dims)
-    support = np.reshape(support, dims)
-
-    image = np.swapaxes(image, 2,0)
-    support = np.swapaxes(support, 2,0)
-    image = np.swapaxes(image, 1, 0)
-    support = np.swapaxes(support, 1, 0)
-
-    if coherence.shape[0] > 1:
-        coh_size = int(round(coherence.shape[0] ** (1. / 3.)))
-        coh_dims = (coh_size, coh_size, coh_size,)
-        coherence = np.reshape(coherence, coh_dims)
-        coherence = np.swapaxes(coherence, 2, 0)
-        coherence = np.swapaxes(coherence, 1, 0)
-    else:
-        coherence = None
-
-    return image, support, coherence, er
-
-
-def write_simple(arr, filename):
-    from tvtk.api import tvtk, write_data
-
-    id=tvtk.ImageData()
-    id.point_data.scalars=abs(arr.ravel(order='F'))
-    id.dimensions=arr.shape
-    write_data(id, filename)
 
 
 def reconstruction(proc, filename, conf):
@@ -216,23 +126,23 @@ def reconstruction(proc, filename, conf):
     This function is called by the user. It checks whether the data is valid and configuration file exists.
     It calls function to pre-process the data, and then to run reconstruction.
     The reconstruction results, image and errors are returned.
-    
+
     Parameters
     ----------
     proc : str
         a string indicating the processor type
-        
+
     filename : str
         name of a file containing experiment data
-        
+
     conf : str
         configuration file name
-        
+
     Returns
     -------
     image : array
         a 3D np array containing reconstructed image
-        
+
     er : array
         a vector containing mean error for each iteration
     """
@@ -268,20 +178,26 @@ def reconstruction(proc, filename, conf):
         except AttributeError:
             print ("save_dir not configured")
 
-        np.save(save_dir+'/data.npy', data)
+        np.save(save_dir + '/data.npy', data)
 
     if action != 'prep_only':
-        image, support, coherence, errors = fast_module_reconstruction(proc, data, conf)
+        try:
+            generations = config_map.generations
+        except:
+            generations = 1
+        try:
+            low_resolution_generations = config_map.low_resolution_generations
+        except:
+            low_resolution_generations = 0
 
-        cx.save_CX(conf, image, support, save_dir)
+        if generations == 1 and low_resolution_generations == 0:
+            calc.reconstruction(proc, conf, data, None, None, None)
+        else:
+            gen_obj = Generation(config_map, data)
+            image, support, coherence, errors = None, None, None, None
+            for g in range(generations):
+                data = gen_obj.get_data(g)
+                image, support, coherence, errors = calc.reconstruction(proc, conf, data, image, support, coherence)
 
-        if coherence is not None:
-            write_simple(coherence, save_dir + "simple_coh.vtk")
-
-        errors.pop(0)
-        plt.plot(errors)
-        plt.ylabel('errors')
-        plt.show()
-
-        print 'image, support shape', image.shape, support.shape
+#reconstruction('opencl', '/home/phoebus/BFROSIK/CDI/S149/Staff14-3_S0149.tif', '/local/bfrosik/cdi/config.test')
 

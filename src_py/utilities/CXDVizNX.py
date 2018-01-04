@@ -67,14 +67,16 @@ class DispalyParams:
         except AttributeError:
             print ('pixel not defined')
         try:
-            self.save_two_files = config_map.save_two_files
-        except AttributeError:
-            print ('save_two_files not defined')
-        try:
             self.crop = config_map.crop
         except AttributeError:
             self.crop = None
             print ('crop not defined')
+        try:
+            self.save_dir = config_map.save_dir
+            if not self.save_dir.endswith('/'):
+                self.save_dir = self.save_dir + '/'
+        except AttributeError:
+            self.save_dir = ''
 
 
 class CXDViz(tr.HasTraits):
@@ -166,9 +168,6 @@ class CXDViz(tr.HasTraits):
         r.shape = 3, dims[0] * dims[1] * dims[2]
         r = r.transpose()
 
-        print r.shape
-        print self.T.shape
-
         self.coords = np.dot(r, self.T)
 
 
@@ -256,16 +255,13 @@ class CXDViz(tr.HasTraits):
 
 
     def write_structured_grid(self, filename, **args):
-        print 'in WriteStructuredGrid'
         sgwriter = tvtk.StructuredGridWriter()
         sgwriter.file_type = 'binary'
         if filename.endswith(".vtk"):
             sgwriter.file_name = filename
         else:
             sgwriter.file_name = filename + '.vtk'
-
         sgwriter.set_input_data(self.get_structured_grid())
-        print sgwriter.file_name
         sgwriter.write()
 
 
@@ -341,7 +337,7 @@ def get_crop(params, shape):
     return crop
 
 
-def save_CX(conf, image, support, filename):
+def save_CX(conf, image, support):
     image, support = center(image, support)
     #    image = remove_ramp(image)
     params = DispalyParams(conf)
@@ -350,7 +346,7 @@ def save_CX(conf, image, support, filename):
     viz.set_geometry(params, image.shape)
     crop = get_crop(params, image.shape)
     viz.set_crop(crop[0], crop[1], crop[2])  # save image
-    viz.write_structured_grid(filename + 'image')
+    viz.write_structured_grid(params.save_dir + 'image')
     viz.set_array(support)
-    viz.write_structured_grid(filename + 'support')
+    viz.write_structured_grid(params.save_dir + 'support')
 

@@ -16,10 +16,10 @@ See LICENSE file.
 
 using namespace af;
 
-void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> guess_buffer_r, std::vector<d_type> guess_buffer_i, std::vector<int> dim, const std::string & config)
+void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> guess_buffer_r, std::vector<d_type> guess_buffer_i, std::vector<int> dim, const std::string & config, int stage)
 {
     dim4 af_dims = Utils::Int2Dim4(dim);
-    Params * params = new Params(config.c_str(), af_dims);
+    Params * params = new Params(config.c_str(), stage, af_dims);
     
     int device = params->GetDeviceId();
     if (device >= 0)
@@ -46,15 +46,15 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> g
     printf("iterate function took %g seconds\n", timer::stop());
 }
 
-void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config)
+void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config, int stage)
 {
-    StartCalc(data_buffer_r, dim, config, 1);
+    StartCalc(data_buffer_r, dim, config, 1, stage);
 }
 
-void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config, int nu_threads)
+void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config, int nu_threads, int stage)
 {
     dim4 af_dims = Utils::Int2Dim4(dim);
-    Params * params = new Params(config.c_str(), af_dims);
+    Params * params = new Params(config.c_str(), stage, af_dims);
     
     int device = params->GetDeviceId();
     if (device >= 0)
