@@ -39,6 +39,7 @@ private:
 public:
     // Constructor. Takes in configuration file, parses the configuration and sets the parameters accordingly.
     Params(const char* config_file, int stage, dim4 data_dim);
+    ~Params();
        
     // returns data type (float/double). Used by python code
     std::string GetDataType();

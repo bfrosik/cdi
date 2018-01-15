@@ -7,58 +7,76 @@ See LICENSE file.
 #include "sstream"
 #include "bridge.hpp"
 #include "manager.hpp"
+#include "cstdio"
 
-Manager mgr;
+Manager *mgr;
 
-void Bridge::StartCalcWithGuess(std::vector<float> data_buffer_r, std::vector<float> guess_buffer_r, std::vector<float> guess_buffer_i, std::vector<int> dim, const std::string & config, int stage)
+Bridge::Bridge()
+{
+    mgr = new Manager();
+}
+
+void Bridge::StartCalcWithGuess(std::vector<float> data_buffer_r, std::vector<float> guess_buffer_r, std::vector<float> guess_buffer_i, std::vector<int> dim, const std::string & config)
 {
     std::vector<d_type> data_r(data_buffer_r.begin(), data_buffer_r.end());
     std::vector<d_type> guess_i(guess_buffer_i.begin(), guess_buffer_i.end());
     std::vector<d_type> guess_r(guess_buffer_r.begin(), guess_buffer_r.end());
-    mgr.StartCalc(data_r, guess_r, guess_i, dim, config, stage);
-    //mgr.StartCalc(data_buffer_r, guess_buffer_r, guess_buffer_i, dim, config);
+    mgr->StartCalc(data_r, guess_r, guess_i, dim, config);
 }
 
-void Bridge::StartCalc(std::vector<float> data_buffer_r, std::vector<int> dim, std::string const & config, int stage)
+void Bridge::StartCalcWithGuessSupport(std::vector<float> data_buffer_r, std::vector<float> guess_buffer_r, std::vector<float> guess_buffer_i, std::vector<int> support_buffer, std::vector<int> dim, const std::string & config)
 {
     std::vector<d_type> data_r(data_buffer_r.begin(), data_buffer_r.end());
-    mgr.StartCalc(data_r, dim, config, stage);
-//    mgr.StartCalc(data_buffer_r, dim, config);
+    std::vector<d_type> guess_i(guess_buffer_i.begin(), guess_buffer_i.end());
+    std::vector<d_type> guess_r(guess_buffer_r.begin(), guess_buffer_r.end());
+    std::vector<int> support(support_buffer.begin(), support_buffer.end());
+    mgr->StartCalc(data_r, guess_r, guess_i, support, dim, config);
 }
 
-void Bridge::StartCalcMultiple(std::vector<float> data_buffer_r, std::vector<int> dim, std::string const & config, int nu_threads, int stage)
+void Bridge::StartCalcWithGuessSupportCoh(std::vector<float> data_buffer_r, std::vector<float> guess_buffer_r, std::vector<float> guess_buffer_i, std::vector<int> support_buffer, std::vector<int> dim, std::vector<float> coh_buffer, std::vector<int> coh_dim, const std::string & config)
 {
     std::vector<d_type> data_r(data_buffer_r.begin(), data_buffer_r.end());
-    mgr.StartCalc(data_r, dim, config, nu_threads, stage);
-//    mgr.StartCalc(data_buffer_r, dim, config, nu_threads);
+    std::vector<d_type> guess_i(guess_buffer_i.begin(), guess_buffer_i.end());
+    std::vector<d_type> guess_r(guess_buffer_r.begin(), guess_buffer_r.end());
+    std::vector<int> support(support_buffer.begin(), support_buffer.end());
+    std::vector<d_type> coh(coh_buffer.begin(), coh_buffer.end());
+    mgr->StartCalc(data_r, guess_r, guess_i, support, dim, coh, coh_dim, config);
+}
+
+void Bridge::StartCalc(std::vector<float> data_buffer_r, std::vector<int> dim, std::string const & config)
+{
+    std::vector<d_type> data_r(data_buffer_r.begin(), data_buffer_r.end());
+    mgr->StartCalc(data_r, dim, config);
 }
 
 std::vector<d_type> Bridge::GetImageR()
 {
-    return mgr.GetImageR();
+    return mgr->GetImageR();
 }
 
 std::vector<d_type> Bridge::GetImageI()
 {
-    return mgr.GetImageI();
+    return mgr->GetImageI();
 }
 
 std::vector<d_type> Bridge::GetErrors()
 {
-    return mgr.GetErrors();
+    return mgr->GetErrors();
 }
 
 std::vector<float> Bridge::GetSupportV()
 {
-    return mgr.GetSupportV();
+    return mgr->GetSupportV();
 }
 
 std::vector<d_type> Bridge::GetCoherenceV()
 {
-    return mgr.GetCoherenceV();
+    return mgr->GetCoherenceV();
 }
 
-
-
+void Bridge::Cleanup()
+{
+   delete mgr;
+}
 
 

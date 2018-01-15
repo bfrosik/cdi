@@ -19,7 +19,6 @@ class PartialCoherence
 {
 private:
     std::vector<int> roi;
-    int crop[6];
     std::vector<int> triggers;
     int trigger_index;
     int algorithm;
@@ -35,6 +34,7 @@ private:
 
 public:
     PartialCoherence(Params *params, af::array coherence_array);
+    ~PartialCoherence();
     void Init(af::array data);
     void SetPrevious(af::array abs_amplitudes);
     std::vector<int> GetTriggers();

@@ -2,7 +2,7 @@
 save_dir = "results_dir"
                              // directory where vtk files are saved, and the data and raw results if configured
 
-action = "new_guess"
+action = "continue"
                              // action defines what is processed by the program:
                              // if "prep_only" the program will only do the data preparation and save in the save_dir
                              // if "new_guess" the program will do the data prepation and will start reconstruction
@@ -21,9 +21,9 @@ save_results = true
 
 
 // generations
-generations = 1              // number of generations
+generations = 3              // number of generations
 
-low_resolution_generations = 0
+low_resolution_generations = 1
                              // number of generations low resolution is applied to, starting from first gen
 
 low_resolution_sigma_alg = "SIG_SPACE_LINEAR"
@@ -45,7 +45,7 @@ low_resolution_sigma_max = 2.0
                              // max support sigma value
 
 low_resolution_scale_power = 1
-                             // how the sig scales with generation (1 - linear, 2 - quad etc)
+                             // how the sigma scales with generation (1 - linear, 2 - quad etc)
 
 low_resolution_alg = "GAUSS"
                              // algorithm to use to apply resolution. Supported algorithms:
@@ -91,7 +91,7 @@ plot_errors = true           // indicates whether to plot errors during calculat
 //algorithm_sequence = ((3, ("ER",2), ("HIO", 2), ("ER", 2)), (2, ("ER",3), ("HIO",3)))
 //algorithm_sequence = ((1, ("ER",6)))
 algorithm_sequence = ((1, ("ER",19), ("HIO", 10)), (1,("ER",10)))
-//algorithm_sequence = ((1, ("ER",10), ("HIO", 20)), (1,("ER",10)))
+//algorithm_sequence = ((1, ("ER",19), ("HIO", 4)), (1,("ER",4)))
 //algorithm_sequence = ((1, ("ER",19), ("HIO", 10)), (1,("ER",10)), (1, ("ER",10), ("HIO", 20)), (1,("ER",10)))
                              // defines algorithm applied in each iteration by a sequence of tuples.
                              // The first number in a tuple is a repeat, followed by tuples of pairs, each

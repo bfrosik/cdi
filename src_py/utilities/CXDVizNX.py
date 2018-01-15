@@ -336,6 +336,21 @@ def get_crop(params, shape):
                 crop[i] = int(crop[i]*shape[i])
     return crop
 
+# def reshape(image, support, shape):
+#     # normalize image
+#     mx = max(np.absolute(image).ravel().tolist())
+#     image = image / mx
+#     image = np.reshape(image, shape)
+#
+#     support = np.reshape(support, shape)
+#
+#     image = np.swapaxes(image, 2, 0)
+#     image = np.swapaxes(image, 1, 0)
+#     support = np.swapaxes(support, 2, 0)
+#     support = np.swapaxes(support, 1, 0)
+#
+#     return image, support
+#
 
 def save_CX(conf, image, support):
     image, support = center(image, support)

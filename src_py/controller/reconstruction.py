@@ -121,6 +121,19 @@ def prepare_data(config_map, data):
     return data
 
 
+def save_prepared_data(data, config_map):
+    try:
+        save_dir = config_map.save_dir
+        if not save_dir.endswith('/'):
+            save_dir = save_dir + '/'
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+    except AttributeError:
+        print ("save_dir not configured")
+
+    np.save(save_dir + '/data.npy', data)
+
+
 def reconstruction(proc, filename, conf):
     """
     This function is called by the user. It checks whether the data is valid and configuration file exists.
@@ -168,36 +181,36 @@ def reconstruction(proc, filename, conf):
     except AttributeError:
         save_results = False
 
-    if action == 'prep_only' or save_results:
-        try:
-            save_dir = config_map.save_dir
-            if not save_dir.endswith('/'):
-                save_dir = save_dir + '/'
-            if not os.path.exists(save_dir):
-                os.makedirs(save_dir)
-        except AttributeError:
-            print ("save_dir not configured")
+    if action == 'prep_only':
+        save_prepared_data(data, config_map)
+        return
 
-        np.save(save_dir + '/data.npy', data)
+    if save_results:
+        save_prepared_data(data, config_map)
 
-    if action != 'prep_only':
-        try:
-            generations = config_map.generations
-        except:
-            generations = 1
-        try:
-            low_resolution_generations = config_map.low_resolution_generations
-        except:
-            low_resolution_generations = 0
+    try:
+        generations = config_map.generations
+    except:
+        generations = 1
+    try:
+        low_resolution_generations = config_map.low_resolution_generations
+    except:
+        low_resolution_generations = 0
 
-        if generations == 1 and low_resolution_generations == 0:
-            calc.reconstruction(proc, conf, data, None, None, None)
-        else:
-            gen_obj = Generation(config_map, data)
-            image, support, coherence, errors = None, None, None, None
-            for g in range(generations):
-                data = gen_obj.get_data(g)
-                image, support, coherence, errors = calc.reconstruction(proc, conf, data, image, support, coherence)
+    try:
+        coh_dims = tuple(config_map.partial_coherence_roi)
+    except:
+        coh_dims = None
+
+    print coh_dims
+
+    image, support, coherence = None, None, None
+    gen_obj = Generation(config_map)
+    for g in range(low_resolution_generations):
+        gen_data = gen_obj.get_data(g, data)
+        image, support, coherence, errors = calc.reconstruction(proc, conf, gen_data, coh_dims, image, support, coherence)
+    for g in range(low_resolution_generations, generations):
+        image, support, coherence, errors = calc.reconstruction(proc, conf, data, coh_dims, image, support, coherence)
 
 #reconstruction('opencl', '/home/phoebus/BFROSIK/CDI/S149/Staff14-3_S0149.tif', '/local/bfrosik/cdi/config.test')
 

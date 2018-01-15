@@ -31,11 +31,24 @@ PartialCoherence::PartialCoherence(Params *params, af::array coherence_array)
     normalize = params->GetPcdiNormalize();
     iteration_num = params->GetPcdiIterations();
     kernel_array = coherence_array;
+    if (Utils::IsNullArray(coherence_array))
+    {
+        roi_dims = Utils::Int2Dim4(roi);
+    }
+    else
+    {
+        roi_dims = kernel_array.dims();
+    }    
+}
+
+PartialCoherence::~PartialCoherence()
+{ 
+    roi.clear();
+    triggers.clear();
 }
 
 void PartialCoherence::Init(af::array data)
 {
-    roi_dims = Utils::Int2Dim4(roi);
     dims = data.dims();
 
     af::array data_centered = af::shift(data, dims[0]/2, dims[1]/2, dims[2]/2, dims[3]/2);

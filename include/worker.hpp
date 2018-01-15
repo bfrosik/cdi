@@ -31,13 +31,13 @@ class Reconstruction
 private:
 
     // Params object constructed by the Reconstruction class
-    Params *params = NULL;
+    Params *params;
     // State object constructed by the Reconstruction class
-    State *state = NULL;
+    State *state;
     // A reference to Support object
-    Support *support = NULL;
+    Support *support;
     // A reference to PartialCoherence
-    PartialCoherence *partialCoherence = NULL;
+    PartialCoherence *partialCoherence;
 
     // This method returns sum of squares of all elements in the array
     double GetNorm(af::array arr);
@@ -63,7 +63,9 @@ public:
     // is typically generated as an complex random array. This image can be also the best outcome of previous calculations. The
     // data is saved and is used for processing. 
     Reconstruction(af::array data, af::array guess, Params* params, af::array support_array, af::array coherence_array);
-        
+    
+    ~Reconstruction();
+    
     // This initializes the object. It must be called after object is created.
     // 1. it calculates and sets norm of the data
     // 2. it calculates and sets size of data array

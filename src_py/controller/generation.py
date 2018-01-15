@@ -31,8 +31,7 @@ class Generation:
     """
     This class encapsulates generation.
     """
-    def __init__(self, config_map, data):
-        self.data = data
+    def __init__(self, config_map):
         try:
             self.generations = config_map.generations
         except AttributeError:
@@ -95,17 +94,14 @@ class Generation:
                 self.low_resolution_alg = 'GAUSS'
 
 
-    def get_data(self, generation):
-        if self.low_resolution_generations == 0:
-            return self.data
-
-        gmask = self.get_gmask(generation)
-        return self.data * gmask
+    def get_data(self, generation, data):
+        gmask = self.get_gmask(generation, data.shape)
+        return data * gmask
 
 
-    def get_gmask(self, generation):
+    def get_gmask(self, generation, shape):
         if self.low_resolution_alg == 'GAUSS':
             if self.sigmas[generation] < 1.0:
-                ut.gaussian(self.data.shape, self.sigmas[generation])
+                ut.gaussian(shape, self.sigmas[generation])
             else:
-                return np.ones(self.data.shape)
+                return np.ones(shape)

@@ -47,4 +47,7 @@ const int REGULARIZED_AMPLITUDE_GAUSS = 1;
 const int REGULARIZED_AMPLITUDE_POISSON = 2;
 const int REGULARIZED_AMPLITUDE_UNIFORM = 3;
 
+const int STAGE_PREMIER = 0;
+const int STAGE_CONTINUE = 1;
+
 #endif /* common_h */

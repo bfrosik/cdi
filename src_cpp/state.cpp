@@ -20,41 +20,58 @@ using namespace af;
 Params *params;
 
 // current iteration
-int current_iter = -1;
+int current_iter;
 // number of configured iterations for reconstruction
-int total_iter_num = 0;
+int total_iter_num;
 
 // The vector of errors indexed by iteration
 std::vector<d_type>  errors;
 
 // current algorithm
-Algorithm * current_alg = NULL;
+Algorithm * current_alg;
 // current index of index switches vector
-int alg_switch_index = 0;
+int alg_switch_index;
 
 // mapping of algorithm id to an Algorithm object
 std::map<int, Algorithm*> algorithm_map;
 
 // a flag indicating whether to update support
-bool update_support = false;
+bool update_support;
 // current index in support_triggers vector
-int support_triggers_index = 0;
+int support_triggers_index;
 
 // partial coherence state
 // a flag indicating whether to update partial coherence
-bool run_convolution = false;
-bool update_kernel = false;
+bool run_convolution;
+bool update_kernel;
 // current index in support_partial_coherence vector
-int partial_coherence_triggers_index = 0;
+int partial_coherence_triggers_index;
 
-bool averaging = false;
+bool averaging;
 
-bool apply_twin = false;
+bool apply_twin;
 
 
 State::State(Params* parameters)
 {
     params = parameters;
+    current_iter = -1;
+    total_iter_num = 0;
+    current_alg = NULL;
+    alg_switch_index = 0;
+    update_support = false;
+    support_triggers_index = 0;
+    run_convolution = false;
+    update_kernel = false;
+    partial_coherence_triggers_index = 0;
+    averaging = false;
+    apply_twin = false;
+}
+
+State::~State()
+{
+    errors.clear();
+    algorithm_map.clear();
 }
 
 void State::Init()
@@ -71,10 +88,6 @@ void State::Init()
         }
     }
     current_alg = algorithm_map[params->GetAlgSwitches()[0].algorithm_id];
-}
-
-State::~State()
-{
 }
 
 void State::MapAlgorithmObject(int alg_id)

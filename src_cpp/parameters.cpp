@@ -31,9 +31,9 @@ std::string data_type;
 d_type amp_threshold;
 bool amp_threshold_fill_zeros;
 
-d_type phase_min = 120;
-d_type phase_max = 10;
-float beta = .9;
+// d_type phase_min;
+//d_type phase_max;
+float beta;
 
 // support
 std::vector<int> support_area;
@@ -44,7 +44,7 @@ int support_alg;
 
 //partial coherence
 //PartialCoherence *partial_coherence = NULL;
-int pcdi_alg = 0;
+int pcdi_alg;
 std::vector<int>  pcdi_roi;
 std::vector<int> pcdi_triggers;
 bool pcdi_normalize;
@@ -60,22 +60,22 @@ int number_iterations;
 
 int twin;
 
-int regularized_amp = REGULARIZED_AMPLITUDE_NONE;
+int regularized_amp;
 
 const char * save_dir;
 
 const char * continue_dir;
 
 int action;
-int action_stage = 0;
+int action_stage;
 
-bool save_results = false;
+bool save_results;
 
-bool plot_errors = false;
+bool plot_errors;
 
-int gc = -1;
+int gc;
 
-int device = -1;
+int device;
 
 
 Params::Params(const char* config_file, int stage, dim4 data_dim)
@@ -117,6 +117,7 @@ Params::Params(const char* config_file, int stage, dim4 data_dim)
         printf((std::string("No 'action' parameter in configuration file. running new guess\n")).c_str());
     }
 
+    action_stage = 0;
     if (action == ACTION_CONTINUE)
     {
         try
@@ -136,6 +137,7 @@ Params::Params(const char* config_file, int stage, dim4 data_dim)
         action_stage = stage;
     }
 
+    save_results = false;
     try {
         save_results = cfg.lookup("save_results");
     }
@@ -144,6 +146,7 @@ Params::Params(const char* config_file, int stage, dim4 data_dim)
         printf((std::string("No 'save_results' parameter in configuration file. Setting to false.\n")).c_str());
     }
 
+    plot_errors = false;
     try {
         plot_errors = cfg.lookup("plot_errors");
     }
@@ -179,6 +182,7 @@ Params::Params(const char* config_file, int stage, dim4 data_dim)
         printf("No 'algorithm_sequence' parameter in configuration file.\n");
     }
 
+    gc = -1;
     try {
         gc = cfg.lookup("gc");
     }
@@ -187,6 +191,7 @@ Params::Params(const char* config_file, int stage, dim4 data_dim)
         printf("No 'gc' parameter in configuration file.\n");
     }
 
+    device = -1;
     try {
         device = cfg.lookup("device");
     }
@@ -322,6 +327,7 @@ Params::Params(const char* config_file, int stage, dim4 data_dim)
 //    }
 //    catch (const SettingNotFoundException &nfex)
 //    {
+//          phase_min = 120;
 //        printf("No 'phase_min' parameter in configuration file.\n");
 //    }
 //
@@ -330,6 +336,7 @@ Params::Params(const char* config_file, int stage, dim4 data_dim)
 //    }
 //    catch (const SettingNotFoundException &nfex)
 //    {
+//          phase_max = 10;
 //        printf("No 'phase_max' parameter in configuration file.\n");
 //    }
 
@@ -358,7 +365,10 @@ Params::Params(const char* config_file, int stage, dim4 data_dim)
         {
             regularized_amp = REGULARIZED_AMPLITUDE_UNIFORM;
         }
-        // else it is initialized
+        else
+        {
+            regularized_amp = REGULARIZED_AMPLITUDE_NONE;
+        }
     }
     catch (const SettingNotFoundException &nfex)
     {
@@ -376,6 +386,21 @@ Params::Params(const char* config_file, int stage, dim4 data_dim)
         }
     }
 
+}
+
+
+Params::~Params()
+{
+    action_id_map.clear();
+    algorithm_id_map.clear();
+    alg_switches.clear();
+    data_type.clear();
+    support_area.clear();
+    support_triggers.clear();
+    pcdi_roi.clear();
+    pcdi_triggers.clear();
+    delete save_dir;
+    delete continue_dir;
 }
 
 void Params::BuildAlgorithmMap()
@@ -460,15 +485,15 @@ bool Params::IsAmpThresholdFillZeros()
     return amp_threshold_fill_zeros;
 }
 
-d_type Params::GetPhaseMin()
-{
-    return phase_min;
-}
+//d_type Params::GetPhaseMin()
+//{
+//    return phase_min;
+//}
 
-d_type Params::GetPhaseMax()
-{
-    return phase_max;
-}
+//d_type Params::GetPhaseMax()
+//{
+//    return phase_max;
+//}
 
 float Params::GetBeta()
 {

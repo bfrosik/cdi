@@ -22,7 +22,7 @@ See LICENSE file.
 af::array data;   // this is abs
 int num_points;
 d_type norm_data;
-int current_iteration;
+int current_iteration; 
 af::array ds_image;
 int aver_iter;
 std::vector<d_type> aver_v;
@@ -33,6 +33,10 @@ af::Window * errors_plot;
 
 Reconstruction::Reconstruction(af::array image_data, af::array guess, Params* params, af::array support_array, af::array coherence_array)
 {
+    num_points = 0;
+    norm_data = 0;
+    current_iteration = 0;
+    aver_iter = 0;
     data = image_data;
     ds_image = guess;
     params = params;
@@ -43,7 +47,28 @@ Reconstruction::Reconstruction(af::array image_data, af::array guess, Params* pa
     {
         partialCoherence = new PartialCoherence(params, coherence_array);
     }
+    else
+    {
+        partialCoherence = NULL;
+    }
     errors_plot = new Window(512, 512, "errors");
+}
+
+Reconstruction::~Reconstruction()
+{
+    delete params;
+    delete state;
+    if (partialCoherence != NULL)
+    {
+        delete partialCoherence;
+    }
+    if (errors_plot != NULL)
+    {
+        delete errors_plot;
+    }
+    aver_v.clear();
+    support_vector.clear();
+    coherence_vector.clear();
 }
 
 void Reconstruction::Init()
@@ -226,7 +251,7 @@ void Reconstruction::VectorizeSupport()
 void Reconstruction::VectorizeCoherence()
 {
     // get the partial coherence as double, so it will work for float and double data types
-    af::array a = partialCoherence->GetKernelArray();
+    af::array a = partialCoherence->GetKernelArray().copy();
     d_type *coherence_v = a.host<d_type>();
     std::vector<d_type> v(coherence_v, coherence_v + a.elements());
     coherence_vector = v;

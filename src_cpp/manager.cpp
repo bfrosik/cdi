@@ -16,44 +16,17 @@ See LICENSE file.
 
 using namespace af;
 
-void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> guess_buffer_r, std::vector<d_type> guess_buffer_i, std::vector<int> dim, const std::string & config, int stage)
+af::array ar;
+
+Manager::~Manager()
 {
-    dim4 af_dims = Utils::Int2Dim4(dim);
-    Params * params = new Params(config.c_str(), stage, af_dims);
-    
-    int device = params->GetDeviceId();
-    if (device >= 0)
-    {
-        setDevice(device);
-    }
-    
-    af::array real_d(af_dims, &data_buffer_r[0]);
-    //saving abs(data)
-    af::array data = abs(real_d);
-
-    af::array real_g(af_dims, &guess_buffer_r[0]);
-    af::array imag_g(af_dims, &guess_buffer_i[0]);
-    af::array guess = complex(real_g, imag_g);
-       
-    af::array null_array = array();
-    Reconstruction reconstruction(data, guess, params, null_array, null_array);
-    reconstruction.Init();
-    rec = &reconstruction;
-    timer::start();
-
-    reconstruction.Iterate();	
-
-    printf("iterate function took %g seconds\n", timer::stop());
+    delete rec;
 }
 
-void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config, int stage)
-{
-    StartCalc(data_buffer_r, dim, config, 1, stage);
-}
-
-void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config, int nu_threads, int stage)
+void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config)
 {
     dim4 af_dims = Utils::Int2Dim4(dim);
+    int stage = STAGE_PREMIER;
     Params * params = new Params(config.c_str(), stage, af_dims);
     
     int device = params->GetDeviceId();
@@ -106,8 +79,9 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim,
                 coherence_array = null_array;
             }
 
-            Reconstruction reconstruction(data, guess, params, support_array, coherence_array);
-            rec = &reconstruction;
+            //Reconstruction reconstruction(data, guess, params, support_array, coherence_array);
+            //rec = &reconstruction;
+            rec = new Reconstruction(data, guess, params, support_array, coherence_array);
         }
     }
     if (action == ACTION_NEW_GUESS)
@@ -124,8 +98,9 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim,
             guess = randu(data.dims(), c32, r);
         }
         af::array null_array = array();
-        Reconstruction reconstruction(data, guess, params, null_array, null_array);
-        rec = &reconstruction;
+        //Reconstruction reconstruction(data, guess, params, null_array, null_array);
+        //rec = &reconstruction;
+        rec = new Reconstruction(data, guess, params, null_array, null_array);
     }
 
     rec->Init();
@@ -137,7 +112,6 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim,
     
     if (params->IsSaveResults())
     {
-        printf("save results\n");
         const char * save_dir = params->GetSaveDir();
         std::string image_file = Utils::GetFullFilename(save_dir, "image.af");
         std::string support_file = Utils::GetFullFilename(save_dir, "support.af");
@@ -160,11 +134,116 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim,
     printf("iterate function took %g seconds\n", timer::stop());
 }
 
+void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> guess_buffer_r, std::vector<d_type> guess_buffer_i, std::vector<int> dim, const std::string & config)
+{
+    dim4 af_dims = Utils::Int2Dim4(dim);
+    int stage = STAGE_CONTINUE;
+    Params * params = new Params(config.c_str(), stage, af_dims);
+    
+    int device = params->GetDeviceId();
+    if (device >= 0)
+    {
+        setDevice(device);
+    }
+    
+    af::array real_d(af_dims, &data_buffer_r[0]);
+    //saving abs(data)
+    af::array data = abs(real_d);
+
+    af::array real_g(af_dims, &guess_buffer_r[0]);
+    af::array imag_g(af_dims, &guess_buffer_i[0]);
+    af::array guess = complex(real_g, imag_g);
+       
+    af::array null_array = array();
+    //Reconstruction reconstruction(data, guess, params, null_array, null_array);
+    //reconstruction.Init();
+    //rec = &reconstruction;
+    rec = new Reconstruction(data, guess, params, null_array, null_array);
+    rec->Init();
+    timer::start();
+
+    rec->Iterate();	
+
+    printf("iterate function took %g seconds\n", timer::stop());
+}
+
+void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> guess_buffer_r, std::vector<d_type> guess_buffer_i, std::vector<int> support_vector, std::vector<int> dim, const std::string & config)
+{
+    dim4 af_dims = Utils::Int2Dim4(dim);
+    int stage = STAGE_CONTINUE;
+    Params * params = new Params(config.c_str(), stage, af_dims);
+    
+    int device = params->GetDeviceId();
+    if (device >= 0)
+    {
+        setDevice(device);
+    }
+    
+    af::array real_d(af_dims, &data_buffer_r[0]);
+    //saving abs(data)
+    af::array data = abs(real_d);
+
+    af::array real_g(af_dims, &guess_buffer_r[0]);
+    af::array imag_g(af_dims, &guess_buffer_i[0]);
+    af::array guess = complex(real_g, imag_g);
+    af::array support_a(af_dims, &support_vector[0]);
+       
+    af::array null_array = array();
+    //Reconstruction reconstruction(data, guess, params, support_a, null_array);
+    //reconstruction.Init();
+    //rec = &reconstruction;
+    rec = new Reconstruction(data, guess, params, support_a, null_array);
+    rec->Init();
+    timer::start();
+
+    rec->Iterate();	
+    //reconstruction.Iterate();	
+
+    printf("iterate function took %g seconds\n", timer::stop());
+}
+
+void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> guess_buffer_r, std::vector<d_type> guess_buffer_i, std::vector<int> support_vector, std::vector<int> dim, std::vector<d_type> coh_vector, std::vector<int> coh_dim, const std::string & config)
+{
+    dim4 af_dims = Utils::Int2Dim4(dim);
+    int stage = STAGE_CONTINUE;
+    Params * params = new Params(config.c_str(), stage, af_dims);
+    
+    int device = params->GetDeviceId();
+    if (device >= 0)
+    {
+        setDevice(device);
+    }
+    
+    af::array real_d(af_dims, &data_buffer_r[0]);
+    //saving abs(data)
+    af::array data = abs(real_d);
+
+    af::array real_g(af_dims, &guess_buffer_r[0]);
+    af::array imag_g(af_dims, &guess_buffer_i[0]);
+    af::array guess = complex(real_g, imag_g).copy();
+    af::array support_a(af_dims, &support_vector[0]);
+    af::array coh_a(Utils::Int2Dim4(coh_dim), &coh_vector[0]);
+       
+    af::array null_array = array();
+    //Reconstruction reconstruction(data, guess, params, support_a, coh_a);
+    //reconstruction.Init();
+    //rec = &reconstruction;
+    rec = new Reconstruction(data, guess, params, support_a, coh_a);
+    rec->Init();
+
+    timer::start();
+
+    rec->Iterate();	
+    //reconstruction.Iterate();	
+
+    printf("iterate function took %g seconds\n", timer::stop());
+}
+
 std::vector<d_type> Manager::GetImageR()
 {
     af::array image = rec->GetImage();
     
-    d_type *image_r = real(image).host<d_type>();
+    d_type *image_r = real(image).copy().host<d_type>();
     std::vector<d_type> v(image_r, image_r + image.elements());
 
     delete [] image_r;
@@ -175,7 +254,7 @@ std::vector<d_type> Manager::GetImageI()
 {
     af::array image = rec->GetImage();
 
-    d_type *image_i = imag(image).host<d_type>();
+    d_type *image_i = imag(image).copy().host<d_type>();
     std::vector<d_type> v(image_i, image_i + image.elements());
 
     delete [] image_i;
