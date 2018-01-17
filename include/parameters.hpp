@@ -7,11 +7,12 @@ See LICENSE file.
 #ifndef parameters_hpp
 #define parameters_hpp
 
+#include "string"
 #include "common.h"
 #include "vector"
-#include "arrayfire.h"
+//#include "arrayfire.h"
 
-using namespace af;
+//using namespace af;
 
 struct Trigger_setting
 {
@@ -38,7 +39,7 @@ private:
 
 public:
     // Constructor. Takes in configuration file, parses the configuration and sets the parameters accordingly.
-    Params(const char* config_file, int stage, dim4 data_dim);
+    Params(const char* config_file, int stage, std::vector<int> data_dim);
     ~Params();
        
     // returns data type (float/double). Used by python code

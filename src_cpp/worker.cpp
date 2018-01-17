@@ -106,7 +106,9 @@ void Reconstruction::Iterate()
 
         current_iteration = state->GetCurrentIteration();
         if (params->GetGC() && (current_iteration+1) % params->GetGC() == 0)
+        {
             af::deviceGC();
+        }
         Algorithm * alg  = state->GetCurrentAlg();
         alg->RunAlgorithm(this);
         
@@ -314,4 +316,5 @@ std::vector<d_type> Reconstruction::GetCoherenceVectorI()
 {
     return coherence_vector;
 }
+
 

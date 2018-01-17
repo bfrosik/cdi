@@ -2,7 +2,7 @@
 save_dir = "results_dir"
                              // directory where vtk files are saved, and the data and raw results if configured
 
-action = "continue"
+action = "new_guess"
                              // action defines what is processed by the program:
                              // if "prep_only" the program will only do the data preparation and save in the save_dir
                              // if "new_guess" the program will do the data prepation and will start reconstruction
@@ -21,9 +21,9 @@ save_results = true
 
 
 // generations
-generations = 3              // number of generations
+generations = 1              // number of generations
 
-low_resolution_generations = 1
+low_resolution_generations = 0
                              // number of generations low resolution is applied to, starting from first gen
 
 low_resolution_sigma_alg = "SIG_SPACE_LINEAR"
@@ -79,7 +79,8 @@ adjust_dimensions = [0, 3, -5]
 
 
 // RECONSTRUCTION PARAMETERS USED BY FAST MODULE
-device = 0                   // ID of the target device
+device = 1
+                   // ID of the target device
 
 gc = 5;
                              // ArrayFire memory management is not reliable, the way around is to call garbage
@@ -89,7 +90,7 @@ gc = 5;
 plot_errors = true           // indicates whether to plot errors during calculations. Plotting will slow down.
 
 //algorithm_sequence = ((3, ("ER",2), ("HIO", 2), ("ER", 2)), (2, ("ER",3), ("HIO",3)))
-//algorithm_sequence = ((1, ("ER",6)))
+//algorithm_sequence = ((1, ("ER",1)))
 algorithm_sequence = ((1, ("ER",19), ("HIO", 10)), (1,("ER",10)))
 //algorithm_sequence = ((1, ("ER",19), ("HIO", 4)), (1,("ER",4)))
 //algorithm_sequence = ((1, ("ER",19), ("HIO", 10)), (1,("ER",10)), (1, ("ER",10), ("HIO", 20)), (1,("ER",10)))

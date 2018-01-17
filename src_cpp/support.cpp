@@ -97,5 +97,3 @@ af::array Support::GaussConvFft(af::array ds_image_abs)
     return convag;
 }
 
-
-

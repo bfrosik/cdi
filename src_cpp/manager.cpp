@@ -25,16 +25,17 @@ Manager::~Manager()
 
 void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim, std::string const & config)
 {
-    dim4 af_dims = Utils::Int2Dim4(dim);
     int stage = STAGE_PREMIER;
-    Params * params = new Params(config.c_str(), stage, af_dims);
+    Params * params = new Params(config.c_str(), stage, dim);
     
     int device = params->GetDeviceId();
     if (device >= 0)
     {
         setDevice(device);
+        info();
     }
     
+    dim4 af_dims = Utils::Int2Dim4(dim);
     af::array real_d(af_dims, &data_buffer_r[0]);
     //saving abs(data)
     af::array data = abs(real_d);
@@ -136,9 +137,8 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<int> dim,
 
 void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> guess_buffer_r, std::vector<d_type> guess_buffer_i, std::vector<int> dim, const std::string & config)
 {
-    dim4 af_dims = Utils::Int2Dim4(dim);
     int stage = STAGE_CONTINUE;
-    Params * params = new Params(config.c_str(), stage, af_dims);
+    Params * params = new Params(config.c_str(), stage, dim);
     
     int device = params->GetDeviceId();
     if (device >= 0)
@@ -146,6 +146,7 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> g
         setDevice(device);
     }
     
+    dim4 af_dims = Utils::Int2Dim4(dim);
     af::array real_d(af_dims, &data_buffer_r[0]);
     //saving abs(data)
     af::array data = abs(real_d);
@@ -169,9 +170,8 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> g
 
 void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> guess_buffer_r, std::vector<d_type> guess_buffer_i, std::vector<int> support_vector, std::vector<int> dim, const std::string & config)
 {
-    dim4 af_dims = Utils::Int2Dim4(dim);
     int stage = STAGE_CONTINUE;
-    Params * params = new Params(config.c_str(), stage, af_dims);
+    Params * params = new Params(config.c_str(), stage, dim);
     
     int device = params->GetDeviceId();
     if (device >= 0)
@@ -179,6 +179,7 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> g
         setDevice(device);
     }
     
+    dim4 af_dims = Utils::Int2Dim4(dim);
     af::array real_d(af_dims, &data_buffer_r[0]);
     //saving abs(data)
     af::array data = abs(real_d);
@@ -204,9 +205,8 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> g
 
 void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> guess_buffer_r, std::vector<d_type> guess_buffer_i, std::vector<int> support_vector, std::vector<int> dim, std::vector<d_type> coh_vector, std::vector<int> coh_dim, const std::string & config)
 {
-    dim4 af_dims = Utils::Int2Dim4(dim);
     int stage = STAGE_CONTINUE;
-    Params * params = new Params(config.c_str(), stage, af_dims);
+    Params * params = new Params(config.c_str(), stage, dim);
     
     int device = params->GetDeviceId();
     if (device >= 0)
@@ -214,6 +214,7 @@ void Manager::StartCalc(std::vector<d_type> data_buffer_r, std::vector<d_type> g
         setDevice(device);
     }
     
+    dim4 af_dims = Utils::Int2Dim4(dim);
     af::array real_d(af_dims, &data_buffer_r[0]);
     //saving abs(data)
     af::array data = abs(real_d);

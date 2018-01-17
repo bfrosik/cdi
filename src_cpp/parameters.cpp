@@ -4,8 +4,8 @@ See LICENSE file.
 ***/
 // Created by Barbara Frosik
 
-#include "arrayfire.h"
-#include <string.h>
+
+#include "string.h"
 #include "iostream"
 #include "libconfig.h++"
 #include "map"
@@ -14,7 +14,7 @@ See LICENSE file.
 #include "common.h"
 #include "util.hpp"
 
-using namespace af;
+
 using namespace libconfig;
 Config cfg;
 
@@ -78,7 +78,7 @@ int gc;
 int device;
 
 
-Params::Params(const char* config_file, int stage, dim4 data_dim)
+Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
 {
     BuildAlgorithmMap();
     BuildActionMap();
@@ -437,16 +437,17 @@ std::vector<int> Params::ParseTriggers(std::string trigger_name, int action_stag
                 int start = tmp[i][0];
             }
             int step = tmp[i][1];
+            int end_step;
             if (tmp[i].getLength() > 2)
             {
-                end = tmp[i][2];
-                end = std::min(end, number_iterations);
+                end_step = tmp[i][2];
+                end_step = std::min(end_step, number_iterations);
             }
             else
             {
-                end = number_iterations;
+                end_step = number_iterations;
             }
-            triggers.push_back(Trigger_setting(start, step, end));
+            triggers.push_back(Trigger_setting(start, step, end_step));
         }
     }
     catch ( const SettingNotFoundException &nfex)

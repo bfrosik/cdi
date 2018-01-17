@@ -192,3 +192,4 @@ af::array PartialCoherence::GetKernelArray()
 {
     return kernel_array;
 }
+
