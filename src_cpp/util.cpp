@@ -361,3 +361,13 @@ std::string Utils::GetFullFilename(const char * dir, const char * filename)
     full_filename.append(filename);
     return full_filename;
 }
+
+std::vector<float> Utils::Linspace(int iter, float start_val, float end_val)
+{
+    std::vector<float> spaced;
+    for (int i = 0; i < iter; ++i)
+    {
+        spaced.push_back(start_val + (end_val - start_val)/iter * i);
+    }
+    return spaced;
+}

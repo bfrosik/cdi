@@ -71,6 +71,7 @@ public:
     static af::array GetRatio(af::array, af::array );
     static bool IsNullArray(af::array);
     static std::string GetFullFilename(const char * dir, const char * filename);
+    static std::vector<float> Linspace(int iter, float start_val, float end_val);
 };
 
 #endif /* util_hpp */

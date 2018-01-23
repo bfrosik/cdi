@@ -38,7 +38,7 @@ float beta;
 // support
 std::vector<int> support_area;
 float support_threshold;
-int support_sigma;
+float support_sigma;
 std::vector<int> support_triggers;
 int support_alg;
 
@@ -76,6 +76,14 @@ bool plot_errors;
 int gc;
 
 int device;
+
+int low_res_iterations;
+
+float iter_low_res_sigma_min;
+
+float iter_low_res_sigma_max;
+
+std::vector<int> update_resolution_triggers;
 
 
 Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
@@ -227,13 +235,13 @@ Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
     {
         printf("No 'support_threshold' parameter in configuration file.\n");
     }
-    support_sigma = 0;
+    support_sigma = 1;
     try {
         support_sigma = cfg.lookup("support_sigma");
     }
     catch ( const SettingNotFoundException &nfex)
     {
-        printf("No 'support_sigma' parameter in configuration file.\n");
+        printf("No 'support_sigma' parameter in configuration file. Setting to 1\n");
     }
     support_triggers = ParseTriggers("support", action_stage);
     support_alg = -1;
@@ -293,6 +301,59 @@ Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
         {
             printf((std::string("No 'partial_coherence_iteration_num' parameter in configuration file. Setting to 20.\n")).c_str());
             pcdi_iter = 20;
+        }
+    }
+
+    if (action_stage == 0)
+    {
+        try 
+        {
+            const Setting& root = cfg.getRoot();
+            const Setting &tmp = root["update_resolution_triggers"];
+            int step = 0;
+            low_res_iterations = 0;
+            try
+            {
+                step = tmp[0];
+                try
+                {
+                    low_res_iterations = tmp[1];
+                }
+                catch ( const SettingNotFoundException &nfex)
+                { }
+            }
+            catch ( const SettingNotFoundException &nfex)
+            { }
+
+            for (int i = 0; i <= low_res_iterations; i += step)
+            {
+                update_resolution_triggers.push_back(i);
+            }
+        }
+        catch ( const SettingNotFoundException &nfex)
+        { }
+        if (low_res_iterations > 0)
+        {            
+            try
+            {
+                iter_low_res_sigma_min = cfg.lookup("iter_low_res_sigma_min");
+                if (iter_low_res_sigma_min == 0.0)
+                {
+                    iter_low_res_sigma_min = support_sigma;
+                }
+            }
+            catch(const SettingNotFoundException &nfex)
+            {
+                iter_low_res_sigma_min = support_sigma;
+            }
+            try
+            {
+                iter_low_res_sigma_max = cfg.lookup("iter_low_res_sigma_max");
+            }
+            catch(const SettingNotFoundException &nfex)
+            {
+                iter_low_res_sigma_min = 3.0;
+            }
         }
     }
 
@@ -526,7 +587,7 @@ float Params::GetSupportThreshold()
     return support_threshold;
 }
 
-int Params::GetSupportSigma()
+float Params::GetSupportSigma()
 {
     return support_sigma;
 }
@@ -614,4 +675,25 @@ int Params::GetActionStage()
 {
     return action_stage;
 }
+
+float Params::GetIterLowResSigmaMin()
+{
+    return iter_low_res_sigma_min;
+}
+
+float Params::GetIterLowResSigmaMax()
+{
+    return iter_low_res_sigma_max;
+}
+
+std::vector<int> Params::GetUpdateResolutionTriggers()
+{
+    return update_resolution_triggers;
+}
+
+int Params::GetLowResolutionIter()
+{
+    return low_res_iterations;
+}
+
 

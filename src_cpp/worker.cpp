@@ -18,8 +18,10 @@ See LICENSE file.
 #include "common.h"
 #include "algorithm.hpp"
 #include "util.hpp"
+#include "resolution.hpp"
 
 af::array data;   // this is abs
+af::array iter_data;  // if low resolutionis used, data will differ in iterations
 int num_points;
 d_type norm_data;
 int current_iteration; 
@@ -28,6 +30,7 @@ int aver_iter;
 std::vector<d_type> aver_v;
 std::vector<float> support_vector;
 std::vector<d_type> coherence_vector;
+d_type max_data;
 af::Window * errors_plot;
 
 
@@ -51,6 +54,11 @@ Reconstruction::Reconstruction(af::array image_data, af::array guess, Params* pa
     {
         partialCoherence = NULL;
     }
+    if (params->GetLowResolutionIter() >0)
+    {
+        resolution = new Resolution(params);
+    }
+    max_data = af::max<d_type>(data);
     errors_plot = new Window(512, 512, "errors");
 }
 
@@ -83,12 +91,12 @@ void Reconstruction::Init()
     norm_data = GetNorm(data);
     num_points = data.elements();
     // multiply the rs_amplitudes by max element of data array and the norm
-    d_type max_data = af::max<d_type>(data);
+    // d_type max_data = af::max<d_type>(data);
     ds_image *= max_data * GetNorm(ds_image);
 
 // the next two lines are for testing it sets initial guess to initial support    
-    // af::array temp = support->GetSupportArray();
-    // ds_image  = complex(temp.as((af_dtype) dtype_traits<d_type>::ctype), 0.0).as(c64);
+     //af::array temp = support->GetSupportArray();
+     //ds_image  = complex(temp.as((af_dtype) dtype_traits<d_type>::ctype), 0.0).as(c64);
     
     ds_image *= support->GetSupportArray();
     printf("initial image norm %f\n", GetNorm(ds_image));
@@ -99,12 +107,24 @@ void Reconstruction::Iterate()
 {
     while (state->Next())
     {
+        current_iteration = state->GetCurrentIteration();
+        iter_data = data;
+        af_print(iter_data(seq(0,4), seq(0,4), seq(0,4)));
+        if ((resolution != NULL) && (current_iteration < params->GetLowResolutionIter()) && (state->IsUpdateResolution()))
+        {
+            printf("Updating resolution iter %i\n", state->GetCurrentIteration());
+            iter_data = resolution->GetIterData(current_iteration, data);
+            d_type iter_data_max = af::max<d_type>(iter_data);
+            printf("the max of iter_data %f\n", af::max<d_type>(iter_data));
+   
+            iter_data = iter_data/iter_data_max;
+        af_print(iter_data(seq(0,4), seq(0,4), seq(0,4)));
+        }
         if (state->IsUpdateSupport())
         {
             support->Update(abs(ds_image).copy());
         }
 
-        current_iteration = state->GetCurrentIteration();
         if (params->GetGC() && (current_iteration+1) % params->GetGC() == 0)
         {
             af::deviceGC();
@@ -144,13 +164,14 @@ af::array Reconstruction::ModulusProjection()
     rs_amplitudes = Utils::ifft(ds_image)*num_points;
 
     
-    printf("data norm, ampl norm before ratio %fl %fl\n", GetNorm(data), GetNorm(rs_amplitudes));
-    state->RecordError( GetNorm(abs(rs_amplitudes)(rs_amplitudes > 0)-data(rs_amplitudes > 0))/norm_data );
+    printf("data norm, ampl norm before ratio %fl %fl\n", GetNorm(iter_data), GetNorm(rs_amplitudes));
+    //state->RecordError( GetNorm(abs(rs_amplitudes)(rs_amplitudes > 0)-iter_data(rs_amplitudes > 0))/GetNorm(iter_data));
     
     if ((partialCoherence == NULL) || (partialCoherence->GetTriggers().size() == 0))
     {
         //rs_amplitudes = data * exp(af::complex(0, af::arg(rs_amplitudes)));
-        af::array ratio = Utils::GetRatio(data, abs(rs_amplitudes));        
+        af::array ratio = Utils::GetRatio(iter_data, abs(rs_amplitudes));        
+        state->RecordError( GetNorm(abs(rs_amplitudes)(rs_amplitudes > 0)-iter_data(rs_amplitudes > 0))/GetNorm(iter_data));
         rs_amplitudes *= ratio;
     }  
     else
@@ -160,15 +181,17 @@ af::array Reconstruction::ModulusProjection()
             printf("coherence using lucy\n");            
             af::array abs_amplitudes = abs(rs_amplitudes).copy();
             af::array converged = partialCoherence->ApplyPartialCoherence(abs_amplitudes, current_iteration);
-            af::array ratio = Utils::GetRatio(data, abs(converged));
+            af::array ratio = Utils::GetRatio(iter_data, abs(converged));
             printf("ratio norm %f\n", GetNorm(ratio));
+            state->RecordError( GetNorm(abs(converged)(converged > 0)-iter_data(converged > 0))/GetNorm(iter_data));
 
             rs_amplitudes *= ratio;            
         }
         else
         {
             //rs_amplitudes = data * exp(af::complex(0, af::arg(rs_amplitudes)));
-            af::array ratio = Utils::GetRatio(data, abs(rs_amplitudes));
+            af::array ratio = Utils::GetRatio(iter_data, abs(rs_amplitudes));
+            state->RecordError( GetNorm(abs(rs_amplitudes)(rs_amplitudes > 0)-iter_data(rs_amplitudes > 0))/GetNorm(iter_data));
             rs_amplitudes *= ratio;
         }
         partialCoherence->SetPrevious(abs(rs_amplitudes));

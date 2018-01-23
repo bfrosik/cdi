@@ -7,7 +7,7 @@
 
 # distutils: language = c++
 # distutils: include_dirs = ['include', 'AF_DIR/include', 'LC_DIR/lib',]
-# distutils: sources = ['src_cpp/algorithm.cpp', 'src_cpp/bridge.cpp', 'src_cpp/manager.cpp', 'src_cpp/parameters.cpp', 'src_cpp/pcdi.cpp', 'src_cpp/state.cpp', 'src_cpp/support.cpp', 'src_cpp/util.cpp', 'src_cpp/worker.cpp']
+# distutils: sources = ['src_cpp/algorithm.cpp', 'src_cpp/bridge.cpp', 'src_cpp/manager.cpp', 'src_cpp/parameters.cpp', 'src_cpp/pcdi.cpp', 'src_cpp/resolution.cpp', 'src_cpp/state.cpp', 'src_cpp/support.cpp', 'src_cpp/util.cpp', 'src_cpp/worker.cpp']
 # distutils: libraries = ['afcpu',  'config++',]
 # distutils: library_dirs = ['AF_DIR/lib', 'LC_DIR/lib/.libs',]
 

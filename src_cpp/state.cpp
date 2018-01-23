@@ -47,6 +47,9 @@ bool update_kernel;
 // current index in support_partial_coherence vector
 int partial_coherence_triggers_index;
 
+int update_resolution_triggers_index;
+bool update_resolution;
+
 bool averaging;
 
 bool apply_twin;
@@ -66,6 +69,8 @@ State::State(Params* parameters)
     partial_coherence_triggers_index = 0;
     averaging = false;
     apply_twin = false;
+    update_resolution_triggers_index = 0;
+    update_resolution = false;
 }
 
 State::~State()
@@ -88,6 +93,8 @@ void State::Init()
         }
     }
     current_alg = algorithm_map[params->GetAlgSwitches()[0].algorithm_id];
+
+    std::vector<int> temp = params->GetUpdateResolutionTriggers();
 }
 
 void State::MapAlgorithmObject(int alg_id)
@@ -129,6 +136,17 @@ int State::Next()
         update_support = false;
     }
 
+    // check if change resolution this iteration
+    if ((params->GetUpdateResolutionTriggers().size() > 0) && (params->GetUpdateResolutionTriggers()[update_resolution_triggers_index] == current_iter))
+    {
+        update_resolution = true;
+        update_resolution_triggers_index++;
+    }
+    else
+    {
+        update_resolution = false;
+    }
+
     // calculate if during the iteration should do averaging.
     averaging = ( current_iter >= (total_iter_num - params->GetAvgIterations()) );
 
@@ -168,6 +186,11 @@ bool State::IsUpdateSupport()
 bool State::IsUpdatePartialCoherence()
 {
     return update_kernel;
+}
+
+bool State::IsUpdateResolution()
+{
+    return update_resolution;
 }
 
 bool State::IsApplyTwin()

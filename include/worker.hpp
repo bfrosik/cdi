@@ -17,6 +17,7 @@ class Params;
 class State;
 class Support;
 class PartialCoherence;
+class Resolution;
 
 using namespace af;
 // This class represents a single image phase reconstruction processing.
@@ -38,6 +39,8 @@ private:
     Support *support;
     // A reference to PartialCoherence
     PartialCoherence *partialCoherence;
+    // A reference to Resolution
+    Resolution *resolution;
 
     // This method returns sum of squares of all elements in the array
     double GetNorm(af::array arr);

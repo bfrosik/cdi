@@ -54,11 +54,6 @@ int Support::GetTriggerAlgorithm()
     return algorithm;
 }
 
-int Support::GetSigma()
-{
-    return sigma;
-}
-
 float Support::GetThreshold()
 {
     return threshold;

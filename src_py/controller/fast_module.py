@@ -23,7 +23,7 @@ import scipy.fftpack as sf
 import matplotlib.pyplot as plt
 import src_py.cyth.bridge_cpu as bridge_cpu
 import src_py.cyth.bridge_opencl as bridge_opencl
-# import src_py.cyth.bridge_cuda as bridge_cuda
+import src_py.cyth.bridge_cuda as bridge_cuda
 
 
 __author__ = "Barbara Frosik"
@@ -67,9 +67,9 @@ def fast_module_reconstruction(proc, conf, data, coh_dims, image=None, support=N
         bridge = bridge_cpu
     elif proc == 'opencl':
         bridge = bridge_opencl
-    # elif proc == 'cuda':
-    #     bridge = bridge_cuda
-    print 'entered fm coh_dims', coh_dims
+    elif proc == 'cuda':
+        bridge = bridge_cuda
+
     # shift data
     data=sf.fftshift(data)
     data = np.swapaxes(data,1,2)

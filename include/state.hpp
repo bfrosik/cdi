@@ -55,6 +55,9 @@ public:
     // Returns true if the current state should include partial coherence update.
     bool IsUpdatePartialCoherence();
 
+    // Returns true if the current state should include resolution update.
+    bool IsUpdateResolution();
+
     // Returns true if the current state should apply twin.
     bool IsApplyTwin();
 

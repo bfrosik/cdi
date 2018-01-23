@@ -50,7 +50,7 @@ public:
 
     std::vector<int> GetSupportArea();
     float GetSupportThreshold();
-    int GetSupportSigma();
+    float GetSupportSigma();
     std::vector<int> GetSupportTriggers();
     int GetSupportAlg();
 
@@ -59,6 +59,11 @@ public:
     std::vector<int> GetPcdiTriggers();
     bool GetPcdiNormalize();
     int GetPcdiIterations();
+
+    float GetIterLowResSigmaMin();
+    float GetIterLowResSigmaMax();
+    std::vector<int> GetUpdateResolutionTriggers();
+    int GetLowResolutionIter();
 
     // Returns amplitude threshold. Used by ER and HIO algorithms.
     d_type GetAmpThreshold();
