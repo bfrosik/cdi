@@ -26,7 +26,7 @@ private:
     af::array GaussConvFft(af::array ds_image);
     
 public:
-    Support(const dim4 data_dim, Params *params, af::array support_array);
+    Support(const af::dim4 data_dim, Params *params, af::array support_array);
     void Update(const af::array ds_image);
     int GetTriggerAlgorithm();
     float GetThreshold();

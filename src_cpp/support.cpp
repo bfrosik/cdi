@@ -10,7 +10,7 @@ See LICENSE file.
 #include "util.hpp"
 
 
-Support::Support(const dim4 data_dim, Params *params, af::array support)
+Support::Support(const af::dim4 data_dim, Params *params, af::array support)
 {
     threshold = params->GetSupportThreshold();
     sigma = params->GetSupportSigma();

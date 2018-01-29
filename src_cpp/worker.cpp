@@ -59,7 +59,10 @@ Reconstruction::Reconstruction(af::array image_data, af::array guess, Params* pa
         resolution = new Resolution(params);
     }
     max_data = af::max<d_type>(data);
-    errors_plot = new Window(512, 512, "errors");
+    if (params->IsPlotErrors())
+    {
+        errors_plot = new Window(512, 512, "errors");
+    }
 }
 
 Reconstruction::~Reconstruction()
@@ -109,16 +112,11 @@ void Reconstruction::Iterate()
     {
         current_iteration = state->GetCurrentIteration();
         iter_data = data;
-        af_print(iter_data(seq(0,4), seq(0,4), seq(0,4)));
         if ((resolution != NULL) && (current_iteration < params->GetLowResolutionIter()) && (state->IsUpdateResolution()))
         {
-            printf("Updating resolution iter %i\n", state->GetCurrentIteration());
             iter_data = resolution->GetIterData(current_iteration, data);
             d_type iter_data_max = af::max<d_type>(iter_data);
-            printf("the max of iter_data %f\n", af::max<d_type>(iter_data));
-   
             iter_data = iter_data/iter_data_max;
-        af_print(iter_data(seq(0,4), seq(0,4), seq(0,4)));
         }
         if (state->IsUpdateSupport())
         {

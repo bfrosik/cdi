@@ -88,6 +88,40 @@ std::vector<int> update_resolution_triggers;
 
 Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
 {
+    action_id_map.clear();
+    algorithm_id_map.clear();
+    alg_switches.clear();
+    d_type amp_threshold = 0;
+    amp_threshold_fill_zeros = false;
+    beta = 0.9;
+    support_area.clear();
+    support_threshold = 0.1; 
+    support_sigma = 1.0;
+    support_triggers.clear();
+    support_alg = -1;
+    pcdi_alg = 0;
+    pcdi_roi.clear();
+    pcdi_triggers.clear();
+    pcdi_normalize = false;
+    pcdi_iter = 20;
+    d_type_precision = false;
+    avg_iterations = 0;
+    number_iterations = 0;
+    twin = -1;
+    regularized_amp = REGULARIZED_AMPLITUDE_NONE;
+    save_dir = "my_dir";
+    continue_dir = "my_dir";
+    action = 0;
+    action_stage = 0;
+    save_results = false;
+    plot_errors = false;
+    gc = -1;
+    device = -1;
+    low_res_iterations = 0;
+    iter_low_res_sigma_min = support_sigma;
+    iter_low_res_sigma_max = 3.0;
+    update_resolution_triggers.clear();
+
     BuildAlgorithmMap();
     BuildActionMap();
     
@@ -108,13 +142,9 @@ Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
     try
     {
         save_dir = cfg.lookup("save_dir");
-        // else it is initialized
     }
     catch (const SettingNotFoundException &nfex)
-    {
-        save_dir = "my_dir";
-        printf("No 'save_dir' parameter in configuration file, saving in 'my_dir'.\n");
-    }
+    { }
 
     try {
         action = action_id_map[cfg.lookup("action")];
@@ -122,10 +152,8 @@ Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
     catch ( const SettingNotFoundException &nfex)
     {
         action = action_id_map["new_guess"];
-        printf((std::string("No 'action' parameter in configuration file. running new guess\n")).c_str());
     }
 
-    action_stage = 0;
     if (action == ACTION_CONTINUE)
     {
         try
@@ -136,7 +164,6 @@ Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
         }
         catch (const SettingNotFoundException &nfex)
         {
-            continue_dir = "my_dir";
             printf("No 'continue_dir' parameter in configuration file, saving in 'my_dir'.\n");
         }
     }
@@ -145,23 +172,17 @@ Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
         action_stage = stage;
     }
 
-    save_results = false;
     try {
         save_results = cfg.lookup("save_results");
     }
     catch ( const SettingNotFoundException &nfex)
-    {
-        printf((std::string("No 'save_results' parameter in configuration file. Setting to false.\n")).c_str());
-    }
+    { }
 
-    plot_errors = false;
     try {
         plot_errors = cfg.lookup("plot_errors");
     }
     catch ( const SettingNotFoundException &nfex)
-    {
-        printf((std::string("No 'plot_errors' parameter in configuration file. Setting to false.\n")).c_str());
-    }
+    { }
 
     try {
         const Setting& root = cfg.getRoot();
@@ -190,23 +211,17 @@ Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
         printf("No 'algorithm_sequence' parameter in configuration file.\n");
     }
 
-    gc = -1;
     try {
         gc = cfg.lookup("gc");
     }
     catch ( const SettingNotFoundException &nfex)
-    {
-        printf("No 'gc' parameter in configuration file.\n");
-    }
+    { }
 
-    device = -1;
     try {
         device = cfg.lookup("device");
     }
     catch ( const SettingNotFoundException &nfex)
-    {
-        printf("No 'device' parameter in configuration file.\n");
-    }
+    { }
 
     try {
         const Setting& root = cfg.getRoot();
@@ -227,24 +242,17 @@ Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
     {
         printf("No 'support_area' parameter in configuration file.\n");
     }
-    support_threshold = 0;
     try {
         support_threshold = cfg.lookup("support_threshold");
     }
     catch ( const SettingNotFoundException &nfex)
-    {
-        printf("No 'support_threshold' parameter in configuration file.\n");
-    }
-    support_sigma = 1;
+    { }
     try {
         support_sigma = cfg.lookup("support_sigma");
     }
     catch ( const SettingNotFoundException &nfex)
-    {
-        printf("No 'support_sigma' parameter in configuration file. Setting to 1\n");
-    }
+    { }
     support_triggers = ParseTriggers("support", action_stage);
-    support_alg = -1;
     try {
         support_alg = algorithm_id_map[cfg.lookup("support_type")];
     }
@@ -253,7 +261,6 @@ Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
         printf((std::string("No 'support_type' parameter in configuration file.\n")).c_str());
     }
 
-    pcdi_alg = 0;
     try {
         pcdi_alg = algorithm_id_map[cfg.lookup("partial_coherence_type")];
     }
@@ -285,22 +292,17 @@ Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
         }
 
         pcdi_triggers = ParseTriggers("partial_coherence", action_stage);
-        pcdi_normalize = false;
         try {
             pcdi_normalize = cfg.lookup("partial_coherence_normalize");
         }
         catch ( const SettingNotFoundException &nfex)
-        {
-            printf((std::string("No 'partial_coherence_normalize' parameter in configuration file.\n")).c_str());
-        }
-        pcdi_iter = 1;
+        { }
         try {
             pcdi_iter = cfg.lookup("partial_coherence_iteration_num");
         }
         catch ( const SettingNotFoundException &nfex)
         {
             printf((std::string("No 'partial_coherence_iteration_num' parameter in configuration file. Setting to 20.\n")).c_str());
-            pcdi_iter = 20;
         }
     }
 
@@ -311,7 +313,6 @@ Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
             const Setting& root = cfg.getRoot();
             const Setting &tmp = root["update_resolution_triggers"];
             int step = 0;
-            low_res_iterations = 0;
             try
             {
                 step = tmp[0];
@@ -343,17 +344,13 @@ Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
                 }
             }
             catch(const SettingNotFoundException &nfex)
-            {
-                iter_low_res_sigma_min = support_sigma;
-            }
+            { }
             try
             {
                 iter_low_res_sigma_max = cfg.lookup("iter_low_res_sigma_max");
             }
             catch(const SettingNotFoundException &nfex)
-            {
-                iter_low_res_sigma_min = 3.0;
-            }
+            { }
         }
     }
 
@@ -362,9 +359,7 @@ Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
         avg_iterations = cfg.lookup("avg_iterations");
     }
     catch(const SettingNotFoundException &nfex)
-    {
-        printf("No 'avg_iterations' parameter in configuration file.\n");
-    }
+    { }
 
 //    try
 //    {
@@ -408,7 +403,6 @@ Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
     catch (const SettingNotFoundException &nfex)
     {
         printf("No 'beta' parameter in configuration file. Setting to .9\n");
-        beta = .9;
     }
 
     try
@@ -426,16 +420,9 @@ Params::Params(const char* config_file, int stage, std::vector<int> data_dim)
         {
             regularized_amp = REGULARIZED_AMPLITUDE_UNIFORM;
         }
-        else
-        {
-            regularized_amp = REGULARIZED_AMPLITUDE_NONE;
-        }
     }
     catch (const SettingNotFoundException &nfex)
-    {
-        printf("No 'regularized_amp' parameter in configuration file.\n");
-    }
-    twin = -1;
+    { }
     if (action_stage == 0)
     {
         try {
