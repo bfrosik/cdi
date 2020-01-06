@@ -48,6 +48,7 @@ def save_vtk(res_dir_conf):
 
 
 def to_vtk(experiment_dir, results_dir=None):
+    print ('starting conversion to vtk')
     if not os.path.isdir(experiment_dir):
         print("Please provide a valid experiment directory")
         return
@@ -107,7 +108,6 @@ def to_vtk(experiment_dir, results_dir=None):
     dirs = []
     for (dirpath, dirnames, filenames) in os.walk(results_dir):
         for file in filenames:
-            print("file", file)
             if file.endswith('image.npy'):
                 dirs.append((dirpath, conf_dict))
 
@@ -115,6 +115,7 @@ def to_vtk(experiment_dir, results_dir=None):
         pool.map_async(save_vtk, dirs)
         pool.close()
         pool.join()
+    print ('done')
 
 
 def main(arg):
