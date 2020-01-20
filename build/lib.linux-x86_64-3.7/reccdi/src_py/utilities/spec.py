@@ -42,7 +42,7 @@ def parse_spec(specfile, scan):
     # returning the scan motor name as well.  Sometimes we scan things
     # other than theta.  So we need to expand the capability of the display
     # code.
-    return lam, delta, gamma, scanmot_del, arm, pixel
+    return lam, delta, gamma, scanmot_del, arm, pixel, energy
 
 
 def get_det_from_spec(specfile, scan):

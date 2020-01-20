@@ -1,4 +1,4 @@
-import reccdi.src_py.utilities.CXDVizNX as cx
+import reccdi.src_py.utilities.viz_util_xu as vu
 import reccdi.src_py.utilities.utils as ut
 import reccdi.src_py.utilities.parse_ver as ver
 import argparse
@@ -7,8 +7,53 @@ import os
 import numpy as np
 from multiprocessing import Pool
 
+def printhello():
+    print("Hello")
+
+def save_CX(conf, image, support, coh, save_dir):
+    print("setting geom")
+    #image = np.swapaxes(image, 1,2)
+    #image = np.swapaxes(image, 0,1)
+#    support = np.swapaxes(support, 1,2)
+#    support = np.swapaxes(support, 0,1)
+#    image, support = center(image, support)
+    params = vu.DispalyParams(conf)
+#    image = remove_ramp(image)
+    viz = vu.CXDViz()
+    viz.set_geometry(params, image.shape)
+    crop = get_crop(params, image.shape)
+    #viz.set_crop(crop[0], crop[1], crop[2])  # save image
+
+    viz.add_array(np.abs(image), "imAmp", space='direct')
+    viz.add_array(np.angle(image), "imPh", space='direct')
+    image_file = os.path.join(save_dir, 'image')
+    #viz.write_structured_grid(image_file)
+    viz.write_directspace(image_file)
+    viz.clear_direct_arrays()
+
+    viz.add_array(support, "support", space='direct')
+    support_file = os.path.join(save_dir, 'support')
+    #viz.write_structured_grid(support_file)
+    viz.write_directspace(support_file)
+    viz.clear_direct_arrays()
+
+    if coh is not None:
+        coh = np.swapaxes(coh, 1, 2)
+        # investigate if pad_center before fft or after
+        coh = np.fft.fftshift(np.fft.fftn(np.fft.fftshift(coh))).real
+        coh = ut.get_zero_padded_centered(coh, image.shape)
+        coh_file = os.path.join(save_dir, 'coherence')
+        viz.add_array(np.abs(coh), 'cohAmp', space='direct')
+        viz.add_array(np.angle(coh), 'cohPh', space='direct')
+        #viz.write_structured_grid(coh_file)
+        viz.write_directspace(coh_file)
+        viz.clear_direct_arrays()
+
+# a = np.load('/home/phoebus/BFROSIK/temp/test/A_78-97/results/image.npy')
+# remove_ramp(a, 3)
 
 def save_vtk(res_dir_conf):
+    print(res_dir_conf)
     (res_dir, conf) = res_dir_conf
     try:
         imagefile = os.path.join(res_dir, 'image.npy')
@@ -42,9 +87,11 @@ def save_vtk(res_dir_conf):
     cohfile = os.path.join(res_dir, 'coherence.npy')
     if os.path.isfile(cohfile):
         coh = np.load(cohfile)
-        cx.save_CX(conf, image, support, coh, res_dir)
+        save_CX(conf, image, support, coh, res_dir)
     else:
-        cx.save_CX(conf, image, support, None, res_dir)
+        print("running CX")
+        printhello()
+        save_CX(conf, image, support, None, res_dir)
 
 
 def to_vtk(experiment_dir, results_dir=None):
@@ -111,10 +158,11 @@ def to_vtk(experiment_dir, results_dir=None):
             if file.endswith('image.npy'):
                 dirs.append((dirpath, conf_dict))
 
-    with Pool(processes = no_gpus) as pool:
-        pool.map_async(save_vtk, dirs)
-        pool.close()
-        pool.join()
+    save_vtk(dirs[0])
+#    with Pool(processes = no_gpus) as pool:
+#        pool.map_async(save_vtk, dirs)
+#        pool.close()
+#        pool.join()
 
 
 def main(arg):

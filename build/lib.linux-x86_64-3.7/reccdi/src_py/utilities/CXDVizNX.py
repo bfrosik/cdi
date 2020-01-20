@@ -346,10 +346,10 @@ def get_crop(params, shape):
 
 
 def save_CX(conf, image, support, coh, save_dir):
-    image = np.swapaxes(image, 1,2)
-    image = np.swapaxes(image, 0,1)
-    support = np.swapaxes(support, 1,2)
-    support = np.swapaxes(support, 0,1)
+#    image = np.swapaxes(image, 1,2)
+#    image = np.swapaxes(image, 0,1)
+#    support = np.swapaxes(support, 1,2)
+#    support = np.swapaxes(support, 0,1)
     image, support = center(image, support)
     params = DispalyParams(conf)
     image = remove_ramp(image)
