@@ -576,6 +576,7 @@ def get_gpu_distribution(runs, available):
     return available
 
 
+#https://stackoverflow.com/questions/51503672/decorator-for-timeit-timeit-method/51503837#51503837
 from functools import wraps
 from time import time
 def measure(func):

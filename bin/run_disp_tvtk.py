@@ -1,5 +1,7 @@
-import reccdi.src_py.utilities.viz_util_xu as vu
+import reccdi.src_py.utilities.viz_util as vu
+import reccdi.src_py.beamlines.aps_34id.diffractometer as dif
 import reccdi.src_py.utilities.utils as ut
+from reccdi.src_py.utilities.utils import measure
 import reccdi.src_py.utilities.parse_ver as ver
 import argparse
 import sys
@@ -7,50 +9,51 @@ import os
 import numpy as np
 from multiprocessing import Pool
 
-
-def save_CX(conf, image, support, coh, save_dir, last_scan):
-    image = np.swapaxes(image, 1,2)
-    image = np.swapaxes(image, 0,1)
+def save_CX(conf_dict, image, support, coh, save_dir):
+    params = dif.DispalyParams(conf_dict)
+#    image = np.swapaxes(image, 1,2)
+#    image = np.swapaxes(image, 0,1)
 #    support = np.swapaxes(support, 1,2)
 #    support = np.swapaxes(support, 0,1)
-#    image, support = center(image, support)
-    params = vu.DispalyParams(conf, last_scan)
-#    image = remove_ramp(image)
-    viz = vu.CXDViz()
+    print("center image and support")
+    image, support = vu.center(image, support)
+    print("remove phase ramp on image")
+    image = vu.remove_ramp(image, ups=conf_dict['rampups'])
+    print("set viz")
+    viz = dif.CXDViz()
     viz.set_geometry(params, image.shape)
-    crop = get_crop(params, image.shape)
-    #viz.set_crop(crop[0], crop[1], crop[2])  # save image
+#    crop = get_crop(params, image.shape)
+#    viz.set_crop(crop[0], crop[1], crop[2])  # save image
 
-    viz.add_array(np.abs(image), "imAmp", space='direct')
+    print("set im amps")
+    viz.add_array(abs(image), "imAmp", space='direct')
+    print("set im phase")
     viz.add_array(np.angle(image), "imPh", space='direct')
     image_file = os.path.join(save_dir, 'image')
-    #viz.write_structured_grid(image_file)
+    print("write im")
     viz.write_directspace(image_file)
     viz.clear_direct_arrays()
 
+
+    print("set support")
     viz.add_array(support, "support", space='direct')
     support_file = os.path.join(save_dir, 'support')
-    #viz.write_structured_grid(support_file)
+    print("write support")
     viz.write_directspace(support_file)
     viz.clear_direct_arrays()
 
     if coh is not None:
-        coh = np.swapaxes(coh, 1, 2)
-        # investigate if pad_center before fft or after
-        coh = np.fft.fftshift(np.fft.fftn(np.fft.fftshift(coh))).real
+        coh = np.fft.fftshift(np.fft.fftn(np.fft.fftshift(coh)))
         coh = ut.get_zero_padded_centered(coh, image.shape)
         coh_file = os.path.join(save_dir, 'coherence')
         viz.add_array(np.abs(coh), 'cohAmp', space='direct')
         viz.add_array(np.angle(coh), 'cohPh', space='direct')
-        #viz.write_structured_grid(coh_file)
         viz.write_directspace(coh_file)
         viz.clear_direct_arrays()
 
-# a = np.load('/home/phoebus/BFROSIK/temp/test/A_78-97/results/image.npy')
-# remove_ramp(a, 3)
-
+#seems all of this could be consolidated with save_CX.  
 def save_vtk(res_dir_conf):
-    (res_dir, conf) = res_dir_conf
+    (res_dir, conf_dict) = res_dir_conf
     try:
         imagefile = os.path.join(res_dir, 'image.npy')
         image = np.load(imagefile)
@@ -83,11 +86,15 @@ def save_vtk(res_dir_conf):
     cohfile = os.path.join(res_dir, 'coherence.npy')
     if os.path.isfile(cohfile):
         coh = np.load(cohfile)
-        save_CX(conf, image, support, coh, res_dir)
+        save_CX(conf_dict, image, support, coh, res_dir)
     else:
-        save_CX(conf, image, support, None, res_dir)
+        save_CX(conf_dict, image, support, None, res_dir)
 
-
+#This is the first thing called by main
+#reads the config_disp file into a dictionary
+#Gets the binning param from config_data
+#Gets GPU list from config_rec
+#in principle I think all of this could go to DisplayParams?
 def to_vtk(experiment_dir, results_dir=None):
     if not os.path.isdir(experiment_dir):
         print("Please provide a valid experiment directory")
@@ -148,14 +155,14 @@ def to_vtk(experiment_dir, results_dir=None):
     dirs = []
     for (dirpath, dirnames, filenames) in os.walk(results_dir):
         for file in filenames:
-            print("file", file)
             if file.endswith('image.npy'):
                 dirs.append((dirpath, conf_dict))
-
-    with Pool(processes = no_gpus) as pool:
-        pool.map_async(save_vtk, dirs)
-        pool.close()
-        pool.join()
+#this overrides the pooling and will only work for a single reconstruction.  Just for testing.
+    save_vtk(dirs[0])
+#    with Pool(processes = no_gpus) as pool:
+#        pool.map_async(save_vtk, dirs)
+#        pool.close()
+#        pool.join()
 
 
 def main(arg):

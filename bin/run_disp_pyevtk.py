@@ -1,4 +1,4 @@
-import reccdi.src_py.utilities.viz_util_xu as vu
+import reccdi.src_py.utilities.viz_util_xu_pyevtk as vu
 import reccdi.src_py.utilities.utils as ut
 from reccdi.src_py.utilities.utils import measure
 import reccdi.src_py.utilities.parse_ver as ver

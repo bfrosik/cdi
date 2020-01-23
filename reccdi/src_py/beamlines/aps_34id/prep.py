@@ -5,7 +5,7 @@ import scipy.fftpack as sf
 import os
 import glob
 import tifffile as tif
-import reccdi.src_py.utilities.spec as spec
+import reccdi.src_py.beamlines.aps_34id.spec as spec
 import reccdi.src_py.utilities.utils as ut
 
 
