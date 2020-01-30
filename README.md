@@ -1,33 +1,4 @@
 
-Skip to content
-Pull requests
-Issues
-Marketplace
-Explore
-@bfrosik
-Learn Git and GitHub without any code!
-
-Using the Hello World guide, you’ll start a branch, write comments, and open a pull request.
-AdvancedPhotonSource /
-cdi
-forked from bfrosik/cdi
-
-7
-2
-
-    3
-
-Code
-Pull requests 0
-Actions
-Projects 0
-Wiki
-Security
-Insights
-Settings
-cdi/README.md
-@bfrosik bfrosik reversed the hardcoded library path 0c547d2 23 days ago
-58 lines (46 sloc) 3.52 KB
 cdi
 
 Coherent Diffraction Imaging technique provides a reconstruction of image of a nanoscale structures. Refer to Wikipedia article CDI description for the technique details. Project summary: Implement and parallelize genetic algorithms and phase retrieval methods for Bragg CDI techniques.
