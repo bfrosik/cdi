@@ -18,6 +18,7 @@ class Detector(object):
 
 class Detector_34idcTIM2(Detector):
     name="34idcTIM2:"
+    dims=(512,512)
     pixel=(55.0e-6,55e-6)
     pixelorientation=('x+','y-')  #in xrayutilities notation
     def __init__(self):

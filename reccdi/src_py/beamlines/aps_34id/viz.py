@@ -9,7 +9,7 @@ import sys
 import numpy as np
 import scipy.ndimage as ndi
 import math as m
-import pyevtk.hl as vtk
+#import pyevtk.hl as vtk
 from tvtk.api import tvtk
 import xrayutilities.experiment as xuexp
 import reccdi.src_py.utilities.utils as ut
@@ -90,38 +90,26 @@ basically an information agglomerator for the viz generation.
     except:
       pass
     try:
-#      saxes=[]
-#      print(config['sampleaxes'], type(config['sampleaxes']))
-#      for a in config['sampleaxes'][1:-1].split(','):
-#        saxes.append(a.split("\'")[1])
-#      self.sampleaxes = saxes
       self.sampleaxes=tuple(config['sampleaxes'])
     except KeyError:
       pass
     try:
-#      daxes=[]
-#      for a in config['detectoraxes'][1:-1].split(','):
-#        daxes.append(a.split("\'")[1])
-#      self.detectoraxes = daxes
       self.detectoraxes = tuple(config['detectoraxes'])
     except KeyError:
       pass
     try:
-      #self.sampleaxes_name = config['sampleaxes_name'][1:-1].split(',')
       self.sampleaxes_name = tuple(config['sampleaxes_name'])
     except KeyError:
       pass
     try:
-      #self.detectoraxes_name = config['detectoraxes_name'][1:-1].split(',')
       self.detectoraxes_name = tuple(config['detectoraxes_name'])
     except KeyError:
       pass
     try:
-      #self.incidentaxis = config['incidentaxis'][1:-1].split(',')
       self.incidentaxis = tuple(config['incidentaxis'])
     except KeyError:
       pass
-    #axes are set from the spec file, but if they are specified in the runs config file
+    #axes values are set from the spec file, but if they are specified in the config file
     #the vals from config take precedence.
     for axes in self.detectoraxes_name:
       if axes in config:
@@ -156,23 +144,15 @@ basically an information agglomerator for the viz generation.
       for attr in self.detector_obj.__dict__.keys():
         if not attr.startswith('__'):
           self.__dict__[attr]=self.detector_obj.__dict__[attr]
-#      self.sampleaxes=self.diffractometer_obj.sampleaxes
-#      self.detectoraxes=self.diffractometer_obj.detectoraxes
-#      self.sampleaxes_name=self.diffractometer_obj.sampleaxes_name
-#      self.detectoraxes_name=self.diffractometer_obj.detectoraxes_name
     except:
       pass
 
     try:
-      #pixorient=[]
-      #for a in config['pixelorientation'][1:-1].split(','):
-      #  pixorient.append(a.split("\'")[1])
       self.pixelorientation = tuple(config['pixelorientation'])
     except KeyError:
       pass
 
     try:
-      #self.pixel = config['pixel'][1:-1].split(',')
       self.pixel = tuple(config['pixel'])
     except KeyError:
       pass
@@ -217,6 +197,7 @@ class CXDViz():
   @measure
   def set_geometry(self, p, shape):
     self.params = p
+    #DisplayParams is not expected to do any modifications of params (units, etc)
     px = p.pixel[0]*p.binning[0]
     py = p.pixel[1]*p.binning[1]
     detdist=p.detdist/1000.0  #convert to meters
@@ -242,20 +223,11 @@ class CXDViz():
     #compute for 4pixel (2x2) detector
     self.qc.init_area(p.pixelorientation[0],p.pixelorientation[1], shape[0],shape[1], 2,2, distance=detdist, pwidth1=px, pwidth2=py)
 
-    #make arrays from th,phi,chi.  Get dQ in single call to qc.area
-    #will work for both angle and energy scans then.  Just need to learn the ordering of axes
-
-    #q1=np.array(self.qc.area(p.th,p.chi,p.phi,p.delta,p.gamma,deg=True))
-    #qshape=q1.shape
-    #q1=np.array(vtrans([q1[0,:,:].ravel(),q1[1,:,:].ravel(),q1[2,:,:].ravel()],p.theta,p.chi,p.phi)).reshape(qshape)
     #I think q2 will always be (3,2,2,2) (vec, scanarr, px, py)
-            
-      
-
     #should put some try except around this in case something goes wrong.
-    if scanmot=='en':
+    if scanmot=='en':  #seems en scans always have to be treated differently since init is unique
       q2=np.array(self.qc.area(p.th, p.chi,p.phi,p.delta,p.gamma,deg=True))
-    elif scanmot in p.sampleaxes_name:
+    elif scanmot in p.sampleaxes_name:  #based on scanmot args are made for qc.area
       args=[]
       axisindex=p.sampleaxes_name.index(scanmot)
       for n in range(len(p.sampleaxes_name)):
@@ -271,29 +243,13 @@ class CXDViz():
     else:
       print("scanmot not in sample axes or energy")
 
-#    if p.scanmot.strip()=='th':
-#      scanarr=np.array( (p.th, p.th+p.scanmot_del) )
-#      q2=np.array(self.qc.area( *(scanarr, p.chi,p.phi,p.delta,p.gamma),deg=True))
-#      q2=np.array(self.qc.area(p.th+p.scanmot_del, p.chi,p.phi,p.delta,p.gamma,deg=True))
-    #  q2=np.array(self.qc.transformSample2Lab([q2[0,:,:],q1[1,:,:],q1[2,:,:]],p.theta+p.scanmot_del,p.chi,p.phi))
-#    elif p.scanmot.strip()=='chi':
-#      scanarr=np.array( (p.chi, p.chi+p.scanmot_del) )
-#      q2=np.array(self.qc.area(p.th, scanarr, p.phi,p.delta,p.gamma,deg=True))
-#    #  q2=np.array(self.qc.transformSample2Lab([q2[0,:,:],q1[1,:,:],q1[2,:,:]],p.theta,p.chi+p.scanmot_del,p.phi))
-#    elif p.scanmot.strip()=='phi':
-#      scanarr=np.array( (p.phi, p.phi+p.scanmot_del) )
-#      q2=np.array(self.qc.area(p.th,p.chi,scanarr,p.delta,p.gamma,deg=True))
-#    #  q2=np.array(self.qc.transformSample2Lab([q2[0,:,:],q1[1,:,:],q1[2,:,:]],p.theta,p.chi,p.phi+p.scanmot_del))
-    print("q2", q2.shape)
     Astar=q2[:,0,1,0]-q2[:,0,0,0]
     Bstar=q2[:,0,0,1]-q2[:,0,0,0]
     Cstar=q2[:,1,0,0]-q2[:,0,0,0]
 
-#    Astar=q1[:,1,0]-q1[:,0,0]
-#    Bstar=q1[:,0,1]-q1[:,0,0]
-#    Cstar=(q2-q1)[:,0,0]
     print("Recip")
     print(Astar, Bstar, Cstar)
+    #transform to lab coords from sample reference frame
     Astar=self.qc.transformSample2Lab(Astar, p.th,p.chi,p.phi)*10.0  #convert to inverse nm.
     Bstar=self.qc.transformSample2Lab(Bstar, p.th,p.chi,p.phi)*10.0
     Cstar=self.qc.transformSample2Lab(Cstar, p.th,p.chi,p.phi)*10.0
@@ -332,19 +288,12 @@ class CXDViz():
         0:dims[0] * self.dxdir:self.dxdir, \
         0:dims[1] * self.dydir:self.dydir,\
         0:dims[2] * self.dzdir:self.dzdir]
-#    r = np.mgrid[
-#        0:dims[0]*self.dxdir:self.dxdir, \
-#        (dims[1]-1)*self.dydir:-self.dydir:-self.dydir,\
-#        0:dims[2]*self.dzdir:self.dzdir]
 
     origshape=r.shape
     r.shape = 3, dims[0] * dims[1] * dims[2]
-    #r = r.transpose()
   
     self.dir_coords = np.dot(self.Tdir, r).transpose()
  
-#    self.dir_coords = self.dir_coords.transpose()
-#    self.dir_coords.shape=origshape
     print("dir shape", self.dir_coords.shape)
     self.dirspace_uptodate=1
 
@@ -356,7 +305,6 @@ class CXDViz():
     q.shape = 3, dims[0] * dims[1] * dims[2]
 
     self.recip_coords = np.dot(self.Trecip, q).transpose()
-    #self.recip_coords.shape=origshape
     self.recipspace_uptodate=1   
 
   def clear_direct_arrays(self):
@@ -445,16 +393,17 @@ class CXDViz():
     sgwriter.write()
     print ('saved file', filename)
 
-  @measure
-  def write_directspace_pyevtk(self, filename, **args):
-    print(self.dir_arrs.keys())
-    vtk.gridToVTK(filename, self.dir_coords[0,:,:,:].copy(), \
-                  self.dir_coords[1,:,:,:].copy(), \
-                  self.dir_coords[2,:,:,:].copy(), pointData=self.dir_arrs)
-    vtk.imageToVTK(filename, pointData=self.dir_arrs)
-
-  def write_recipspace_pyevtk(self, filename, **args):
-    vtk.gridToVTK(filename, self.recip_coords[0,:,:,:].copy(), \
-                  self.recip_coords[1,:,:,:].copy(), \
-                  self.recip_coords[2,:,:,:].copy(), pointData=self.recip_arrs)
-    vtk.imageToVTK(filename, pointData=self.recip_arrs)
+#Save until we finally give up in pyevtk
+#  @measure
+#  def write_directspace_pyevtk(self, filename, **args):
+#    print(self.dir_arrs.keys())
+#    vtk.gridToVTK(filename, self.dir_coords[0,:,:,:].copy(), \
+#                  self.dir_coords[1,:,:,:].copy(), \
+#                  self.dir_coords[2,:,:,:].copy(), pointData=self.dir_arrs)
+#    vtk.imageToVTK(filename, pointData=self.dir_arrs)
+#
+#  def write_recipspace_pyevtk(self, filename, **args):
+#    vtk.gridToVTK(filename, self.recip_coords[0,:,:,:].copy(), \
+#                  self.recip_coords[1,:,:,:].copy(), \
+#                  self.recip_coords[2,:,:,:].copy(), pointData=self.recip_arrs)
+#    vtk.imageToVTK(filename, pointData=self.recip_arrs)
