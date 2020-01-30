@@ -1,9 +1,9 @@
 package:
   name: reccdi
-  version: "1.0"
+  version: "v1.1"
 
 source:
-  path: reccdi
+  path: .
 
 build:
   script_env:
@@ -21,9 +21,9 @@ requirements:
     - cython
 
   run:
-    - python
     - tifffile
     - pylibconfig2
+    - gputil
     - xrayutilities
     - traits
     - mayavi
