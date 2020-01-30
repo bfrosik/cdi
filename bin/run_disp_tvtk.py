@@ -1,5 +1,5 @@
 import reccdi.src_py.utilities.viz_util as vu
-import reccdi.src_py.beamlines.aps_34id.diffractometer as dif
+import reccdi.src_py.beamlines.aps_34id.viz as v
 import reccdi.src_py.utilities.utils as ut
 from reccdi.src_py.utilities.utils import measure
 import reccdi.src_py.utilities.parse_ver as ver
@@ -10,7 +10,9 @@ import numpy as np
 from multiprocessing import Pool
 
 def save_CX(conf_dict, image, support, coh, save_dir):
-    params = dif.DispalyParams(conf_dict)
+    params = v.DispalyParams(conf_dict)
+    for k in params.__dict__:
+     print("params",k,params.__dict__[k])
 #    image = np.swapaxes(image, 1,2)
 #    image = np.swapaxes(image, 0,1)
 #    support = np.swapaxes(support, 1,2)
@@ -20,15 +22,15 @@ def save_CX(conf_dict, image, support, coh, save_dir):
     print("remove phase ramp on image")
     image = vu.remove_ramp(image, ups=conf_dict['rampups'])
     print("set viz")
-    viz = dif.CXDViz()
+    viz = v.CXDViz()
     viz.set_geometry(params, image.shape)
 #    crop = get_crop(params, image.shape)
 #    viz.set_crop(crop[0], crop[1], crop[2])  # save image
 
     print("set im amps")
-    viz.add_array(abs(image), "imAmp", space='direct')
+    viz.add_ds_array(abs(image), "imAmp")
     print("set im phase")
-    viz.add_array(np.angle(image), "imPh", space='direct')
+    viz.add_ds_array(np.angle(image), "imPh")
     image_file = os.path.join(save_dir, 'image')
     print("write im")
     viz.write_directspace(image_file)
@@ -36,7 +38,7 @@ def save_CX(conf_dict, image, support, coh, save_dir):
 
 
     print("set support")
-    viz.add_array(support, "support", space='direct')
+    viz.add_ds_array(support, "support")
     support_file = os.path.join(save_dir, 'support')
     print("write support")
     viz.write_directspace(support_file)
@@ -46,8 +48,8 @@ def save_CX(conf_dict, image, support, coh, save_dir):
         coh = np.fft.fftshift(np.fft.fftn(np.fft.fftshift(coh)))
         coh = ut.get_zero_padded_centered(coh, image.shape)
         coh_file = os.path.join(save_dir, 'coherence')
-        viz.add_array(np.abs(coh), 'cohAmp', space='direct')
-        viz.add_array(np.angle(coh), 'cohPh', space='direct')
+        viz.add_ds_array(np.abs(coh), 'cohAmp')
+        viz.add_ds_array(np.angle(coh), 'cohPh')
         viz.write_directspace(coh_file)
         viz.clear_direct_arrays()
 
@@ -102,9 +104,9 @@ def to_vtk(experiment_dir, results_dir=None):
     conf_dir = os.path.join(experiment_dir, 'conf')
     conf = os.path.join(conf_dir, 'config_disp')
     # verify configuration file
-    if not ver.ver_config_disp(conf):
-        print ('incorrect configuration file ' + conf +', cannot parse')
-        return
+#    if not ver.ver_config_disp(conf):
+#        print ('incorrect configuration file ' + conf +', cannot parse')
+#        return
 
     # parse the conf once here and save it in dictionary, it will apply to all images in the directory tree
     conf_dict = {}

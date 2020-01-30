@@ -15,21 +15,11 @@ class Detector(object):
     def __init__(self, det_name):
         self.det_name = det_name
 
-    def get_pixel(self):
-        return (1,1)
-
 
 class Detector_34idcTIM2(Detector):
     name="34idcTIM2:"
-    pixel='(55.0e-6,55e-6)'
-    pixelorientation="(x+,y-)"  #in xrayutilities notation
+    pixel=(55.0e-6,55e-6)
+    pixelorientation=('x+','y-')  #in xrayutilities notation
     def __init__(self):
         super(Detector_34idcTIM2, self).__init__('34idcTIM2:')
-
-    def get_pixel(self):
-        return self.pixel
-    
-    def get_pixelorientation(self):
-        return self.pixelorientation
-
 
