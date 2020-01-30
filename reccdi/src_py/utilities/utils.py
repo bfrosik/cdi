@@ -464,11 +464,10 @@ def write_plot_errors(save_dir):
 def save_results(image, support, coh, errs, reciprocal, flow, iter_array, save_dir, metrics=None):
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    print("writing image", image.shape)
+    print("image shape", image.shape)
 
     image_file = os.path.join(save_dir, 'image')
     np.save(image_file, image)
-    print("image max", abs(image.max()))
     save_tif(np.abs(image), image_file+".tif")
     support_file = os.path.join(save_dir, 'support')
     np.save(support_file, support)

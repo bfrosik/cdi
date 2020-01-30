@@ -11,34 +11,30 @@ from multiprocessing import Pool
 
 def save_CX(conf_dict, image, support, coh, save_dir):
     params = dif.DispalyParams(conf_dict)
-#    image = np.swapaxes(image, 1,2)
-#    image = np.swapaxes(image, 0,1)
-#    support = np.swapaxes(support, 1,2)
-#    support = np.swapaxes(support, 0,1)
-    print("center image and support")
+    # print("center image and support")
     image, support = vu.center(image, support)
-    print("remove phase ramp on image")
-    image = vu.remove_ramp(image, ups=conf_dict['rampups'])
-    print("set viz")
+    # print("remove phase ramp on image")
+    try:
+        image = vu.remove_ramp(image, ups=conf_dict['rampups'])
+    except:
+        pass
+    # print("set viz")
     viz = dif.CXDViz()
     viz.set_geometry(params, image.shape)
-#    crop = get_crop(params, image.shape)
-#    viz.set_crop(crop[0], crop[1], crop[2])  # save image
 
-    print("set im amps")
+    # print("set im amps")
     viz.add_array(abs(image), "imAmp", space='direct')
-    print("set im phase")
+    # print("set im phase")
     viz.add_array(np.angle(image), "imPh", space='direct')
     image_file = os.path.join(save_dir, 'image')
-    print("write im")
+    # print("write im")
     viz.write_directspace(image_file)
     viz.clear_direct_arrays()
 
-
-    print("set support")
+    # print("set support")
     viz.add_array(support, "support", space='direct')
     support_file = os.path.join(save_dir, 'support')
-    print("write support")
+    # print("write support")
     viz.write_directspace(support_file)
     viz.clear_direct_arrays()
 
