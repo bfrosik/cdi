@@ -6,5 +6,5 @@ p=${p//"anaconda2"/"anaconda3"}
 p=${p//"CXDUSER/anaconda"/"CXDUSER/CDI/anaconda"}
 export PATH=$p
 
-export LD_LIBRARY_PATH=/home/beams/CXDUSER/CDI/libconfig/lib:/usr/local/lib:/home/beams/CXDUSER/CDI/arrayfire/lib64:/usr/lib64:/usr/nvvm/lib64
+export LD_LIBRARY_PATH=LIB_PATH
 python bin/cdi_window.py
