@@ -1,3 +1,24 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# #########################################################################
+# Copyright (c) , UChicago Argonne, LLC. All rights reserved.             #
+#                                                                         #
+# See LICENSE file.                                                       #
+# #########################################################################
+
+__author__ = "Ross Harder"
+__docformat__ = 'restructuredtext en'
+__all__ = ['get_dir_list',
+           'get_dark_white',
+           'get_normalized_slice',
+           'read_scan',
+           'shift',
+           'combine_part',
+           'fit',
+           'prep_data',
+           'prepare']
+
 import pylibconfig2 as cfg
 import numpy as np
 import copy

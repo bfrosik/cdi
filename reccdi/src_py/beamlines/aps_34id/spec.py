@@ -1,3 +1,14 @@
+# #########################################################################
+# Copyright (c) , UChicago Argonne, LLC. All rights reserved.             #
+#                                                                         #
+# See LICENSE file.                                                       #
+# #########################################################################
+
+__author__ = "Ross Harder"
+__docformat__ = 'restructuredtext en'
+__all__ = ['parse_spec',
+           'get_det_from_spec']
+
 from xrayutilities.io import spec as spec
 
 def parse_spec(specfile, scan):

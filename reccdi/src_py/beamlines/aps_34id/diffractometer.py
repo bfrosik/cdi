@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# #########################################################################
+# Copyright (c) , UChicago Argonne, LLC. All rights reserved.             #
+#                                                                         #
+# See LICENSE file.                                                       #
+# #########################################################################
+
+__author__ = "Ross Harder"
+__docformat__ = 'restructuredtext en'
+__all__ = ['getdiffclass']
+
 
 ##################################################################
 def getdiffclass(diffname, **args):
