@@ -1,4 +1,5 @@
 build/*
+bridge*.cpp
 core
 *.so
 *.pyx

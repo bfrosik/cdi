@@ -79,6 +79,7 @@ basically an information agglomerator for the viz generation.
       self.diffractometer_obj=None
     try:
       #this may not need to be in a try block
+      #get attributes out of the diffractometer class and instance
       for attr in self.diffractometer_obj.__class__.__dict__.keys():
         print("atr", attr)
         if not attr.startswith('__'):
@@ -89,6 +90,7 @@ basically an information agglomerator for the viz generation.
           self.__dict__[attr]=self.diffractometer_obj.__dict__[attr]
     except:
       pass
+    #get attribures out of config, overwriting things from diff object
     try:
       self.sampleaxes=tuple(config['sampleaxes'])
     except KeyError:
@@ -111,12 +113,12 @@ basically an information agglomerator for the viz generation.
       pass
     #axes values are set from the spec file, but if they are specified in the config file
     #the vals from config take precedence.
-    for axes in self.detectoraxes_name:
-      if axes in config:
-        self.__dict__[axes] = config[axes]
-    for axes in self.sampleaxes_name:
-      if axes in config:
-        self.__dict__[axes] = config[axes]
+    for axis in self.detectoraxes_name:
+      if axis in config:
+        self.__dict__[axis] = config[axis]
+    for axis in self.sampleaxes_name:
+      if axis in config:
+        self.__dict__[axis] = config[axis]
 
     try:
       self.scanmot = config['scanmot']
@@ -157,6 +159,7 @@ basically an information agglomerator for the viz generation.
     except KeyError:
       pass
 
+    #binning is used, but crop is currently not used.
     try:
       self.binning = []
       binning = config['binning']
@@ -243,6 +246,7 @@ class CXDViz():
     else:
       print("scanmot not in sample axes or energy")
 
+    #I think q2 will always be (3,2,2,2) (vec, scanarr, px, py)
     Astar=q2[:,0,1,0]-q2[:,0,0,0]
     Bstar=q2[:,0,0,1]-q2[:,0,0,0]
     Cstar=q2[:,1,0,0]-q2[:,0,0,0]
