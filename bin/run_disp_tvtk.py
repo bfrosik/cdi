@@ -24,15 +24,13 @@ def save_CX(conf_dict, image, support, coh, save_dir):
     print("set viz")
     viz = v.CXDViz()
     viz.set_geometry(params, image.shape)
-#    crop = get_crop(params, image.shape)
-#    viz.set_crop(crop[0], crop[1], crop[2])  # save image
 
     print("set im amps")
     viz.add_ds_array(abs(image), "imAmp")
     print("set im phase")
     viz.add_ds_array(np.angle(image), "imPh")
     image_file = os.path.join(save_dir, 'image')
-    print("write im")
+    # print("write im")
     viz.write_directspace(image_file)
     viz.clear_direct_arrays()
 
@@ -40,7 +38,7 @@ def save_CX(conf_dict, image, support, coh, save_dir):
     print("set support")
     viz.add_ds_array(support, "support")
     support_file = os.path.join(save_dir, 'support')
-    print("write support")
+    # print("write support")
     viz.write_directspace(support_file)
     viz.clear_direct_arrays()
 

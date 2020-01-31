@@ -89,85 +89,48 @@ def fast_module_reconstruction(proc, device, conf, data, coh_dims, image=None, s
         fast_module = bridge_cuda.PyBridge()
 
     # shift data
-    #data = np.swapaxes(data,1,2)
-    #data = np.asfortranarray(sf.fftshift(data))
     data = sf.fftshift(data)
-
     dims = data.shape[::-1]
-#    dims1 = (dims[2], dims[1], dims[0])
-
     print("data dims", dims)
     data_l = data.flatten().tolist()
     if image is None:
-        print("Running start_calc")
+        # print("Running start_calc")
         fast_module.start_calc(device, data_l, dims, conf)
-        #fast_module.start_calc(device, data_l, dims1, conf)
     elif support is None:
-        # pass image
-#        image = np.swapaxes(image, 1, 0)
-#        image = np.swapaxes(image, 2, 0)
         image = image.flatten()
         fast_module.start_calc_with_guess(device, data_l, image.real.tolist(), image.imag.tolist(), dims, conf)
-        #fast_module.start_calc_with_guess(device, data_l, image.real.tolist(), image.imag.tolist(), dims1, conf)
     elif coherence is None:
-        # pass image and support
-#        image = np.swapaxes(image, 1, 0)
-#        image = np.swapaxes(image, 2, 0)
         image = image.flatten()
-#        support = np.swapaxes(support, 1, 0)
-#        support = np.swapaxes(support, 2, 0)
         support = support.flatten()
         fast_module.start_calc_with_guess_support(device, data_l, image.real.tolist(), image.imag.tolist(), support.tolist(), dims, conf)
-        #fast_module.start_calc_with_guess_support(device, data_l, image.real.tolist(), image.imag.tolist(), support.tolist(), dims1, conf)
     else:
-        # pass image and support and coherence
-#        image = np.swapaxes(image, 1, 0)
-#        image = np.swapaxes(image, 2, 0)
         image = image.flatten()
-#        support = np.swapaxes(support, 1, 0)
-#        support = np.swapaxes(support, 2, 0)
         support = support.flatten()
         coh_dims1 = (coh_dims[2], coh_dims[1], coh_dims[0])
-#        coherence = np.swapaxes(coherence, 1, 0)
-#        coherence = np.swapaxes(coherence, 2, 0)
         coherence = coherence.flatten()
 
         fast_module.start_calc_with_guess_support_coh(device, data_l, image.real.tolist(), image.imag.tolist(), support.tolist(), dims, coherence.tolist(), coh_dims, conf)
-        #fast_module.start_calc_with_guess_support_coh(device, data_l, image.real.tolist(), image.imag.tolist(), support.tolist(), dims1, coherence.tolist(), coh_dims1, conf)
 
     er = copy.deepcopy(fast_module.get_errors())
     if len(er) == 1 and er[0] == -1:
         # run into Nan during reconstruction
         fast_module.cleanup()
         return None, None, None, None, None, None, None
-#    image_r = copy.deepcopy(np.asarray(fast_module.get_image_r()))
-#    image_i = copy.deepcopy(np.asarray(fast_module.get_image_i()))
     image_r = np.asarray(fast_module.get_image_r())
     image_i = np.asarray(fast_module.get_image_i())
     image = image_r + 1j*image_i  #no need to deepcopy the real and imag parts since this makes a new array
 
     # normalize image
-    #mx = max(np.absolute(image).ravel().tolist())
-    mx=np.abs(image).max()
+    mx = np.abs(image).max()
     image = image/mx
 
     support = copy.deepcopy(np.asarray(fast_module.get_support()))
     coherence = copy.deepcopy(np.asarray(fast_module.get_coherence()))
 
     image.shape=dims[::-1]
-    #image=np.ascontiguousarray(image)
-    #image = np.reshape(image, dims)
-#    image = np.swapaxes(image, 2, 0)
-#    image = np.swapaxes(image, 1, 0)
-
     support = np.reshape(support, dims[::-1])
-#    support = np.swapaxes(support, 2, 0)
-#    support = np.swapaxes(support, 1, 0)
-
     if coherence.shape[0] > 1:
         coherence = np.reshape(coherence, coh_dims[::-1])
-#        coherence = np.swapaxes(coherence, 2, 0)
-#        coherence = np.swapaxes(coherence, 1, 0)
     else:
         coherence = None
 
@@ -175,7 +138,6 @@ def fast_module_reconstruction(proc, device, conf, data, coh_dims, image=None, s
     reciprocal_i = copy.deepcopy(np.asarray(fast_module.get_reciprocal_i()))
     reciprocal = reciprocal_r + 1j*reciprocal_i
     reciprocal = np.reshape(reciprocal, dims[::-1])
-    #reciprocal = np.swapaxes(reciprocal, 2, 1)
     reciprocal = sf.ifftshift(reciprocal)
 
     iter_array = copy.deepcopy(np.asarray(fast_module.get_iter_flow()))

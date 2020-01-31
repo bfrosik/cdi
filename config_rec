@@ -57,13 +57,12 @@ ga_metrics = ("chi", "sharpness")
                              // defines which metric should be used to rank the reconstruction results
                              // supported: 'chi', 'sharpness', 'summed_phase', 'area', ('TV')
 
-ga_breed_modes = ("sqrt_ab", "Dhalf")
+ga_breed_modes = ("sqrt_ab", "dsqrt")
                              // defines which breeding mode to use to populate new generation. If "none"
                              // there is no breeding
-                             // supported: 'sqrt_ab', 'max_all', 'Dhalf', 'Dhalf-best', 'dsqrt', 'pixel_switch',
-                             // 'b_pa', '2ab_a_b', '2a-b_pa', 'sqrt_ab_pa', 'sqrt_ab_pa_recip', 'sqrt_ab_recip',
-                             // 'max_ab', 'max_ab_pa', 'min_ab_pa', 'avg_ab', 'avg_ab_pa', 'sqrt_abg',
-                             // 'sqrt_abg_pa', 'max_abg','max_abg_pa', 'avg_abg', 'avg_abg_pa', 'avg_sqrt'
+                             // supported: 'sqrt_ab', 'dsqrt', 'pixel_switch', 'b_pa', '2ab_a_b',
+                             // '2a-b_pa', 'sqrt_ab_pa', 'sqrt_ab_pa_recip', 'sqrt_ab_recip',
+                             // 'max_ab', 'max_ab_pa', 'min_ab_pa', 'avg_ab', 'avg_ab_pa'
 
 // ga_cullings = (2,1)
                              // defines how many worst samples to remove in breeding phase for each generation
@@ -170,4 +169,3 @@ average_trigger = (-65, 1)
 progress_trigger = (0, 20)
                              // defines when to print info on the console
                              // the info includes current iteration and error
-

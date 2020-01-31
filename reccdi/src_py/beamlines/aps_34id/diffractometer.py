@@ -13,8 +13,6 @@ class Diffractometer(object):
     def __init__(self, det_name):
         self.det_name = det_name
 
-
-
 class Diffractometer_34idc(Diffractometer):
     name="34idc"
     sampleaxes=('y+','z-','x-')  #in xrayutilities notation

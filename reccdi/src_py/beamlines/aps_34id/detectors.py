@@ -2,7 +2,7 @@
 ##################################################################
 def getdetclass(detname, **args):
   for cls in Detector.__subclasses__():
-    print(detname.strip(),cls, cls.name)
+    # print(detname.strip(),cls, cls.name)
     if cls.name == detname.strip():
         c=cls()
   return c
