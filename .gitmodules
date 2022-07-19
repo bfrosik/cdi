@@ -1,6 +1,0 @@
-[submodule "src_py"]
-        path = src_py
-        url = ../src_py.git
-[submodule "src_cpp"]
-        path = src_cpp
-        url = ../src_cpp.git
