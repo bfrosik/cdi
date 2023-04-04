@@ -1,6 +1,6 @@
 #!/bin/sh
 
-
+# tst
 echo -n "enter ArrayFire installation directory > "
 read af_dir
 #af_dir='/local/af'
